@@ -1,0 +1,222 @@
+/* ============================================================
+   ELG Pro 360 — Sesión cruzada y barra global
+   SessionNotice (aviso full-screen de cruce de área) + UserMenu
+   (menú de sesión reutilizable en las 3 áreas). Tokens en globals.css.
+   Patrones base: .amodal (admin.css) y avatar + menu-overlay (prototipo).
+   ============================================================ */
+
+/* ---------- Session Notice (cruce de área con sesión incompatible) ---------- */
+.snotice {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: var(--bg);
+}
+.snotice::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(72% 50% at 82% 0%, rgba(196, 30, 42, 0.12), transparent 60%);
+}
+.snotice-card {
+  position: relative;
+  width: 460px;
+  max-width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  box-shadow: 0 40px 100px -30px #000;
+  padding: 38px 34px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  animation: snotice-in 0.26s cubic-bezier(0.2, 0.8, 0.3, 1);
+}
+@keyframes snotice-in {
+  from { opacity: 0; transform: translateY(10px) scale(0.985); }
+  to { opacity: 1; transform: none; }
+}
+.snotice-ic {
+  width: 60px;
+  height: 60px;
+  border-radius: 16px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--primary);
+  margin-bottom: 22px;
+}
+.snotice-title {
+  font-family: var(--display);
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 22px;
+  line-height: 1.12;
+  color: var(--text);
+}
+.snotice-sub {
+  font-size: 14px;
+  color: var(--muted);
+  line-height: 1.55;
+  margin-top: 11px;
+  max-width: 350px;
+}
+.snotice-sub b { color: var(--text); font-weight: 600; }
+.snotice-id {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--muted-dim);
+  margin-top: 4px;
+}
+.snotice-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  margin-top: 28px;
+}
+
+/* ---------- User Menu (barra de sesión global) ---------- */
+.umenu { position: relative; display: inline-flex; }
+.umenu-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 5px 7px 5px 14px;
+  cursor: pointer;
+  color: var(--text);
+  transition: border-color 0.16s, background 0.16s;
+}
+.umenu-trigger:hover { border-color: #3a3a3a; }
+.umenu-trigger-name {
+  font-family: var(--display);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  font-size: 12.5px;
+  max-width: 132px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.umenu-av {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--display);
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--text);
+  flex-shrink: 0;
+}
+.umenu-backdrop { position: fixed; inset: 0; z-index: 70; }
+.umenu-pop {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  z-index: 80;
+  width: 252px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  box-shadow: 0 24px 60px -20px #000;
+  overflow: hidden;
+  animation: umenu-in 0.18s ease;
+}
+@keyframes umenu-in {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: none; }
+}
+.umenu-head {
+  padding: 15px 16px;
+  border-bottom: 1px solid var(--border-soft);
+  display: flex;
+  align-items: center;
+  gap: 11px;
+}
+.umenu-head-av {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--display);
+  font-weight: 600;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+.umenu-head-txt { min-width: 0; }
+.umenu-head-name {
+  font-family: var(--display);
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 13px;
+  letter-spacing: 0.02em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.umenu-head-mail {
+  font-size: 11.5px;
+  color: var(--muted-dim);
+  margin-top: 1px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.umenu-role {
+  display: inline-block;
+  margin-top: 7px;
+  font-family: var(--display);
+  font-weight: 600;
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--primary);
+  background: rgba(196, 30, 42, 0.12);
+  border: 1px solid rgba(196, 30, 42, 0.3);
+  padding: 2px 7px;
+  border-radius: 999px;
+}
+.umenu-list { padding: 7px; display: flex; flex-direction: column; gap: 2px; }
+.umenu-item {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 10px 11px;
+  border-radius: 9px;
+  background: none;
+  border: none;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+  color: var(--text);
+  font-family: var(--body);
+  font-size: 13.5px;
+  text-decoration: none;
+  transition: background 0.14s;
+}
+.umenu-item:hover { background: var(--surface-2); }
+.umenu-item svg { color: var(--muted); flex-shrink: 0; }
+.umenu-item.danger { color: #ff5d68; }
+.umenu-item.danger svg { color: #ff5d68; }
+.umenu-sep { height: 1px; background: var(--border-soft); margin: 5px 0; }

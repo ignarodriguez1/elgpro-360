@@ -1,0 +1,142 @@
+@import url('https://fonts.googleapis.com/css2?family=Oswald:wght@300;400;500;600;700&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=DM+Mono:wght@400;500&display=swap');
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+/*
+ * ============================================================
+ * ELG Pro 360 — Design Tokens (alineados al prototipo v1.0)
+ * ============================================================
+ *
+ * Paleta (fuente de verdad: elg-pro-prototipo/styles.css)
+ *   --bg          #0F0F0F   fondo principal
+ *   --surface     #1A1A1A   superficies / cards
+ *   --surface-2   #202020   superficies elevadas
+ *   --border      #2A2A2A   bordes
+ *   --border-soft #222      bordes suaves
+ *   --primary     #C41E2A   rojo ELG Pro
+ *   --primary-hover #A3161F
+ *   --primary-glow rgba(196,30,42,.35)  (sombra)
+ *   --text        #F5F5F5   texto principal
+ *   --muted       #9CA3AF   texto secundario
+ *   --muted-dim   #6B7280   texto terciario
+ *   --success     #22C55E
+ *   --warning     #F59E0B
+ *
+ * Fuentes (next/font):
+ *   --display / --font-heading : Oswald (títulos, etiquetas, botones)
+ *   --body    / --font-sans    : DM Sans (cuerpo)
+ *   --mono    / --font-mono    : DM Mono (patentes, fechas, orderCode)
+ *
+ * Radios: --r-sm 8px · --r 12px · --r-lg 16px
+ * ============================================================
+ */
+
+@theme inline {
+  --color-background: var(--bg);
+  --color-foreground: var(--text);
+  --color-card: var(--surface);
+  --color-card-foreground: var(--text);
+  --color-popover: var(--surface);
+  --color-popover-foreground: var(--text);
+  --color-primary: var(--primary);
+  --color-primary-foreground: #ffffff;
+  --color-secondary: var(--surface-2);
+  --color-secondary-foreground: var(--text);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted);
+  --color-accent: var(--surface-2);
+  --color-accent-foreground: var(--text);
+  --color-destructive: #dc2626;
+  --color-border: var(--border);
+  --color-input: var(--border);
+  --color-ring: var(--primary);
+
+  /* tokens propios del proyecto usados en clases utility */
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-card-alt: var(--surface-2);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-info: var(--info);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-glow: var(--primary-glow);
+  --color-muted-light: var(--muted-light);
+  --color-muted-dim: var(--muted-dim);
+
+  --font-sans: var(--font-dm-sans);
+  --font-mono: var(--font-dm-mono);
+  --font-heading: var(--font-oswald);
+
+  --color-sidebar: var(--surface);
+  --color-sidebar-foreground: var(--text);
+  --color-sidebar-primary: var(--primary);
+  --color-sidebar-primary-foreground: #ffffff;
+  --color-sidebar-accent: var(--surface-2);
+  --color-sidebar-accent-foreground: var(--text);
+  --color-sidebar-border: var(--border);
+  --color-sidebar-ring: var(--primary);
+
+  --color-chart-1: var(--primary);
+  --color-chart-2: var(--success);
+  --color-chart-3: var(--warning);
+  --color-chart-4: #3b82f6;
+  --color-chart-5: #8b5cf6;
+
+  --radius-sm: 8px;
+  --radius-md: 10px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+}
+
+:root {
+  --bg: #0f0f0f;
+  --surface: #1a1a1a;
+  --surface-2: #202020;
+  --border: #2a2a2a;
+  --border-soft: #222222;
+  --primary: #c41e2a;
+  --primary-hover: #a3161f;
+  --primary-glow: rgba(196, 30, 42, 0.35);
+  --text: #f5f5f5;
+  --muted: #9ca3af;
+  --muted-light: #d1d5db;
+  --muted-dim: #6b7280;
+  --success: #22c55e;
+  --warning: #f59e0b;
+  --info: #7aa2ff;
+
+  --display: var(--font-oswald), "Oswald", sans-serif;
+  --body: var(--font-dm-sans), "DM Sans", sans-serif;
+  --mono: var(--font-dm-mono), ui-monospace, monospace;
+
+  --r-sm: 8px;
+  --r: 12px;
+  --r-lg: 16px;
+  --pad: 20px;
+
+  /* escala de espaciado — usar SOLO estos valores para gaps/márgenes */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 20px;
+  --sp-6: 24px;
+
+  --radius: 0.75rem;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-family: var(--body);
+  }
+  html {
+    @apply font-sans;
+  }
+}

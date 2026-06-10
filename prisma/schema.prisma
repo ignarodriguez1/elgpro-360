@@ -1,0 +1,226 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  ADMIN
+  STAFF
+  CUSTOMER
+}
+
+enum WorkOrderStatus {
+  PROCESO // trabajo en curso
+  LISTO // listo para retirar
+  ENTREGADO // ya retirado por el cliente
+}
+
+enum OrderStage {
+  INGRESO
+  PREPARACION
+  PINTURA
+  DETAIL_ENTREGA
+}
+
+enum PaymentStatus {
+  PENDING
+  PARTIAL
+  PAID
+  NA
+}
+
+model User {
+  id              String    @id @default(cuid())
+  name            String
+  email           String    @unique
+  passwordHash    String?
+  role            Role      @default(CUSTOMER)
+  emailVerified   DateTime?
+  inviteToken     String?   @unique
+  inviteExpiresAt DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  customerProfile CustomerProfile?
+  statusUpdates   WorkOrderStatusUpdate[]
+  auditLogs       AuditLog[]
+}
+
+model CustomerProfile {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  phone     String?
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user     User      @relation(fields: [userId], references: [id])
+  vehicles Vehicle[]
+}
+
+model Vehicle {
+  id           String   @id @default(cuid())
+  customerId   String
+  licensePlate String
+  brand        String
+  model        String
+  year         Int?
+  color        String?
+  vin          String?
+  notes        String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  customer   CustomerProfile @relation(fields: [customerId], references: [id])
+  workOrders WorkOrder[]
+
+  @@unique([customerId, licensePlate])
+  @@index([licensePlate])
+}
+
+model WorkOrder {
+  id                    String          @id @default(cuid())
+  orderCode             String          @unique // codigo legible, ej. "OT-1042"
+  vehicleId             String
+  title                 String
+  description           String?
+  servicesRequested     String[] // nombres de los servicios elegidos (snapshot para display)
+  internalNotes         String?
+  estimatedDeliveryDate DateTime?
+  actualDeliveryDate    DateTime?
+  status                WorkOrderStatus @default(PROCESO)
+  stage                 OrderStage      @default(INGRESO) // etapa macro actual (barra de progreso)
+  budgetAmount          Decimal?        @db.Decimal(12, 2)
+  paymentStatus         PaymentStatus   @default(NA)
+  createdAt             DateTime        @default(now())
+  updatedAt             DateTime        @updatedAt
+
+  vehicle       Vehicle                 @relation(fields: [vehicleId], references: [id])
+  statusUpdates WorkOrderStatusUpdate[]
+  photos        WorkOrderPhoto[]
+
+  @@index([vehicleId])
+  @@index([status])
+  @@index([stage])
+}
+
+model WorkOrderStatusUpdate {
+  id                  String      @id @default(cuid())
+  workOrderId         String
+  title               String
+  description         String?
+  internalDescription String?
+  stage               OrderStage? // etapa macro del paso; deriva la stage de la orden
+  visibleToCustomer   Boolean     @default(true)
+  notifyCustomer      Boolean     @default(false)
+  notifiedAt          DateTime?
+  isCurrent           Boolean     @default(false) // estado actual de la orden
+  confirmed           Boolean     @default(false) // true = el taller ya alcanzo este paso; false = pendiente del plan
+  custom              Boolean     @default(false) // true = intercalado a mano (no venia del flujo del servicio)
+  sortOrder           Int         @default(0) // orden del paso en el timeline materializado
+  createdByUserId     String?
+  createdAt           DateTime    @default(now())
+
+  workOrder WorkOrder        @relation(fields: [workOrderId], references: [id])
+  createdBy User?            @relation(fields: [createdByUserId], references: [id])
+  photos    WorkOrderPhoto[]
+
+  @@index([workOrderId])
+  @@index([workOrderId, sortOrder])
+}
+
+model WorkOrderPhoto {
+  id                String   @id @default(cuid())
+  workOrderId       String
+  statusUpdateId    String?
+  imageUrl          String
+  thumbnailUrl      String?
+  caption           String?
+  visibleToCustomer Boolean  @default(true)
+  createdAt         DateTime @default(now())
+
+  workOrder    WorkOrder              @relation(fields: [workOrderId], references: [id])
+  statusUpdate WorkOrderStatusUpdate? @relation(fields: [statusUpdateId], references: [id])
+
+  @@index([workOrderId])
+}
+
+model Tutorial {
+  id          String   @id @default(cuid())
+  title       String
+  slug        String   @unique
+  description String?
+  content     String   @db.Text
+  videoUrl    String?
+  category    String
+  visible     Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model ProductRecommendation {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  purchaseUrl String?
+  imageUrl    String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Service {
+  id          String   @id @default(cuid())
+  name        String
+  description String?  @db.Text
+  imageUrl    String?
+  visible     Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  flow FlowStep[] // hoja de ruta de estados del servicio (editor de flujo)
+}
+
+/// Registro de auditoría interno, total e inmutable (append-only).
+/// Distinto del timeline visible al cliente (WorkOrderStatusUpdate): este log
+/// es interno y registra quién cambió qué y cuándo a nivel sistema.
+/// NUNCA se actualiza ni se borra desde la app (solo create).
+model AuditLog {
+  id         String   @id @default(cuid())
+  actorId    String? // User que ejecutó la acción (SET NULL si se borra el user)
+  actorEmail String // snapshot del email: no se pierde el "quién" aunque borren el user
+  action     String // ej. "ORDER_CREATED", "STATUS_ADDED", "MARKED_DELIVERED"
+  entity     String // ej. "WorkOrder", "Vehicle", "Service"
+  entityId   String
+  summary    String // texto legible para el panel de auditoría
+  diff       Json? // { before, after } cuando aplica
+  createdAt  DateTime @default(now())
+
+  actor User? @relation(fields: [actorId], references: [id])
+
+  @@index([entity, entityId])
+  @@index([createdAt])
+  @@index([actorId])
+}
+
+model FlowStep {
+  id          String     @id @default(cuid())
+  serviceId   String
+  title       String // ej. "Masillado y lijado"
+  description String? // descripcion por defecto del estado
+  stage       OrderStage // etapa macro a la que pertenece este paso
+  visible     Boolean    @default(true) // visibilidad por defecto al cliente
+  custom      Boolean    @default(false) // true = estado personalizado agregado a mano
+  sortOrder   Int // posicion en la secuencia (reordenable)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  service Service @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+
+  @@index([serviceId])
+  @@index([serviceId, sortOrder])
+}
