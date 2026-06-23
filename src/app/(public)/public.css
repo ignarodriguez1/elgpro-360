@@ -641,6 +641,14 @@
 .dlb-inner{ animation: lbInner .42s var(--ease-out-strong) both; }
 .lb-inner{ animation: lbInnerUp .42s var(--ease-out-strong) both; }
 
+/* Cierre del modal — salida más rápida que la entrada (asimetría de Emil) */
+@keyframes lbFadeOut{ to{ opacity:0; } }
+@keyframes lbInnerOut{ to{ opacity:0; transform:scale(.97); } }
+@keyframes lbInnerUpOut{ to{ opacity:0; transform:translateY(10px); } }
+.dlightbox.closing, .lightbox.closing{ animation: lbFadeOut .2s ease forwards; }
+.dlightbox.closing .dlb-inner{ animation: lbInnerOut .2s var(--ease-out-strong) forwards; }
+.lightbox.closing .lb-inner{ animation: lbInnerUpOut .2s var(--ease-out-strong) forwards; }
+
 /* Antes/Después — crossfade del lado (la foto se remonta con key={side}).
    Blur sutil para enmascarar el cambio (truco de Emil), bajo 8px. */
 @keyframes sideFade{ from{ opacity:0; filter:blur(5px); } to{ opacity:1; filter:blur(0); } }

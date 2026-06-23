@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { PageHead } from "@/components/public/PageHead";
 import { Photo } from "@/components/shared/Photo";
 import { Icon } from "@/components/shared/Icon";
@@ -23,10 +23,18 @@ export function TrabajosGallery({ works, cats }: { works: GalleryWork[]; cats: s
   const [cat, setCat] = useState<string>("Todos");
   const [lb, setLb] = useState<number | null>(null);
   const [side, setSide] = useState<"antes" | "despues">("despues");
+  const [closing, setClosing] = useState(false);
+  const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const list = works.map((w, i) => ({ ...w, _i: i })).filter((w) => cat === "Todos" || w.category === cat);
-  const open = (i: number) => { setSide("despues"); setLb(i); };
+  const open = (i: number) => { if (closeTimer.current) clearTimeout(closeTimer.current); setClosing(false); setSide("despues"); setLb(i); };
   const go = (d: number) => { if (lb == null || works.length === 0) return; setSide("despues"); setLb((lb + d + works.length) % works.length); };
+  // Cierre coreografiado: marca .closing, espera la animación de salida y recién ahí desmonta.
+  const requestClose = () => {
+    setClosing(true);
+    if (closeTimer.current) clearTimeout(closeTimer.current);
+    closeTimer.current = setTimeout(() => { setLb(null); setSide("despues"); setClosing(false); }, 200);
+  };
   const w = lb != null ? works[lb] : null;
   const sideImg = (wk: GalleryWork) => (side === "antes" ? wk.beforeImageUrl : wk.afterImageUrl) ?? undefined;
 
@@ -101,9 +109,9 @@ export function TrabajosGallery({ works, cats }: { works: GalleryWork[]; cats: s
       {w && (
         <>
           <div className="only-desktop">
-            <div className="dlightbox" onClick={() => setLb(null)}>
+            <div className={"dlightbox" + (closing ? " closing" : "")} onClick={requestClose}>
               <div className="dlb-inner" onClick={(e) => e.stopPropagation()}>
-                <button className="dlb-close" onClick={() => setLb(null)} aria-label="Cerrar"><Icon name="close" size={22} /></button>
+                <button className="dlb-close" onClick={requestClose} aria-label="Cerrar"><Icon name="close" size={22} /></button>
                 <div className="dlb-stage">
                   <Photo key={side} src={sideImg(w)} className="dlb-photo" tint={side === "antes" ? "rgba(120,120,120,.18)" : (w.tint ?? undefined)} label={side === "antes" ? "Estado de ingreso" : "Resultado final"} />
                   <span className={"dlb-tag " + side}>{side === "antes" ? "Antes" : "Después"}</span>
@@ -123,9 +131,9 @@ export function TrabajosGallery({ works, cats }: { works: GalleryWork[]; cats: s
             </div>
           </div>
           <div className="only-mobile">
-            <div className="lightbox open" onClick={() => setLb(null)}>
+            <div className={"lightbox open" + (closing ? " closing" : "")} onClick={requestClose}>
               <div className="lb-inner" onClick={(e) => e.stopPropagation()}>
-                <button className="lb-close" onClick={() => setLb(null)} aria-label="Cerrar"><Icon name="close" size={22} /></button>
+                <button className="lb-close" onClick={requestClose} aria-label="Cerrar"><Icon name="close" size={22} /></button>
                 <div className="lb-stage">
                   <Photo key={side} src={sideImg(w)} className="lb-photo" tint={side === "antes" ? "rgba(120,120,120,.18)" : (w.tint ?? undefined)} label={side === "antes" ? "Estado de ingreso" : "Resultado final"} />
                   <span className={"lb-tag " + side}>{side === "antes" ? "Antes" : "Después"}</span>
