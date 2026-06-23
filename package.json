@@ -11,6 +11,7 @@
     "db:seed": "npx prisma db seed",
     "db:studio": "npx prisma studio",
     "db:generate": "npx prisma generate",
+    "db:deploy": "npx prisma migrate deploy",
     "email:dev": "npx react-email dev --dir emails",
     "postinstall": "prisma generate"
   },
