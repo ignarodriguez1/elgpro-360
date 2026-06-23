@@ -46,27 +46,27 @@ export function HomeDesktop({ featured }: { featured: ServiceItem[] }) {
         <div className="dhero-veil2" />
         <div className="wrap">
           <div className="dhero-copy">
-            <div className="deyebrow drise in">ELG Pro · Rosario, Santa Fe</div>
-            <h1 className="dhero-title drise in" style={{ transitionDelay: "60ms" }}>
+            <div className="deyebrow drise">ELG Pro · Rosario, Santa Fe</div>
+            <h1 className="dhero-title drise" style={{ transitionDelay: "60ms" }}>
               Tu auto en<br />las mejores<br /><span className="hl">manos</span>
             </h1>
-            <p className="dhero-sub drise in" style={{ transitionDelay: "130ms" }}>
+            <p className="dhero-sub drise" style={{ transitionDelay: "130ms" }}>
               Pintura, chapería, detail y trabajos personalizados. Y por primera vez, seguís
               cada etapa del trabajo en tiempo real.
             </p>
-            <div className="dhero-cta drise in" style={{ transitionDelay: "200ms" }}>
+            <div className="dhero-cta drise" style={{ transitionDelay: "200ms" }}>
               <Link href="/contacto" className="dbtn dbtn-primary">
                 Solicitar cotización <Icon name="arrow" size={19} />
               </Link>
               <Link href="/trabajos" className="dbtn dbtn-ghost">Ver trabajos</Link>
             </div>
-            <div className="dhero-stats drise in" style={{ transitionDelay: "280ms" }}>
+            <div className="dhero-stats drise" style={{ transitionDelay: "280ms" }}>
               <div><div className="dhero-stat-n">+12</div><div className="dhero-stat-l">años de oficio</div></div>
               <div><div className="dhero-stat-n">+800</div><div className="dhero-stat-l">autos entregados</div></div>
               <div><div className="dhero-stat-n">100%</div><div className="dhero-stat-l">trabajo documentado</div></div>
             </div>
           </div>
-          <div className="dhero-track drise in">
+          <div className="dhero-track drise">
             <div className="dhero-track-head">
               <Logo size={16} />
               <span className="badge" style={{ background: "rgba(34,197,94,.14)", color: "#4ade80", borderColor: "rgba(34,197,94,.3)" }}>● En vivo</span>
@@ -77,7 +77,7 @@ export function HomeDesktop({ featured }: { featured: ServiceItem[] }) {
       </section>
 
       <div className="dconcept">
-        <div className="wrap drise in">
+        <div className="wrap drise">
           <span className="dconcept-mark">+</span>
           <p className="dconcept-text">
             La <strong>historia clínica</strong> de tu auto
@@ -99,7 +99,7 @@ export function HomeDesktop({ featured }: { featured: ServiceItem[] }) {
           </div>
           <div className="dsvc-grid">
             {featured.map((s) => (
-              <Link key={s.name} href="/servicios" className="dsvc-card drise in" style={{ display: "flex" }}>
+              <Link key={s.name} href="/servicios" className="dsvc-card drise" style={{ display: "flex" }}>
                 <Photo src={s.img} className="dsvc-img" tint={s.tint} grad />
                 <span className="dsvc-go"><Icon name="arrowUR" size={17} /></span>
                 <span className="dsvc-body">
@@ -124,7 +124,7 @@ export function HomeDesktop({ featured }: { featured: ServiceItem[] }) {
           </div>
           <div className="dproc-grid">
             {PROCESS.map((p) => (
-              <div key={p.n} className="dproc-step drise in">
+              <div key={p.n} className="dproc-step drise">
                 <div className="dproc-dot"><Icon name={p.icon} size={22} /></div>
                 <span className="dproc-n">{p.n}</span>
                 <h3 className="dproc-title">{p.title}</h3>
@@ -137,7 +137,7 @@ export function HomeDesktop({ featured }: { featured: ServiceItem[] }) {
 
       <section className="dsection dtrack">
         <div className="wrap">
-          <div className="dtrack-copy drise in">
+          <div className="dtrack-copy drise">
             <div className="deyebrow">Lo que nos hace distintos</div>
             <h2 className="dtrack-title">Mirá tu auto sin venir al taller</h2>
             <p style={{ color: "var(--muted)", fontSize: 17, lineHeight: 1.6, margin: 0, maxWidth: 440 }}>
@@ -153,7 +153,7 @@ export function HomeDesktop({ featured }: { featured: ServiceItem[] }) {
               Ver el portal de clientes <Icon name="arrow" size={18} />
             </Link>
           </div>
-          <div className="dtrack-demo drise in">
+          <div className="dtrack-demo drise">
             <div className="dtrack-demo-head">
               <Logo size={17} />
               <span className="badge" style={{ background: "rgba(34,197,94,.14)", color: "#4ade80", borderColor: "rgba(34,197,94,.3)" }}>● En vivo</span>
@@ -175,7 +175,7 @@ export function HomeDesktop({ featured }: { featured: ServiceItem[] }) {
           </div>
           <div className="dwork-grid">
             {WORKS.slice(0, 6).map((w, i) => (
-              <Link key={w.title} href="/trabajos" className={"dwork-item drise in " + WORK_LAYOUT[i]}>
+              <Link key={w.title} href="/trabajos" className={"dwork-item drise " + WORK_LAYOUT[i]}>
                 <span className="dwork-btn" style={{ display: "block" }}>
                   <Photo src={w.img} className="dwork-photo" tint={w.tint} />
                   <span className="dwork-swap"><Icon name="swap" size={16} /></span>
@@ -191,7 +191,7 @@ export function HomeDesktop({ featured }: { featured: ServiceItem[] }) {
       </section>
 
       <section className="dsection dsection-sm">
-        <div className="wrap drise in">
+        <div className="wrap drise">
           <div className="dtesti">
             <Icon name="quote" size={56} className="dtesti-q" />
             <p className="dtesti-text">{TESTIMONIAL.quote}</p>
@@ -208,7 +208,7 @@ export function HomeDesktop({ featured }: { featured: ServiceItem[] }) {
 
       <section className="dcta">
         <div className="dcta-glow" />
-        <div className="wrap drise in">
+        <div className="wrap drise">
           <div className="deyebrow" style={{ color: "#ffd0d4" }}>¿Listo para empezar?</div>
           <h2 className="dcta-title">Pedí tu cotización hoy</h2>
           <p className="dcta-sub">Contanos qué necesita tu auto y te respondemos a la brevedad. Sin compromiso.</p>

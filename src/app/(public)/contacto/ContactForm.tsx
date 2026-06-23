@@ -106,9 +106,9 @@ export function ContactForm({ services }: { services: string[] }) {
         <div className="page">
           <header className="page-header">
             <div className="page-header-glow" />
-            <div className="eyebrow rise in">Contacto</div>
-            <h1 className="page-header-title display rise in" style={{ transitionDelay: "50ms" }}>Hablemos de tu auto</h1>
-            <p className="page-header-sub rise in" style={{ transitionDelay: "110ms" }}>Contanos qué necesitás y coordinamos una cotización.</p>
+            <div className="eyebrow rise">Contacto</div>
+            <h1 className="page-header-title display rise" style={{ transitionDelay: "50ms" }}>Hablemos de tu auto</h1>
+            <p className="page-header-sub rise" style={{ transitionDelay: "110ms" }}>Contanos qué necesitás y coordinamos una cotización.</p>
           </header>
           <section className="section-tight" style={{ paddingTop: 8 }}>
             <form className="form" onSubmit={submit} noValidate>

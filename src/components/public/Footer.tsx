@@ -18,7 +18,7 @@ export async function Footer() {
   return (
     <footer className="dfooter">
       <div className="wrap">
-        <div className="dfooter-top">
+        <div className="dfooter-top drise">
           <div>
             <Logo size={34} tagline location />
             <p className="dfooter-tag">

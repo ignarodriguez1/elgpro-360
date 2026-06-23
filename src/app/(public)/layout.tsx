@@ -3,6 +3,7 @@ import { PublicChrome } from "@/components/public/PublicChrome";
 import { MobileChrome } from "@/components/public/MobileChrome";
 import { Footer } from "@/components/public/Footer";
 import { MobileFooter } from "@/components/public/MobileFooter";
+import { RevealRoot } from "@/components/public/RevealRoot";
 import "./public.css";
 
 export default async function PublicLayout({
@@ -25,9 +26,11 @@ export default async function PublicLayout({
     <div className="dweb">
       <div className="only-desktop"><PublicChrome user={user} /></div>
       <div className="only-mobile"><MobileChrome user={user} /></div>
-      <main>{children}</main>
-      <div className="only-desktop"><Footer /></div>
-      <div className="only-mobile"><MobileFooter /></div>
+      <RevealRoot>
+        <main>{children}</main>
+        <div className="only-desktop"><Footer /></div>
+        <div className="only-mobile"><MobileFooter /></div>
+      </RevealRoot>
     </div>
   );
 }

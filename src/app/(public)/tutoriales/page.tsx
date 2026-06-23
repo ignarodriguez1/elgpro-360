@@ -45,7 +45,7 @@ export default async function TutorialesPublicPage({
               </div>
               <div className="dtuto-grid">
                 {filtered.map((t, i) => (
-                  <Link key={t.id} href={`/tutoriales/${t.slug}`} className="dtuto-card drise in">
+                  <Link key={t.id} href={`/tutoriales/${t.slug}`} className="dtuto-card drise">
                     <div className="dtuto-thumb-wrap">
                       <Photo src={youtubeThumbFromUrl(t.videoUrl) ?? undefined} className="dtuto-thumb" tint={TINTS[i % TINTS.length]} grad />
                       <span className="dtuto-play"><Icon name="play" size={22} /></span>
@@ -67,9 +67,9 @@ export default async function TutorialesPublicPage({
         <div className="page">
           <header className="page-header">
             <div className="page-header-glow" />
-            <div className="eyebrow rise in">Aprendé con nosotros</div>
-            <h1 className="page-header-title display rise in" style={{ transitionDelay: "50ms" }}>Tutoriales</h1>
-            <p className="page-header-sub rise in" style={{ transitionDelay: "110ms" }}>
+            <div className="eyebrow rise">Aprendé con nosotros</div>
+            <h1 className="page-header-title display rise" style={{ transitionDelay: "50ms" }}>Tutoriales</h1>
+            <p className="page-header-sub rise" style={{ transitionDelay: "110ms" }}>
               Cuidá tu auto entre visita y visita con nuestras guías.
             </p>
           </header>

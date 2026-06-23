@@ -617,3 +617,67 @@
 @media (min-width: 921px){
   .menu-overlay{ display:none !important; }
 }
+
+/* ============================================================
+   ELG PRO — Capa de movimiento (Fase 2)
+   Solo transform/opacity · ease-out con carácter · sin bounce.
+   El revelado lo dispara RevealRoot (IntersectionObserver) agregando .in.
+   ============================================================ */
+
+/* Curva de las reveals: ease-out fuerte, con presencia */
+.rise, .drise{ transition-timing-function: var(--ease-out-strong); }
+
+/* Cascada (stagger) al revelar los grids del árbol desktop */
+.dsvc-grid > :nth-child(2), .dsvc-full-grid > :nth-child(2), .dproc-grid > :nth-child(2), .dwork-grid > :nth-child(2), .dtuto-grid > :nth-child(2){ transition-delay:.06s; }
+.dsvc-grid > :nth-child(3), .dsvc-full-grid > :nth-child(3), .dproc-grid > :nth-child(3), .dwork-grid > :nth-child(3), .dtuto-grid > :nth-child(3){ transition-delay:.12s; }
+.dsvc-grid > :nth-child(4), .dsvc-full-grid > :nth-child(4), .dproc-grid > :nth-child(4), .dwork-grid > :nth-child(4), .dtuto-grid > :nth-child(4){ transition-delay:.18s; }
+.dsvc-grid > :nth-child(5), .dsvc-full-grid > :nth-child(5), .dproc-grid > :nth-child(5), .dwork-grid > :nth-child(5), .dtuto-grid > :nth-child(5){ transition-delay:.24s; }
+.dsvc-grid > :nth-child(6), .dsvc-full-grid > :nth-child(6), .dproc-grid > :nth-child(6), .dwork-grid > :nth-child(6), .dtuto-grid > :nth-child(6){ transition-delay:.30s; }
+.dsvc-grid > :nth-child(n+7), .dsvc-full-grid > :nth-child(n+7), .dproc-grid > :nth-child(n+7), .dwork-grid > :nth-child(n+7), .dtuto-grid > :nth-child(n+7){ transition-delay:.36s; }
+
+/* Modal Trabajos — apertura coreografiada (el backdrop ya hace fadein) */
+@keyframes lbInner{ from{ opacity:0; transform:scale(.965); } to{ opacity:1; transform:none; } }
+@keyframes lbInnerUp{ from{ opacity:0; transform:translateY(14px); } to{ opacity:1; transform:none; } }
+.dlb-inner{ animation: lbInner .42s var(--ease-out-strong) both; }
+.lb-inner{ animation: lbInnerUp .42s var(--ease-out-strong) both; }
+
+/* Antes/Después — crossfade del lado (la foto se remonta con key={side}).
+   Blur sutil para enmascarar el cambio (truco de Emil), bajo 8px. */
+@keyframes sideFade{ from{ opacity:0; filter:blur(5px); } to{ opacity:1; filter:blur(0); } }
+.dlb-photo, .lb-photo{ animation: sideFade .34s ease both; }
+
+/* Feedback táctil al presionar — vale también en touch */
+.dbtn:active{ transform: scale(.975); }
+.dweb .btn:active{ transform: scale(.975); }
+.dchip:active, .chip:active{ transform: scale(.96); }
+
+/* Hover con presencia, pero gateado: en touch el :hover no queda pegado */
+@media (hover: none){
+  .dsvc-card:hover, .dtuto-card:hover, .dbtn:hover{ transform:none; }
+}
+
+/* Menú mobile — cascada de los links al abrir */
+.menu-link{ transition-delay: 0s; }
+.menu-overlay.open .menu-link:nth-child(1){ transition-delay:.05s; }
+.menu-overlay.open .menu-link:nth-child(2){ transition-delay:.10s; }
+.menu-overlay.open .menu-link:nth-child(3){ transition-delay:.15s; }
+.menu-overlay.open .menu-link:nth-child(4){ transition-delay:.20s; }
+.menu-overlay.open .menu-link:nth-child(5){ transition-delay:.25s; }
+
+/* Sin JavaScript: mostrar el contenido (las reveals dependen de JS) */
+@media (scripting: none){
+  .rise, .drise{ opacity:1 !important; transform:none !important; }
+}
+
+/* Accesibilidad — prefers-reduced-motion: cortar movimiento, conservar contenido.
+   Reduce (no elimina): todo aparece sin desplazamiento ni escala. */
+@media (prefers-reduced-motion: reduce){
+  .dweb *, .dweb *::before, .dweb *::after{
+    animation-duration:.01ms !important;
+    animation-iteration-count:1 !important;
+    transition-duration:.01ms !important;
+    transition-delay:0ms !important;
+    scroll-behavior:auto !important;
+  }
+  .rise, .drise{ opacity:1 !important; transform:none !important; }
+}

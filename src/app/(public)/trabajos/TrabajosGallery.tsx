@@ -48,7 +48,7 @@ export function TrabajosGallery({ works, cats }: { works: GalleryWork[]; cats: s
               ) : (
               <div className="dwork-grid">
                 {list.map((wk, i) => (
-                  <div key={wk.id} className={"dwork-item drise in " + dlayout(i)}>
+                  <div key={wk.id} className={"dwork-item drise " + dlayout(i)}>
                     <button className="dwork-btn" onClick={() => open(wk._i)}>
                       <Photo src={wk.afterImageUrl ?? undefined} className="dwork-photo" tint={wk.tint ?? undefined} />
                       <span className="dwork-swap"><Icon name="swap" size={16} /></span>
@@ -68,9 +68,9 @@ export function TrabajosGallery({ works, cats }: { works: GalleryWork[]; cats: s
         <div className="page">
           <header className="page-header">
             <div className="page-header-glow" />
-            <div className="eyebrow rise in">Portfolio</div>
-            <h1 className="page-header-title display rise in" style={{ transitionDelay: "50ms" }}>Trabajos realizados</h1>
-            <p className="page-header-sub rise in" style={{ transitionDelay: "110ms" }}>Tocá cualquier proyecto para ver el antes y después.</p>
+            <div className="eyebrow rise">Portfolio</div>
+            <h1 className="page-header-title display rise" style={{ transitionDelay: "50ms" }}>Trabajos realizados</h1>
+            <p className="page-header-sub rise" style={{ transitionDelay: "110ms" }}>Tocá cualquier proyecto para ver el antes y después.</p>
           </header>
           <div className="filters">
             {cats.map((c) => (
@@ -105,7 +105,7 @@ export function TrabajosGallery({ works, cats }: { works: GalleryWork[]; cats: s
               <div className="dlb-inner" onClick={(e) => e.stopPropagation()}>
                 <button className="dlb-close" onClick={() => setLb(null)} aria-label="Cerrar"><Icon name="close" size={22} /></button>
                 <div className="dlb-stage">
-                  <Photo src={sideImg(w)} className="dlb-photo" tint={side === "antes" ? "rgba(120,120,120,.18)" : (w.tint ?? undefined)} label={side === "antes" ? "Estado de ingreso" : "Resultado final"} />
+                  <Photo key={side} src={sideImg(w)} className="dlb-photo" tint={side === "antes" ? "rgba(120,120,120,.18)" : (w.tint ?? undefined)} label={side === "antes" ? "Estado de ingreso" : "Resultado final"} />
                   <span className={"dlb-tag " + side}>{side === "antes" ? "Antes" : "Después"}</span>
                   <button className="dlb-nav dlb-prev" onClick={() => go(-1)}><Icon name="chevR" size={22} style={{ transform: "rotate(180deg)" }} /></button>
                   <button className="dlb-nav dlb-next" onClick={() => go(1)}><Icon name="chevR" size={22} /></button>
@@ -127,7 +127,7 @@ export function TrabajosGallery({ works, cats }: { works: GalleryWork[]; cats: s
               <div className="lb-inner" onClick={(e) => e.stopPropagation()}>
                 <button className="lb-close" onClick={() => setLb(null)} aria-label="Cerrar"><Icon name="close" size={22} /></button>
                 <div className="lb-stage">
-                  <Photo src={sideImg(w)} className="lb-photo" tint={side === "antes" ? "rgba(120,120,120,.18)" : (w.tint ?? undefined)} label={side === "antes" ? "Estado de ingreso" : "Resultado final"} />
+                  <Photo key={side} src={sideImg(w)} className="lb-photo" tint={side === "antes" ? "rgba(120,120,120,.18)" : (w.tint ?? undefined)} label={side === "antes" ? "Estado de ingreso" : "Resultado final"} />
                   <span className={"lb-tag " + side}>{side === "antes" ? "Antes" : "Después"}</span>
                   <button className="lb-nav lb-prev" onClick={() => go(-1)}><Icon name="chevR" size={22} style={{ transform: "rotate(180deg)" }} /></button>
                   <button className="lb-nav lb-next" onClick={() => go(1)}><Icon name="chevR" size={22} /></button>

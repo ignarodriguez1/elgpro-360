@@ -14,14 +14,14 @@ export function HomeMobile({ featured }: { featured: ServiceItem[] }) {
         <Photo src={HERO_IMG} className="hero-bg" tint="rgba(196,30,42,.30)" />
         <div className="hero-veil" />
         <div className="hero-inner">
-          <div className="eyebrow rise in">ELG Pro · Rosario</div>
-          <h1 className="hero-title rise in" style={{ transitionDelay: "60ms" }}>
+          <div className="eyebrow rise">ELG Pro · Rosario</div>
+          <h1 className="hero-title rise" style={{ transitionDelay: "60ms" }}>
             Tu auto en<br />las mejores<br /><span className="hl">manos</span>
           </h1>
-          <p className="hero-sub rise in" style={{ transitionDelay: "140ms" }}>
+          <p className="hero-sub rise" style={{ transitionDelay: "140ms" }}>
             Pintura, chapería, detail y trabajos personalizados. Y por primera vez, seguís cada etapa en tiempo real.
           </p>
-          <div className="hero-cta rise in" style={{ transitionDelay: "220ms" }}>
+          <div className="hero-cta rise" style={{ transitionDelay: "220ms" }}>
             <Link href="/contacto" className="btn btn-primary btn-block">
               Solicitar cotización <Icon name="arrow" size={18} />
             </Link>
@@ -30,7 +30,7 @@ export function HomeMobile({ featured }: { featured: ServiceItem[] }) {
             </Link>
           </div>
         </div>
-        <div className="hero-track rise in" style={{ margin: "0 var(--pad) 26px", transitionDelay: "300ms" }}>
+        <div className="hero-track rise" style={{ margin: "0 var(--pad) 26px", transitionDelay: "300ms" }}>
           <div className="hero-track-top">
             <span className="badge">En proceso</span>
             <span className="mono hero-track-plate">AB 123 CD</span>

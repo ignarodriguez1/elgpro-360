@@ -10,12 +10,12 @@ export function PageHead({ eyebrow, title, sub }: PageHeadProps) {
     <header className="dpagehead">
       <div className="dpagehead-glow" />
       <div className="wrap">
-        <div className="deyebrow drise in">{eyebrow}</div>
-        <h1 className="dpagehead-title drise in" style={{ transitionDelay: "60ms" }}>
+        <div className="deyebrow drise">{eyebrow}</div>
+        <h1 className="dpagehead-title drise" style={{ transitionDelay: "60ms" }}>
           {title}
         </h1>
         {sub && (
-          <p className="dpagehead-sub drise in" style={{ transitionDelay: "120ms" }}>
+          <p className="dpagehead-sub drise" style={{ transitionDelay: "120ms" }}>
             {sub}
           </p>
         )}

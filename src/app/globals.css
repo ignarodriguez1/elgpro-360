@@ -117,6 +117,11 @@
   --r-lg: 16px;
   --pad: 20px;
 
+  /* easing — curvas de movimiento con carácter (Fase 2). ease-out fuerte,
+     sin bounce/elastic. Entradas y reveals decantan, no rebotan. */
+  --ease-out-strong: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-out-soft: cubic-bezier(0.25, 1, 0.5, 1);
+
   /* escala de espaciado — usar SOLO estos valores para gaps/márgenes */
   --sp-1: 4px;
   --sp-2: 8px;

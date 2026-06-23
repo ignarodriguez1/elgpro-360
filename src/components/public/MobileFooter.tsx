@@ -21,7 +21,7 @@ export function MobileFooter() {
       <p className="footer-tag">
         La historia clínica de tu auto y el seguimiento del trabajo, en un solo lugar.
       </p>
-      <div className="footer-grid">
+      <div className="footer-grid rise">
         <div className="footer-col">
           <span className="footer-h">Navegación</span>
           {NAV_LINKS.map((l) => (

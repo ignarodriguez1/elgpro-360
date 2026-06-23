@@ -33,14 +33,14 @@ export default async function ServiciosPage() {
           <section className="dsection-sm" style={{ paddingTop: 60 }}>
             <div className="wrap">
               {services.length === 0 ? (
-                <div className="svc-empty drise in">
+                <div className="svc-empty drise">
                   <h3>Pronto, nuevos servicios</h3>
                   <p>Estamos renovando nuestro catálogo. Escribinos y te asesoramos sin compromiso.</p>
                 </div>
               ) : (
                 <div className="dsvc-full-grid">
                   {services.map((s) => (
-                    <Link key={s.name} href="/contacto" className="dsvc-card drise in" style={{ display: "flex" }}>
+                    <Link key={s.name} href="/contacto" className="dsvc-card drise" style={{ display: "flex" }}>
                       <Photo src={s.img} className="dsvc-img" tint={s.tint} grad />
                       <span className="dsvc-go"><Icon name="arrowUR" size={17} /></span>
                       <span className="dsvc-body">
@@ -57,7 +57,7 @@ export default async function ServiciosPage() {
 
           <section className="dcta">
             <div className="dcta-glow" />
-            <div className="wrap drise in">
+            <div className="wrap drise">
               <div className="deyebrow" style={{ color: "#ffd0d4" }}>¿Listo para empezar?</div>
               <h2 className="dcta-title">Pedí tu cotización hoy</h2>
               <p className="dcta-sub">Contanos qué necesita tu auto y te respondemos a la brevedad. Sin compromiso.</p>
@@ -72,15 +72,15 @@ export default async function ServiciosPage() {
         <div className="page">
           <header className="page-header">
             <div className="page-header-glow" />
-            <div className="eyebrow rise in">Servicios</div>
-            <h1 className="page-header-title display rise in" style={{ transitionDelay: "50ms" }}>Todo para tu auto</h1>
-            <p className="page-header-sub rise in" style={{ transitionDelay: "110ms" }}>
+            <div className="eyebrow rise">Servicios</div>
+            <h1 className="page-header-title display rise" style={{ transitionDelay: "50ms" }}>Todo para tu auto</h1>
+            <p className="page-header-sub rise" style={{ transitionDelay: "110ms" }}>
               Estética automotor integral con acabado de fábrica y materiales premium.
             </p>
           </header>
           <section className="section-tight svc-full-list">
             {services.length === 0 ? (
-              <div className="svc-empty rise in">
+              <div className="svc-empty rise">
                 <h3>Pronto, nuevos servicios</h3>
                 <p>Estamos renovando nuestro catálogo. Escribinos y te asesoramos sin compromiso.</p>
               </div>
@@ -98,7 +98,7 @@ export default async function ServiciosPage() {
             )}
           </section>
 
-          <div className="ctaband rise in">
+          <div className="ctaband rise">
             <div className="ctaband-glow" />
             <div className="eyebrow" style={{ color: "#ffb3b9" }}>¿Listo para empezar?</div>
             <h2 className="ctaband-title display">Pedí tu<br />cotización hoy</h2>

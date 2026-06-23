@@ -1,40 +1,22 @@
 "use client";
 
-import { useRef, useEffect } from "react";
-
 interface RevealProps {
   children: React.ReactNode;
   delay?: number;
   className?: string;
 }
 
-/** Anima el contenido on-scroll (IntersectionObserver). Portado del prototipo. */
+/**
+ * Wrapper de revelado on-scroll. El observer global (RevealRoot) le agrega `.in`
+ * cuando entra al viewport; acá solo fijamos el `transition-delay` para el stagger.
+ *
+ * Antes tenía su propio IntersectionObserver + fallback de 1400ms, pero RevealRoot
+ * ya cubre todos los `.rise`/`.drise` del sitio público — mantenerlo acá revelaba
+ * el contenido de más abajo antes de tiempo. Ahora es presentacional.
+ */
 export function Reveal({ children, delay = 0, className = "" }: RevealProps) {
-  const ref = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    const io = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((e) => {
-          if (e.isIntersecting) {
-            el.classList.add("in");
-            io.unobserve(el);
-          }
-        });
-      },
-      { threshold: 0.08 }
-    );
-    io.observe(el);
-    const t = setTimeout(() => el.classList.add("in"), 1400);
-    return () => {
-      io.disconnect();
-      clearTimeout(t);
-    };
-  }, []);
-
   return (
-    <div ref={ref} className={"rise " + className} style={{ transitionDelay: delay + "ms" }}>
+    <div className={"rise " + className} style={{ transitionDelay: delay + "ms" }}>
       {children}
     </div>
   );
