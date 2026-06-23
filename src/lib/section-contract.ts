@@ -18,10 +18,14 @@
 /** Dónde debe renderizarse una sección. */
 export type SectionVisibility = "both" | "mobile" | "desktop";
 
+/** Roles del panel admin. ADMIN = dueño/manager; STAFF = operario. */
+export type AdminRole = "ADMIN" | "STAFF";
+
 /**
- * Descriptor de sección — objeto extensible a propósito.
- * Futuro (solo admin): se agregará `roles?` de forma aditiva
- * (visibility = dónde se renderiza; roles = quién la ve).
+ * Descriptor de sección.
+ * `visibility` = en qué viewport se renderiza.
+ * `roles`      = QUIÉN la ve. Si se omite, la ven todos los roles admin;
+ *                si se especifica, solo esos roles. (Ortogonal a visibility.)
  */
 export interface SectionDef {
   /** id estable, kebab-case, único dentro de la pantalla */
@@ -31,6 +35,13 @@ export interface SectionDef {
   visibility: SectionVisibility;
   /** por qué NO es "both" — completar siempre que visibility !== "both" */
   reason?: string;
+  /** si se especifica, la sección solo es visible para estos roles */
+  roles?: AdminRole[];
+}
+
+/** ¿Un rol puede ver algo gateado por esta lista? (sin lista = todos los admin) */
+export function roleCanSee(roles: AdminRole[] | undefined, role: AdminRole): boolean {
+  return !roles || roles.includes(role);
 }
 
 /** Estrategia de maquetación de la pantalla. */

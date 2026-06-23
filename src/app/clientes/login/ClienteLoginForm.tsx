@@ -6,6 +6,13 @@ import { Logo } from "@/components/shared/Logo";
 import { Icon } from "@/components/shared/Icon";
 import { Photo } from "@/components/shared/Photo";
 import { HERO_IMG } from "@/lib/public-data";
+import { whatsappUrl } from "@/lib/contact";
+
+// Salida real mientras no exista el flujo de reset (schema + Resend, tranche aparte):
+// el cliente recupera acceso contactando al taller por WhatsApp.
+const recoveryUrl = whatsappUrl(
+  "Hola ELG Pro, olvidé mi contraseña del portal de clientes y necesito recuperar el acceso."
+);
 
 export function ClienteLoginForm() {
   const [error, setError] = useState("");
@@ -50,7 +57,7 @@ export function ClienteLoginForm() {
                 {loading ? "Ingresando…" : <>Ingresar <Icon name="arrow" size={18} /></>}
               </button>
             </form>
-            <div className="p-login-links"><a href="/clientes/activar">¿Primera vez? Activá tu cuenta</a><a href="#">Olvidé mi contraseña</a></div>
+            <div className="p-login-links"><a href="/clientes/activar">¿Primera vez? Activá tu cuenta</a><a href={recoveryUrl} target="_blank" rel="noopener noreferrer">Olvidé mi contraseña</a></div>
           </div>
         </div>
       </div>
@@ -71,7 +78,7 @@ export function ClienteLoginForm() {
               {loading ? "Ingresando…" : <>Ingresar <Icon name="arrow" size={18} /></>}
             </button>
           </form>
-          <div className="pw-login-links"><a href="/clientes/activar">¿Primera vez? Activá tu cuenta</a><a href="#">Olvidé mi contraseña</a></div>
+          <div className="pw-login-links"><a href="/clientes/activar">¿Primera vez? Activá tu cuenta</a><a href={recoveryUrl} target="_blank" rel="noopener noreferrer">Olvidé mi contraseña</a></div>
         </div>
       </div>
     </>

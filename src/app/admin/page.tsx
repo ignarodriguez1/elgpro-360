@@ -47,24 +47,28 @@ export default async function AdminDashboardPage() {
 
   return (
     <>
-    {/* MOBILE — Modo Taller */}
+    {/* MOBILE — Modo Taller (con strip de stats + ver todas) */}
     <div className="only-mobile">
-      <TallerOrdersList orders={tallerOrders} adminName={admin.name} />
+      <TallerOrdersList
+        orders={tallerOrders}
+        adminName={admin.name}
+        stats={{ enTaller, activas: activas.length, completadasMes, clientes: customers.length }}
+      />
     </div>
 
     {/* DESKTOP */}
     <div className="only-desktop apage">
-      <div className="ahead">
+      <div className="ahead" data-section="header">
         <div className="ahead-l">
           <h2>Panel general</h2>
           <div className="ahead-sub">{activas.length} órdenes activas · {enTaller} en taller</div>
         </div>
-        <Link href="/admin/ordenes/nueva" className="abtn abtn-primary">
+        <Link href="/admin/ordenes/nueva" className="abtn abtn-primary" data-section="new-order-cta">
           <Icon name="plus" size={17} /> Nueva orden
         </Link>
       </div>
 
-      <div className="stat-grid">
+      <div className="stat-grid" data-section="stats">
         {stats.map((s) => (
           <div key={s.label} className="statcard">
             <div className="statcard-top">
@@ -81,10 +85,10 @@ export default async function AdminDashboardPage() {
         ))}
       </div>
 
-      <div className="apanel">
+      <div className="apanel" data-section="active-orders">
         <div className="apanel-head">
           <h3>Órdenes activas</h3>
-          <Link href="/admin/ordenes" className="alink">Ver todas</Link>
+          <Link href="/admin/ordenes" className="alink" data-section="see-all-link">Ver todas</Link>
         </div>
         <table className="atable">
           <thead>
@@ -92,10 +96,10 @@ export default async function AdminDashboardPage() {
           </thead>
           <tbody>
             {activas.map((o) => (
-              <tr key={o.id}>
+              <tr key={o.id} className="rowlink">
                 <td className="mono">{o.orderCode}</td>
                 <td>
-                  <Link href={`/admin/ordenes/${o.id}`} className="atable-veh" style={{ textDecoration: "none", color: "inherit" }}>
+                  <Link href={`/admin/ordenes/${o.id}`} className="atable-veh rowlink-a" style={{ textDecoration: "none", color: "inherit" }}>
                     <span className="atable-plate mono">{o.vehicle.licensePlate}</span>
                     {o.vehicle.brand} {o.vehicle.model}
                   </Link>

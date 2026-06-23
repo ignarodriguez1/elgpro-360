@@ -124,6 +124,7 @@ model WorkOrderStatusUpdate {
   sortOrder           Int         @default(0) // orden del paso en el timeline materializado
   createdByUserId     String?
   createdAt           DateTime    @default(now())
+  reachedAt           DateTime? // momento real en que el taller ALCANZÓ este paso; null = aún no alcanzado o sin marca histórica. Habilita la duración por etapa (TI1/S3).
 
   workOrder WorkOrder        @relation(fields: [workOrderId], references: [id])
   createdBy User?            @relation(fields: [createdByUserId], references: [id])
@@ -139,6 +140,7 @@ model WorkOrderPhoto {
   statusUpdateId    String?
   imageUrl          String
   thumbnailUrl      String?
+  publicId          String? // ref del provider de storage (Cloudinary public_id); habilita el borrado del asset
   caption           String?
   visibleToCustomer Boolean  @default(true)
   createdAt         DateTime @default(now())
@@ -223,4 +225,23 @@ model FlowStep {
 
   @@index([serviceId])
   @@index([serviceId, sortOrder])
+}
+
+/// Obra del portfolio público (/trabajos). ABM del dueño; lo que se muestra en la
+/// web pública sale de acá (visible + sortOrder). before/after son fotos reales.
+model PortfolioWork {
+  id             String   @id @default(cuid())
+  title          String
+  category       String // Pintura / Detail / Restauración / Personalizado
+  description    String?  @db.Text // texto del lightbox
+  afterImageUrl  String? // "después" (resultado) — también la card de la grilla
+  beforeImageUrl String? // "antes" (estado de ingreso)
+  tint           String? // overlay de color (presentación)
+  tall           Boolean  @default(false) // hint de layout: item grande en la grilla
+  visible        Boolean  @default(true)
+  sortOrder      Int      @default(0)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([visible, sortOrder])
 }

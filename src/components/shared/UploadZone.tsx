@@ -1,13 +1,23 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { Upload, Camera, X, Loader2 } from "lucide-react";
+import { Upload, Camera, X, Loader2, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface UploadedFile {
   url: string;
   thumbnailUrl?: string;
   publicId: string;
+}
+
+type PreviewStatus = "idle" | "uploading" | "done" | "error";
+
+interface PreviewItem {
+  id: string;
+  file: File;
+  preview: string;
+  status: PreviewStatus;
+  error?: string;
 }
 
 interface UploadZoneProps {
@@ -23,21 +33,20 @@ export function UploadZone({
   accept = "image/*",
   disabled = false,
 }: UploadZoneProps) {
-  const [previews, setPreviews] = useState<
-    { file: File; preview: string; uploading: boolean }[]
-  >([]);
+  const [previews, setPreviews] = useState<PreviewItem[]>([]);
   const [isDragging, setIsDragging] = useState(false);
 
   const handleFiles = useCallback(
     (files: FileList | null) => {
       if (!files) return;
 
-      const newFiles = Array.from(files)
+      const newFiles: PreviewItem[] = Array.from(files)
         .slice(0, maxFiles - previews.length)
         .map((file) => ({
+          id: crypto.randomUUID(),
           file,
           preview: URL.createObjectURL(file),
-          uploading: false,
+          status: "idle",
         }));
 
       setPreviews((prev) => [...prev, ...newFiles]);
@@ -45,60 +54,84 @@ export function UploadZone({
     [maxFiles, previews.length]
   );
 
-  function removePreview(index: number) {
+  function removePreview(id: string) {
     setPreviews((prev) => {
-      const updated = [...prev];
-      URL.revokeObjectURL(updated[index].preview);
-      updated.splice(index, 1);
-      return updated;
+      const target = prev.find((p) => p.id === id);
+      if (target) URL.revokeObjectURL(target.preview);
+      return prev.filter((p) => p.id !== id);
     });
   }
 
-  async function uploadAll() {
-    setPreviews((prev) => prev.map((p) => ({ ...p, uploading: true })));
+  function setStatus(id: string, status: PreviewStatus, error?: string) {
+    setPreviews((prev) =>
+      prev.map((p) => (p.id === id ? { ...p, status, error } : p))
+    );
+  }
 
-    try {
-      const res = await fetch("/api/upload", { method: "POST" });
-      if (!res.ok) throw new Error("Error obteniendo firma de upload");
+  /**
+   * Sube los archivos pendientes (idle o con error previo) UNO POR UNO. Cada
+   * archivo lleva su propio estado: un fallo NO descarta el archivo ni corta el
+   * resto — queda marcado en error y se puede reintentar. Los que suben bien se
+   * entregan al padre y se sacan de la lista; los que fallan quedan para reintentar.
+   * Pensado para mobile/4G: nada desaparece en silencio.
+   */
+  async function uploadPending() {
+    const pending = previews.filter(
+      (p) => p.status === "idle" || p.status === "error"
+    );
+    if (pending.length === 0) return;
 
-      const signedParams = await res.json();
-      const uploaded: UploadedFile[] = [];
+    const uploaded: UploadedFile[] = [];
+    const doneIds: string[] = [];
 
-      for (const preview of previews) {
+    for (const item of pending) {
+      setStatus(item.id, "uploading");
+
+      try {
         const formData = new FormData();
-        formData.append("file", preview.file);
-        formData.append("api_key", signedParams.apiKey);
-        formData.append("timestamp", signedParams.timestamp);
-        formData.append("signature", signedParams.signature);
-        if (signedParams.folder) formData.append("folder", signedParams.folder);
+        formData.append("file", item.file);
+        const res = await fetch("/api/upload", { method: "POST", body: formData });
 
-        const uploadRes = await fetch(
-          `https://api.cloudinary.com/v1_1/${signedParams.cloudName}/image/upload`,
-          { method: "POST", body: formData }
-        );
-
-        if (uploadRes.ok) {
-          const data = await uploadRes.json();
+        if (res.ok) {
+          const asset = await res.json();
           uploaded.push({
-            url: data.secure_url,
-            thumbnailUrl: data.secure_url.replace(
-              "/upload/",
-              "/upload/c_fill,w_200,h_200/"
-            ),
-            publicId: data.public_id,
+            url: asset.url,
+            thumbnailUrl: asset.thumbnailUrl,
+            publicId: asset.ref,
           });
+          doneIds.push(item.id);
+          setStatus(item.id, "done");
+        } else {
+          const body = await res.json().catch(() => null);
+          setStatus(
+            item.id,
+            "error",
+            body?.error ?? `No se pudo subir (error ${res.status})`
+          );
         }
+      } catch {
+        setStatus(item.id, "error", "Sin conexión. Tocá para reintentar.");
       }
+    }
 
+    // Entregamos al padre solo lo que subió bien y lo quitamos de la lista
+    // (sus URLs ya quedaron capturadas). Los que fallaron permanecen visibles.
+    if (uploaded.length > 0) {
       onUpload(uploaded);
-      setPreviews([]);
-    } catch (error) {
-      console.error("Upload failed:", error);
-      setPreviews((prev) => prev.map((p) => ({ ...p, uploading: false })));
+      setPreviews((prev) => {
+        prev
+          .filter((p) => doneIds.includes(p.id))
+          .forEach((p) => URL.revokeObjectURL(p.preview));
+        return prev.filter((p) => !doneIds.includes(p.id));
+      });
     }
   }
 
-  const isUploading = previews.some((p) => p.uploading);
+  const isUploading = previews.some((p) => p.status === "uploading");
+  const errorCount = previews.filter((p) => p.status === "error").length;
+  const pendingCount = previews.filter(
+    (p) => p.status === "idle" || p.status === "error"
+  ).length;
 
   return (
     <div className="space-y-4">
@@ -162,20 +195,40 @@ export function UploadZone({
       {previews.length > 0 && (
         <>
           <div className="grid grid-cols-4 gap-2">
-            {previews.map((p, i) => (
-              <div key={i} className="group relative aspect-square overflow-hidden rounded-lg border border-border">
+            {previews.map((p) => (
+              <div
+                key={p.id}
+                className={`group relative aspect-square overflow-hidden rounded-lg border ${
+                  p.status === "error" ? "border-primary" : "border-border"
+                }`}
+              >
                 <img
                   src={p.preview}
-                  alt={`Preview ${i + 1}`}
+                  alt="Preview"
                   className="h-full w-full object-cover"
                 />
-                {p.uploading ? (
+                {p.status === "uploading" && (
                   <div className="absolute inset-0 flex items-center justify-center bg-black/50">
                     <Loader2 className="h-6 w-6 animate-spin text-white" />
                   </div>
-                ) : (
+                )}
+                {p.status === "error" && (
                   <button
-                    onClick={() => removePreview(i)}
+                    type="button"
+                    onClick={uploadPending}
+                    title={p.error}
+                    className="absolute inset-0 flex flex-col items-center justify-center gap-1 bg-primary/70 p-1 text-center"
+                  >
+                    <AlertCircle className="h-5 w-5 text-white" />
+                    <span className="text-[10px] font-medium leading-tight text-white">
+                      Reintentar
+                    </span>
+                  </button>
+                )}
+                {p.status !== "uploading" && (
+                  <button
+                    type="button"
+                    onClick={() => removePreview(p.id)}
                     className="absolute right-1 top-1 rounded-full bg-black/60 p-1 opacity-0 transition-opacity group-hover:opacity-100"
                   >
                     <X className="h-3 w-3 text-white" />
@@ -185,9 +238,18 @@ export function UploadZone({
             ))}
           </div>
 
+          {errorCount > 0 && (
+            <p className="flex items-center gap-1.5 text-sm text-primary">
+              <AlertCircle className="h-4 w-4 shrink-0" />
+              {errorCount} foto{errorCount !== 1 ? "s" : ""} no se{" "}
+              {errorCount !== 1 ? "subieron" : "subió"}. Tocá la foto o el botón
+              para reintentar.
+            </p>
+          )}
+
           <Button
-            onClick={uploadAll}
-            disabled={isUploading || disabled}
+            onClick={uploadPending}
+            disabled={isUploading || disabled || pendingCount === 0}
             className="w-full"
           >
             {isUploading ? (
@@ -195,8 +257,10 @@ export function UploadZone({
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 Subiendo...
               </>
+            ) : errorCount > 0 ? (
+              `Reintentar ${pendingCount} foto${pendingCount !== 1 ? "s" : ""}`
             ) : (
-              `Subir ${previews.length} foto${previews.length !== 1 ? "s" : ""}`
+              `Subir ${pendingCount} foto${pendingCount !== 1 ? "s" : ""}`
             )}
           </Button>
         </>

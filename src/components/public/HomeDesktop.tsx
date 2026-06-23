@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Photo } from "@/components/shared/Photo";
 import { Icon } from "@/components/shared/Icon";
 import { Logo } from "@/components/shared/Logo";
-import { HERO_IMG, FEATURED, PROCESS, WORKS, TESTIMONIAL } from "@/lib/public-data";
+import { HERO_IMG, PROCESS, WORKS, TESTIMONIAL, type ServiceItem } from "@/lib/public-data";
 
 const WORK_LAYOUT = ["dwork-tall", "", "", "", "dwork-wide", ""];
 
@@ -37,7 +37,7 @@ function TrackDemo() {
   );
 }
 
-export function HomeDesktop() {
+export function HomeDesktop({ featured }: { featured: ServiceItem[] }) {
   return (
     <div className="dpage">
       <section className="dhero">
@@ -98,7 +98,7 @@ export function HomeDesktop() {
             <Link href="/servicios" className="dlink">Ver todos <Icon name="arrow" size={16} /></Link>
           </div>
           <div className="dsvc-grid">
-            {FEATURED.map((s) => (
+            {featured.map((s) => (
               <Link key={s.name} href="/servicios" className="dsvc-card drise in" style={{ display: "flex" }}>
                 <Photo src={s.img} className="dsvc-img" tint={s.tint} grad />
                 <span className="dsvc-go"><Icon name="arrowUR" size={17} /></span>

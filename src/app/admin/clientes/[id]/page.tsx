@@ -25,7 +25,7 @@ export default async function AdminClienteDetailPage({
 
   return (
     <div className="apage">
-      <div className="ahead">
+      <div className="ahead" data-section="header">
         <div className="ahead-l">
           <Link href="/admin/clientes" className="alink" style={{ marginBottom: 6, display: "inline-flex", gap: 6, alignItems: "center" }}>
             <Icon name="chevR" size={14} style={{ transform: "rotate(180deg)" }} /> Clientes
@@ -35,39 +35,64 @@ export default async function AdminClienteDetailPage({
         </div>
       </div>
 
-      <EditCustomerForm
-        customerId={customer.id}
-        initial={{
-          name: customer.name,
-          phone: customer.customerProfile?.phone ?? "",
-          notes: customer.customerProfile?.notes ?? "",
-        }}
-      />
+      <div data-section="edit-form">
+        <EditCustomerForm
+          customerId={customer.id}
+          initial={{
+            name: customer.name,
+            phone: customer.customerProfile?.phone ?? "",
+            notes: customer.customerProfile?.notes ?? "",
+          }}
+        />
+      </div>
 
-      <div className="apanel" style={{ padding: 18, marginTop: 16 }}>
+      <div className="apanel" style={{ padding: 18, marginTop: 16 }} data-section="vehicles-list">
         <h3 style={{ fontFamily: "var(--display)", textTransform: "uppercase", marginBottom: 12 }}>Vehículos</h3>
         {vehicles.length === 0 ? (
           <p style={{ color: "var(--muted)" }}>Este cliente no tiene vehículos.</p>
         ) : (
-          <table className="atable">
-            <thead><tr><th>Vehículo</th><th>Patente</th><th>Órdenes</th></tr></thead>
-            <tbody>
-              {vehicles.map((v) => (
-                <tr key={v.id}>
-                  <td>
-                    <Link href={`/admin/vehiculos/${v.id}`} style={{ textDecoration: "none", color: "inherit" }}>
-                      {v.brand} {v.model} {v.year ? `· ${v.year}` : ""}
-                    </Link>
-                  </td>
-                  <td className="mono">{v.licensePlate}</td>
-                  <td>{v.workOrders?.length ?? 0}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <>
+            {/* Desktop: tabla */}
+            <table className="atable only-desktop">
+              <thead><tr><th>Vehículo</th><th>Patente</th><th>Órdenes</th></tr></thead>
+              <tbody>
+                {vehicles.map((v) => (
+                  <tr key={v.id} className="rowlink">
+                    <td>
+                      <Link href={`/admin/vehiculos/${v.id}`} className="rowlink-a" style={{ textDecoration: "none", color: "inherit" }}>
+                        {v.brand} {v.model} {v.year ? `· ${v.year}` : ""}
+                      </Link>
+                    </td>
+                    <td className="mono">{v.licensePlate}</td>
+                    <td>{v.workOrders?.length ?? 0}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+
+            {/* Mobile: cards */}
+            <div className="only-mobile">
+              <div className="alist">
+                {vehicles.map((v) => (
+                  <Link key={v.id} href={`/admin/vehiculos/${v.id}`} className="alist-card">
+                    <div className="alist-top">
+                      <span className="alist-title">{v.brand} {v.model}</span>
+                      <span className="atable-plate">{v.licensePlate}</span>
+                    </div>
+                    <div className="alist-meta">
+                      {v.year ? <span className="mono">{v.year}</span> : null}
+                      <span>{v.workOrders?.length ?? 0} órden(es)</span>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          </>
         )}
         {customer.customerProfile && (
-          <NewVehicleForm customerProfileId={customer.customerProfile.id} />
+          <div data-section="new-vehicle-form">
+            <NewVehicleForm customerProfileId={customer.customerProfile.id} />
+          </div>
         )}
       </div>
     </div>

@@ -55,16 +55,18 @@ export default async function ClienteDashboardPage() {
             vehicles.map((v) => {
               const order = v.workOrders[0] ?? null;
               return (
+                <div key={v.id} data-section="vehicle-card-link">
                 <VehicleCard
-                  key={v.id}
                   href={`/clientes/vehiculos/${v.id}`}
                   patente={v.licensePlate}
                   marca={v.brand}
                   modelo={v.model}
                   color={v.color}
+                  colorHex={v.color ? colorDot(v.color) : null}
                   anio={v.year}
                   order={order ? { status: order.status, stage: order.stage, eta: fmtEta(order.estimatedDeliveryDate) } : null}
                 />
+                </div>
               );
             })
           )}
@@ -140,10 +142,8 @@ export default async function ClienteDashboardPage() {
                     </div>
                   </>
                 );
-                return order ? (
-                  <Link key={v.id} href={`/clientes/vehiculos/${v.id}`} className="pwv active" style={{ display: "block" }}>{inner}</Link>
-                ) : (
-                  <div key={v.id} className="pwv">{inner}</div>
+                return (
+                  <Link key={v.id} href={`/clientes/vehiculos/${v.id}`} className="pwv active" style={{ display: "block" }} data-section="vehicle-card-link">{inner}</Link>
                 );
               })}
             </div>

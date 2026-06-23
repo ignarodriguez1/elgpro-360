@@ -3,6 +3,18 @@
 import { useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
+import { Photo } from "@/components/shared/Photo";
+import { HERO_IMG } from "@/lib/public-data";
+
+/** Fondo hero compartido por los 3 estados, en ambos árboles (paridad con login). */
+function HeroBg({ variant }: { variant: "mobile" | "desktop" }) {
+  return (
+    <div data-section="hero-bg">
+      <Photo src={HERO_IMG} className={variant === "mobile" ? "p-login-bg" : "pw-login-bg"} tint="rgba(196,30,42,.22)" />
+      <div className={variant === "mobile" ? "p-login-veil" : "pw-login-veil"} />
+    </div>
+  );
+}
 
 export function ActivarForm() {
   const searchParams = useSearchParams();
@@ -54,6 +66,7 @@ export function ActivarForm() {
       <>
         {/* MOBILE */}
         <div className="only-mobile p-login">
+          <HeroBg variant="mobile" />
           <div className="p-login-inner">
             <div className="p-login-card" style={{ textAlign: "center" }}>
               <h1 className="p-login-title" style={{ color: "var(--primary)" }}>Token inválido</h1>
@@ -63,6 +76,7 @@ export function ActivarForm() {
         </div>
         {/* DESKTOP */}
         <div className="only-desktop pw-login" style={{ position: "relative", minHeight: "100svh", background: "var(--bg)" }}>
+          <HeroBg variant="desktop" />
           <div className="pw-login-card" style={{ textAlign: "center" }}>
             <h2 className="pw-login-title" style={{ color: "var(--primary)" }}>Token inválido</h2>
             <p className="pw-login-sub">El enlace de activación no es válido o expiró.</p>
@@ -77,6 +91,7 @@ export function ActivarForm() {
       <>
         {/* MOBILE */}
         <div className="only-mobile p-login">
+          <HeroBg variant="mobile" />
           <div className="p-login-inner">
             <div className="p-login-card" style={{ textAlign: "center" }}>
               <h1 className="p-login-title" style={{ color: "var(--success)" }}>Cuenta activada</h1>
@@ -89,6 +104,7 @@ export function ActivarForm() {
         </div>
         {/* DESKTOP */}
         <div className="only-desktop pw-login" style={{ position: "relative", minHeight: "100svh", background: "var(--bg)" }}>
+          <HeroBg variant="desktop" />
           <div className="pw-login-card" style={{ textAlign: "center" }}>
             <h2 className="pw-login-title" style={{ color: "var(--success)" }}>Cuenta activada</h2>
             <p className="pw-login-sub">Ya podés ingresar con tu email y contraseña.</p>
@@ -105,6 +121,7 @@ export function ActivarForm() {
     <>
       {/* MOBILE */}
       <div className="only-mobile p-login">
+        <HeroBg variant="mobile" />
         <div className="p-login-inner">
           <div className="p-login-card">
             <h1 className="p-login-title">Activar cuenta</h1>
@@ -129,6 +146,7 @@ export function ActivarForm() {
 
       {/* DESKTOP */}
       <div className="only-desktop pw-login" style={{ position: "relative", minHeight: "100svh", background: "var(--bg)" }}>
+        <HeroBg variant="desktop" />
         <div className="pw-login-card">
           <h2 className="pw-login-title">Activar cuenta</h2>
           <p className="pw-login-sub">Configurá tu contraseña para acceder al portal</p>

@@ -35,7 +35,7 @@ export async function addStatusAction(
     stage?: OrderStage;
     visibleToCustomer: boolean;
     notifyCustomer: boolean;
-    photoUrls?: string[];
+    photos?: { url: string; publicId?: string }[];
   }
 ): Promise<ActionResult> {
   const actor = await getActor();
@@ -61,12 +61,13 @@ export async function addStatusAction(
       actor,
     });
 
-    if (data.photoUrls?.length) {
-      for (const url of data.photoUrls) {
+    if (data.photos?.length) {
+      for (const p of data.photos) {
         await createWorkOrderPhoto({
           workOrderId: orderId,
           statusUpdateId: update.id,
-          imageUrl: url,
+          imageUrl: p.url,
+          publicId: p.publicId,
           visibleToCustomer: parsed.data.visibleToCustomer,
         });
       }
@@ -107,12 +108,15 @@ export async function markReadyAction(orderId: string): Promise<ActionResult> {
   }
 }
 
-export async function advanceStepAction(orderId: string): Promise<ActionResult> {
+export async function advanceStepAction(
+  orderId: string,
+  gate?: { photo?: { url: string; publicId?: string }; noImageReason?: string }
+): Promise<ActionResult> {
   const actor = await getActor();
   if (!actor) return { ok: false, error: "Sin permisos" };
 
   try {
-    await advanceToNextStep(orderId, actor);
+    await advanceToNextStep(orderId, actor, gate);
     revalidatePath(`/admin/ordenes/${orderId}`);
     return { ok: true };
   } catch (err) {

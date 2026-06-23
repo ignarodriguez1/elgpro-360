@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Icon } from "@/components/shared/Icon";
 import { reorderServicesAction, createServiceAction, toggleServiceVisibleAction } from "@/app/admin/servicios/actions";
+import { usePointerReorder } from "@/components/admin/usePointerReorder";
 
 interface Svc {
   id: string;
@@ -17,18 +18,14 @@ interface Svc {
 export function ServicesList({ services }: { services: Svc[] }) {
   const router = useRouter();
   const [items, setItems] = useState(services);
-  const [drag, setDrag] = useState<number | null>(null);
   const [, start] = useTransition();
 
-  function onDrop(target: number) {
-    if (drag === null || drag === target) return;
-    const next = [...items];
-    const [moved] = next.splice(drag, 1);
-    next.splice(target, 0, moved);
-    setItems(next);
-    setDrag(null);
-    start(() => reorderServicesAction(next.map((s) => s.id)));
-  }
+  // Reorden por Pointer Events (mouse + touch).
+  const { dragId, registerRow, handleProps } = usePointerReorder(
+    items,
+    setItems,
+    (ids) => start(() => reorderServicesAction(ids))
+  );
 
   function nuevo() {
     const name = window.prompt("Nombre del nuevo servicio:");
@@ -41,7 +38,7 @@ export function ServicesList({ services }: { services: Svc[] }) {
 
   return (
     <>
-      <div className="ahead">
+      <div className="ahead" data-section="header">
         <div className="ahead-l">
           <h2>Servicios</h2>
           <div className="ahead-sub">Arrastrá para ordenar cómo se muestran en la web</div>
@@ -49,17 +46,14 @@ export function ServicesList({ services }: { services: Svc[] }) {
         <button className="abtn abtn-primary" onClick={nuevo}><Icon name="plus" size={17} /> Nuevo servicio</button>
       </div>
 
-      <div className="flow-list">
-        {items.map((s, i) => (
+      <div className="flow-list" data-section="services-list">
+        {items.map((s) => (
           <div
             key={s.id}
-            className="flow-step"
-            draggable
-            onDragStart={() => setDrag(i)}
-            onDragOver={(e) => e.preventDefault()}
-            onDrop={() => onDrop(i)}
+            ref={registerRow(s.id)}
+            className={"flow-step" + (dragId === s.id ? " dragging" : "")}
           >
-            <span className="flow-grip"><Icon name="grip" size={18} /></span>
+            <span className="flow-grip" {...handleProps(s.id)}><Icon name="grip" size={18} /></span>
             <div style={{ flex: 1 }}>
               <div style={{ fontFamily: "var(--display)", textTransform: "uppercase" }}>{s.name}</div>
               <div className="mono" style={{ fontSize: 12, color: "var(--muted-dim)" }}>

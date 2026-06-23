@@ -55,8 +55,8 @@ export default async function AdminOrdenesPage({
           </thead>
           <tbody>
             {orders.map((o) => (
-              <tr key={o.id}>
-                <td className="mono"><Link href={`/admin/ordenes/${o.id}`} style={{ color: "var(--primary)", textDecoration: "none" }}>{o.orderCode}</Link></td>
+              <tr key={o.id} className="rowlink">
+                <td className="mono"><Link href={`/admin/ordenes/${o.id}`} className="rowlink-a" style={{ color: "var(--primary)", textDecoration: "none" }}>{o.orderCode}</Link></td>
                 <td>
                   <div className="atable-veh">
                     <span className="atable-plate mono">{o.vehicle.licensePlate}</span>

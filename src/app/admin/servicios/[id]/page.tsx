@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { requireAdmin } from "@/lib/session";
+import { requireOwner } from "@/lib/session";
 import { getServiceWithFlow } from "@/services/service.service";
 import { FlowEditor } from "@/components/admin/FlowEditor";
 
@@ -8,7 +8,7 @@ export default async function AdminServicioEditorPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  await requireAdmin();
+  await requireOwner();
   const { id } = await params;
 
   let service;

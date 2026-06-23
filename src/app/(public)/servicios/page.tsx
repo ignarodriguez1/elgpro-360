@@ -2,9 +2,24 @@ import Link from "next/link";
 import { PageHead } from "@/components/public/PageHead";
 import { Photo } from "@/components/shared/Photo";
 import { Icon } from "@/components/shared/Icon";
-import { SERVICES } from "@/lib/public-data";
+import { serviceVisual } from "@/lib/public-data";
+import { listServices } from "@/services/service.service";
 
-export default function ServiciosPage() {
+export const dynamic = "force-dynamic";
+
+export default async function ServiciosPage() {
+  // DB-driven: solo servicios visibles. El toggle del admin se refleja acá.
+  const services = (await listServices(true)).map((s, i) => {
+    const v = serviceVisual(s.name, i);
+    return {
+      name: s.name,
+      desc: s.description ?? "",
+      icon: v.icon,
+      tint: v.tint,
+      img: s.imageUrl || v.img,
+    };
+  });
+
   return (
     <>
       {/* DESKTOP */}
@@ -18,7 +33,7 @@ export default function ServiciosPage() {
           <section className="dsection-sm" style={{ paddingTop: 60 }}>
             <div className="wrap">
               <div className="dsvc-full-grid">
-                {SERVICES.map((s) => (
+                {services.map((s) => (
                   <Link key={s.name} href="/contacto" className="dsvc-card drise in" style={{ display: "flex" }}>
                     <Photo src={s.img} className="dsvc-img" tint={s.tint} grad />
                     <span className="dsvc-go"><Icon name="arrowUR" size={17} /></span>
@@ -57,7 +72,7 @@ export default function ServiciosPage() {
             </p>
           </header>
           <section className="section-tight svc-full-list">
-            {SERVICES.map((s) => (
+            {services.map((s) => (
               <Link key={s.name} href="/contacto" className="svc-full" style={{ display: "block" }}>
                 <Photo src={s.img} className="svc-full-img" tint={s.tint} grad />
                 <div className="svc-full-body">

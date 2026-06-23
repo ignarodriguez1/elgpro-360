@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 import { Icon, type IconName } from "@/components/shared/Icon";
 import { Logo } from "@/components/shared/Logo";
 import { UserMenu } from "@/components/shared/UserMenu";
-import { navScreens, type ScreenDef } from "@/lib/admin-sections";
+import { navScreensForRole, type ScreenDef, type AdminRole } from "@/lib/admin-sections";
 
 interface AdminShellUser {
   name: string | null;
@@ -19,12 +19,6 @@ interface AdminShellProps {
   children: React.ReactNode;
 }
 
-/**
- * La navegación se DERIVA de la fuente de verdad (admin-sections.ts):
- * sidebar desktop y nav mobile consumen la misma lista — una pantalla
- * nueva con `nav` aparece en ambas o en ninguna (contrato anti-drift).
- */
-const NAV = navScreens();
 const NAV_SECTIONS = ["Taller", "Contenido web"] as const;
 
 function avatarInitials(name: string | null): string {
@@ -43,12 +37,17 @@ function isActive(screen: ScreenDef, pathname: string): boolean {
   return pathname.startsWith(screen.route);
 }
 
-function pageTitle(pathname: string): string {
-  const entry = NAV.find((s) => isActive(s, pathname));
-  return entry?.nav?.label ?? "Dashboard";
-}
-
+/**
+ * La navegación se DERIVA de la fuente de verdad (admin-sections.ts) y se
+ * FILTRA por rol: sidebar desktop y nav mobile consumen la misma lista, así
+ * que una pantalla restringida (p. ej. Auditoría) desaparece de ambas para el
+ * operario (STAFF). Contrato anti-drift + gating en un solo lugar.
+ */
 export function AdminShell({ user, children }: AdminShellProps) {
+  const NAV = navScreensForRole(user.role as AdminRole);
+  const pageTitle = (pathname: string): string =>
+    NAV.find((s) => isActive(s, pathname))?.nav?.label ?? "Dashboard";
+
   const [collapsed, setCollapsed] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const pathname = usePathname();
@@ -62,7 +61,7 @@ export function AdminShell({ user, children }: AdminShellProps) {
   }
 
   const navLinks = (onNavigate?: () => void) =>
-    NAV_SECTIONS.map((sec) => (
+    NAV_SECTIONS.filter((sec) => NAV.some((s) => s.nav!.section === sec)).map((sec) => (
       <div key={sec}>
         <div className="asb-sec">{sec}</div>
         {NAV.filter((s) => s.nav!.section === sec).map((s) => {
@@ -172,19 +171,9 @@ export function AdminShell({ user, children }: AdminShellProps) {
             <div className="atop-title" data-section="page-title">{pageTitle(pathname)}</div>
           </div>
           <div className="atop-r">
-            <div className="atop-search" data-section="global-search">
-              <Icon name="grid" size={16} />
-              <input placeholder="Buscar…" />
-            </div>
-            <button
-              className="atop-icon"
-              type="button"
-              aria-label="Notificaciones"
-              data-section="notifications-bell"
-            >
-              <Icon name="bell" size={19} />
-              <span className="dot" />
-            </button>
+            {/* Buscador global y campana de notificaciones removidos: eran controles
+                muertos (input sin handler; campana con punto rojo que fingía novedades
+                y sin onClick). La búsqueda de OT real es otro tranche. */}
             <div data-section="logout">
               <UserMenu name={user.name} email={user.email} role={user.role} />
             </div>

@@ -47,10 +47,14 @@ export default async function HistorialVehiculoPage({
           <div className="p-greet-name" style={{ fontSize: 30 }}>Historial</div>
           <div className="p-greet-sub">{vehicle.brand} {vehicle.model} · {vehicle.licensePlate}</div>
         </div>
+        <div className="p-sec-label">
+          <h3>Completados</h3>
+          <span className="p-sec-count" data-section="jobs-counter">{orders.length} {orders.length === 1 ? "trabajo" : "trabajos"}</span>
+        </div>
         {orders.length === 0 ? empty : (
           <div className="hist-list">
             {orders.map((o, i) => (
-              <Link key={o.id} href={`/clientes/vehiculos/${id}`} className="hist-card p-rise" style={{ animationDelay: `${i * 60}ms`, textDecoration: "none" }}>
+              <Link key={o.id} href={`/clientes/vehiculos/${id}/orden/${o.id}`} className="hist-card p-rise" style={{ animationDelay: `${i * 60}ms`, textDecoration: "none" }} data-section="job-card-link">
                 <span className="hist-ic"><Icon name="check" size={20} stroke={2.4} /></span>
                 <div className="hist-main">
                   <div className="hist-title">{o.title}</div>
@@ -71,18 +75,18 @@ export default async function HistorialVehiculoPage({
             <div className="pw-greet-name" style={{ fontSize: 44 }}>Historial</div>
             <div className="pw-greet-sub">{vehicle.brand} {vehicle.model} · {vehicle.licensePlate}</div>
           </div>
-          <div className="pw-sec"><h3>Completados</h3><span className="pwv-foot-l">{orders.length} trabajos</span></div>
+          <div className="pw-sec"><h3>Completados</h3><span className="pwv-foot-l" data-section="jobs-counter">{orders.length} {orders.length === 1 ? "trabajo" : "trabajos"}</span></div>
           {orders.length === 0 ? empty : (
             <div className="pwh-grid">
               {orders.map((o, i) => (
-                <div className="pwh-card pw-rise" style={{ animationDelay: `${i * 60}ms` }} key={o.id}>
+                <Link key={o.id} href={`/clientes/vehiculos/${id}/orden/${o.id}`} className="pwh-card pw-rise" style={{ animationDelay: `${i * 60}ms`, textDecoration: "none" }} data-section="job-card-link">
                   <span className="pwh-ic"><Icon name="check" size={22} stroke={2.4} /></span>
                   <div className="pwh-main">
                     <div className="pwh-title">{o.title}</div>
                     <div className="pwh-meta">{o.servicesRequested.length > 0 ? o.servicesRequested.join(" · ") : o.orderCode}</div>
                   </div>
                   <span className="pwh-date">{fmtDate(o.actualDeliveryDate ?? o.createdAt)}</span>
-                </div>
+                </Link>
               ))}
             </div>
           )}

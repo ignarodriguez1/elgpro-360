@@ -8,6 +8,13 @@
 .portal ::selection{ background:var(--primary); color:#fff; }
 
 .p-scroll{ overflow-x:hidden; scroll-behavior:smooth; padding-bottom:96px; }
+
+/* pull-to-refresh (refresh honesto por gesto) */
+.ptr{ overscroll-behavior-y:contain; }
+.ptr-ind{ display:flex; align-items:flex-end; justify-content:center; padding-bottom:6px; color:var(--muted); overflow:hidden; }
+.ptr-ind svg{ transition:opacity .2s; }
+.ptr-ind.ptr-spin svg{ animation:ptr-rotate .8s linear infinite; }
+@keyframes ptr-rotate{ from{ transform:rotate(0); } to{ transform:rotate(360deg); } }
 .p-scroll::-webkit-scrollbar{ width:0; }
 .p-pad{ padding:0 20px; }
 
@@ -65,11 +72,200 @@
 .od-stage-link.done{ background:var(--primary); }
 
 /* ======================================================
+   FASE B — la etapa activa VIVE (mobile).
+   1) La barra se RECONSTRUYE al abrir: los nodos/conectores
+      alcanzados se llenan izq→der (no aparecen rojos de golpe).
+   2) La etapa ACTUAL respira mientras hay trabajo en curso
+      (.current solo existe en PROCESO). Honesto: el auto se está
+      trabajando AHORA, aunque la última novedad sea vieja.
+   ====================================================== */
+.od-stage-track .od-stage-dot, .od-stage-track .od-stage-link{
+  transition: background-color 420ms cubic-bezier(.23,1,.32,1), border-color 420ms cubic-bezier(.23,1,.32,1);
+}
+@starting-style{
+  .od-stage-node.done .od-stage-dot, .od-stage-node.current .od-stage-dot{ background:#0d0d0d; border-color:var(--border); }
+  .od-stage-link.done{ background:var(--border); }
+}
+.od-stage-track > *:nth-child(1) .od-stage-dot{ transition-delay:120ms; }
+.od-stage-track > *:nth-child(2){ transition-delay:160ms; }
+.od-stage-track > *:nth-child(3) .od-stage-dot{ transition-delay:200ms; }
+.od-stage-track > *:nth-child(4){ transition-delay:240ms; }
+.od-stage-track > *:nth-child(5) .od-stage-dot{ transition-delay:280ms; }
+.od-stage-track > *:nth-child(6){ transition-delay:320ms; }
+.od-stage-track > *:nth-child(7) .od-stage-dot{ transition-delay:360ms; }
+
+/* el nodo actual LATE (ping de anillo), sincronizado con el badge EN PROGRESO */
+.od-stage-node.current .od-stage-dot{ animation:stage-alive 2.4s ease-in-out infinite; }
+@keyframes stage-alive{ 0%{ box-shadow:0 0 0 0 rgba(196,30,42,.55); } 55%{ box-shadow:0 0 0 11px rgba(196,30,42,0); } 100%{ box-shadow:0 0 0 0 rgba(196,30,42,0); } }
+/* energía FLUYENDO hacia la etapa activa (el conector que entra al nodo actual) */
+.od-stage-track .od-stage-link.done:has(+ .od-stage-node.current){
+  background:linear-gradient(90deg, rgba(196,30,42,.55), #ff7a7a, rgba(196,30,42,.55)); background-size:200% 100%;
+  animation:stage-flow 2s linear infinite;
+}
+@keyframes stage-flow{ from{ background-position:200% 0; } to{ background-position:-200% 0; } }
+@media (prefers-reduced-motion: reduce){
+  .od-stage-node.current .od-stage-dot{ animation:none; }
+  .od-stage-track .od-stage-link.done:has(+ .od-stage-node.current){ animation:none; background:var(--primary); }
+  .od-stage-track .od-stage-dot, .od-stage-track .od-stage-link{ transition:none; }
+}
+
+/* ======================================================
    TIMELINE
    ====================================================== */
 .tl-head{ display:flex; align-items:center; gap:9px; padding:30px 20px 6px; }
 .tl-head h3{ font-family:var(--display); font-weight:600; text-transform:uppercase; font-size:14px; letter-spacing:.14em; color:var(--muted); margin:0; }
 .tl-head .livedot{ width:8px; height:8px; border-radius:50%; background:var(--success); animation:pulse 1.6s ease-in-out infinite; }
+
+/* ======================================================
+   INDICADOR DE CONEXIÓN HONESTO (.ci) — reemplaza el punto
+   verde que latía infinito. Motion = actividad real: solo
+   `live` y `reconnecting` se mueven; `fresh`/`offline` quietos.
+   OKLCH, neutros tintados, sin gritar.
+   ====================================================== */
+.ci{ display:inline-flex; align-items:center; gap:7px; font-family:var(--mono); font-size:11px; letter-spacing:.02em; line-height:1; }
+.ci-dot{ width:7px; height:7px; border-radius:50%; flex-shrink:0; }
+.ci-label{ white-space:nowrap; }
+
+/* live: emerald, único estado con vida (ring que respira). */
+.ci-live{ color:oklch(0.82 0.06 155); }
+.ci-live .ci-dot{ background:oklch(0.72 0.13 155); animation:ci-breath 2.4s ease-out infinite; }
+@keyframes ci-breath{ 0%{ box-shadow:0 0 0 0 oklch(0.72 0.13 155 / .5); } 70%,100%{ box-shadow:0 0 0 5px oklch(0.72 0.13 155 / 0); } }
+
+/* fresh: datos frescos sin stream. Estático (latir mentiría cuando es viejo). */
+.ci-fresh{ color:var(--muted); }
+.ci-fresh .ci-dot{ background:oklch(0.68 0.045 220); }
+
+/* reciente (< 10 min): único caso donde un latido leve es HONESTO — el dato ES
+   reciente. Frío, lento, sutil; nunca grita. Viejo no lleva esta clase → queda calmo. */
+.ci-fresh.ci-recent{ color:oklch(0.78 0.05 220); }
+.ci-fresh.ci-recent .ci-dot{ background:oklch(0.72 0.10 220); animation:ci-recent-breath 3s ease-in-out infinite; }
+@keyframes ci-recent-breath{ 0%,100%{ box-shadow:0 0 0 0 oklch(0.72 0.12 220 / .4); } 55%{ box-shadow:0 0 0 4px oklch(0.72 0.12 220 / 0); } }
+@media (prefers-reduced-motion: reduce){ .ci-fresh.ci-recent .ci-dot{ animation:none; } }
+
+/* reconnecting: ámbar, parpadeo de "trabajando" (distinto del breath). */
+.ci-recon{ color:oklch(0.80 0.08 75); }
+.ci-recon .ci-dot{ background:oklch(0.78 0.12 75); animation:ci-work 1.1s ease-in-out infinite; }
+@keyframes ci-work{ 0%,100%{ opacity:.3; } 50%{ opacity:1; } }
+
+/* offline: anillo hueco, rojo desaturado. Estático: ausencia. */
+.ci-off{ color:oklch(0.68 0.06 25); }
+.ci-off .ci-dot{ background:transparent; border:1.5px solid oklch(0.60 0.09 25); }
+
+/* closed: registro cerrado (OT entregada). Estático y mudo: nunca "en vivo". */
+.ci-closed{ color:var(--muted-dim); gap:6px; }
+
+/* ======================================================
+   "EN PROGRESO" — el cartel con LATIDO constante mientras hay
+   trabajo en curso (solo se muestra en PROCESO). Honesto: el auto
+   se está trabajando AHORA. Latido claro y visible (escala + anillo),
+   no el breath sutil del nodo. Acento rojo de marca.
+   ====================================================== */
+.liveprog{ display:inline-flex; align-items:center; gap:8px; font-family:var(--display); font-weight:600; text-transform:uppercase; font-size:11px; letter-spacing:.09em; color:#ff6068; background:rgba(196,30,42,.13); border:1px solid rgba(196,30,42,.32); padding:5px 11px 5px 9px; border-radius:999px; }
+.liveprog-dot{ width:8px; height:8px; border-radius:50%; background:var(--primary); flex-shrink:0; animation:liveprog-beat 2.4s ease-in-out infinite; }
+@keyframes liveprog-beat{
+  0%{ transform:scale(.82); box-shadow:0 0 0 0 rgba(196,30,42,.55); }
+  50%{ transform:scale(1.18); box-shadow:0 0 0 6px rgba(196,30,42,0); }
+  100%{ transform:scale(.82); box-shadow:0 0 0 0 rgba(196,30,42,0); }
+}
+@media (prefers-reduced-motion: reduce){ .liveprog-dot{ animation:none; } }
+
+@media (prefers-reduced-motion: reduce){
+  .ci-live .ci-dot, .ci-recon .ci-dot{ animation:none; }
+}
+
+/* ======================================================
+   REENCUENTRO — revelado escalonado al abrir el detalle.
+   Usa @starting-style + transition (NO keyframes con fill):
+   el estado de REPOSO es visible (opacity 1), así el reveal
+   es puro enhancement. Si la transición no corre (tab en
+   background, browser viejo, motion reducido), el contenido
+   se ve igual — nunca queda oculto. Mata el cold-paint sin
+   el riesgo de "stuck hidden". Solo opacity+transform (GPU),
+   strong ease-out. La respuesta ("¿dónde está mi auto?")
+   entra primero; el timeline se asienta escalonado después.
+   ====================================================== */
+.p-scroll .od-hero, .p-scroll .od-stage, .p-scroll .ready-banner, .p-scroll .tl-head,
+.p-scroll .tl .tl-row, .p-scroll .od-blocks,
+.pwod-hero, .pwod-stage, .pwready, .pwtl-head, .pwtl .pwtl-row, .pwod-side{
+  transition: opacity 360ms cubic-bezier(.23,1,.32,1), transform 360ms cubic-bezier(.23,1,.32,1);
+}
+
+/* stagger por transition-delay (la respuesta primero, el timeline después) */
+.p-scroll .od-stage, .p-scroll .ready-banner{ transition-delay:70ms; }
+.p-scroll .tl-head{ transition-delay:140ms; }
+.p-scroll .tl .tl-row:nth-child(1){ transition-delay:185ms; }
+.p-scroll .tl .tl-row:nth-child(2){ transition-delay:225ms; }
+.p-scroll .tl .tl-row:nth-child(3){ transition-delay:265ms; }
+.p-scroll .tl .tl-row:nth-child(4){ transition-delay:305ms; }
+.p-scroll .tl .tl-row:nth-child(5){ transition-delay:345ms; }
+.p-scroll .tl .tl-row:nth-child(n+6){ transition-delay:380ms; }
+.p-scroll .od-blocks{ transition-delay:240ms; }
+.pwod-stage, .pwready{ transition-delay:70ms; }
+.pwtl-head{ transition-delay:140ms; }
+.pwtl .pwtl-row:nth-child(1){ transition-delay:200ms; }
+.pwtl .pwtl-row:nth-child(2){ transition-delay:240ms; }
+.pwtl .pwtl-row:nth-child(3){ transition-delay:280ms; }
+.pwtl .pwtl-row:nth-child(4){ transition-delay:320ms; }
+.pwtl .pwtl-row:nth-child(5){ transition-delay:360ms; }
+.pwtl .pwtl-row:nth-child(n+6){ transition-delay:395ms; }
+.pwod-side{ transition-delay:220ms; }
+
+/* estado de entrada (solo en el primer render). Sin soporte → se ignora y entra visible. */
+@starting-style{
+  .p-scroll .od-hero, .p-scroll .od-stage, .p-scroll .ready-banner, .p-scroll .tl-head,
+  .p-scroll .tl .tl-row, .p-scroll .od-blocks,
+  .pwod-hero, .pwod-stage, .pwready, .pwtl-head, .pwtl .pwtl-row, .pwod-side{
+    opacity:0; transform:translateY(12px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce){
+  /* sin movimiento: solo opacity, sin translate */
+  .p-scroll .od-hero, .p-scroll .od-stage, .p-scroll .ready-banner, .p-scroll .tl-head,
+  .p-scroll .tl .tl-row, .p-scroll .od-blocks,
+  .pwod-hero, .pwod-stage, .pwready, .pwtl-head, .pwtl .pwtl-row, .pwod-side{
+    transition: opacity 240ms ease;
+  }
+  @starting-style{
+    .p-scroll .od-hero, .p-scroll .od-stage, .p-scroll .ready-banner, .p-scroll .tl-head,
+    .p-scroll .tl .tl-row, .p-scroll .od-blocks,
+    .pwod-hero, .pwod-stage, .pwready, .pwtl-head, .pwtl .pwtl-row, .pwod-side{
+      transform:none;
+    }
+  }
+}
+
+/* ======================================================
+   FASE 4 — PRESENCIA DEL EVENTO EN VIVO.
+   Solo en filas que LLEGARON por el seam (clase .arrived);
+   nunca en la carga inicial ni en contenido estático. Peso
+   sin ruido: un ping en el nodo del riel + un wash suave que
+   se desvanece. Una vez, no infinito. Solo opacity/transform/
+   box-shadow. El evento real (status-added/photo-added) es lo
+   único que lo dispara — la animación nunca finge vida.
+   ====================================================== */
+@keyframes arrive-ping{ 0%{ box-shadow:0 0 0 0 oklch(0.72 0.14 155 / .55); } 100%{ box-shadow:0 0 0 11px oklch(0.72 0.14 155 / 0); } }
+@keyframes arrive-wash{ from{ opacity:1; } to{ opacity:0; } }
+
+.tl-row.arrived .tl-dot, .pwtl-row.arrived .pwtl-dot{ animation:arrive-ping 1.3s ease-out 1; }
+
+/* wash detrás del hito nuevo: overlay con opacity (GPU), se desvanece a nada */
+.tl-row.arrived .tl-card, .pwtl-row.arrived .pwtl-body{ position:relative; }
+.tl-row.arrived .tl-card::before, .pwtl-row.arrived .pwtl-body::before{
+  content:""; position:absolute; inset:-6px -10px; border-radius:12px; pointer-events:none; z-index:0;
+  background:oklch(0.72 0.14 155 / .09);
+  animation:arrive-wash 1.7s ease-out forwards;
+}
+.tl-row.arrived .tl-card > *, .pwtl-row.arrived .pwtl-body > *{ position:relative; z-index:1; }
+
+/* foto nueva: entra con fade, nunca un pop "de la nada" */
+.tl .tl-photo, .pwtl .pwtl-photo{ transition:transform .14s, opacity 300ms cubic-bezier(.23,1,.32,1); }
+@starting-style{ .tl .tl-photo, .pwtl .pwtl-photo{ opacity:0; } }
+
+@media (prefers-reduced-motion: reduce){
+  .tl-row.arrived .tl-dot, .pwtl-row.arrived .pwtl-dot{ animation:none; }
+  .tl-row.arrived .tl-card::before, .pwtl-row.arrived .pwtl-body::before{ animation-duration:500ms; }
+}
 
 .tl{ padding:8px 20px 0; }
 .tl-row{ display:flex; gap:16px; }
@@ -78,6 +274,12 @@
 .tl-dot i{ width:7px; height:7px; border-radius:50%; background:var(--muted-dim); }
 .tl-row.current .tl-dot{ border-color:var(--primary); background:var(--primary); box-shadow:0 0 0 5px rgba(196,30,42,.16); }
 .tl-row.current .tl-dot i{ background:#fff; }
+/* el paso ACTUAL (orden EN PROCESO) late, sincronizado con la etapa y el badge */
+.tl-row.live .tl-dot{ animation:tl-beat 2.4s ease-in-out infinite; }
+@keyframes tl-beat{ 0%{ box-shadow:0 0 0 0 rgba(196,30,42,.55); } 55%{ box-shadow:0 0 0 8px rgba(196,30,42,0); } 100%{ box-shadow:0 0 0 0 rgba(196,30,42,0); } }
+.tl-row.live .tl-now-badge{ animation:ahora-glow 2.4s ease-in-out infinite; }
+@keyframes ahora-glow{ 0%,100%{ box-shadow:0 0 0 0 rgba(196,30,42,0); } 50%{ box-shadow:0 0 9px 1px rgba(196,30,42,.5); } }
+@media (prefers-reduced-motion: reduce){ .tl-row.live .tl-dot, .tl-row.live .tl-now-badge{ animation:none; } }
 .tl-row.ready .tl-dot{ border-color:var(--success); background:var(--success); box-shadow:0 0 0 5px rgba(34,197,94,.16); }
 .tl-row.ready .tl-dot i{ background:#06270f; }
 .tl-line{ flex:1; width:2px; background:linear-gradient(var(--border), var(--border)); margin:5px 0; min-height:14px; }
@@ -104,6 +306,10 @@
 .od-block-h svg{ color:var(--primary); }
 .od-chips{ display:flex; flex-wrap:wrap; gap:8px; }
 .od-chip{ font-family:var(--display); font-weight:500; text-transform:uppercase; letter-spacing:.05em; font-size:12px; padding:7px 13px; border-radius:999px; background:#0d0d0d; border:1px solid var(--border); color:var(--text); }
+.od-kv{ display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid var(--border-soft); font-size:13.5px; }
+.od-kv:last-child{ border-bottom:none; padding-bottom:0; }
+.od-kv-k{ color:var(--muted); }
+.od-kv-v{ font-weight:500; }
 .od-treat{ display:flex; flex-direction:column; gap:11px; }
 .od-treat-row{ display:flex; align-items:center; gap:11px; font-size:14px; color:var(--text); }
 .od-treat-row .tick{ width:22px; height:22px; border-radius:6px; background:rgba(196,30,42,.12); border:1px solid rgba(196,30,42,.3); color:#ff5d68; display:flex; align-items:center; justify-content:center; flex-shrink:0; }

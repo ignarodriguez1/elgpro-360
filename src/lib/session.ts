@@ -28,6 +28,17 @@ export async function requireAdmin() {
   return requireRole("ADMIN", "STAFF");
 }
 
+/**
+ * Solo el dueño (ADMIN). Un operario (STAFF) autenticado que intente entrar a
+ * una pantalla restringida (Auditoría, Servicios, Tutoriales) se redirige al
+ * panel — no a login (evita loop y mensaje confuso).
+ */
+export async function requireOwner() {
+  const user = await requireAdmin();
+  if (user.role !== "ADMIN") redirect("/admin");
+  return user;
+}
+
 export async function requireCustomer() {
   return requireRole("CUSTOMER", "ADMIN");
 }

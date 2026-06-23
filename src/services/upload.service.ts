@@ -1,25 +1,33 @@
 import { prisma } from "@/lib/prisma";
 import { uploadImage, generateThumbnailUrl } from "@/lib/cloudinary";
+import { publishOrderSnapshot } from "@/lib/realtime";
 
 export async function createWorkOrderPhoto(data: {
   workOrderId: string;
   statusUpdateId?: string;
   imageUrl: string;
+  publicId?: string;
   caption?: string;
   visibleToCustomer?: boolean;
 }) {
   const thumbnailUrl = generateThumbnailUrl(data.imageUrl);
 
-  return prisma.workOrderPhoto.create({
+  const photo = await prisma.workOrderPhoto.create({
     data: {
       workOrderId: data.workOrderId,
       statusUpdateId: data.statusUpdateId,
       imageUrl: data.imageUrl,
       thumbnailUrl,
+      publicId: data.publicId,
       caption: data.caption,
       visibleToCustomer: data.visibleToCustomer ?? true,
     },
   });
+
+  // Solo si la foto cuelga de un hito existente (snapshot completo). Cuando se
+  // sube antes de crear el estado, publica createStatusUpdate al asociarla.
+  if (data.statusUpdateId) await publishOrderSnapshot(data.workOrderId);
+  return photo;
 }
 
 export async function uploadAndSavePhoto(data: {
@@ -35,6 +43,7 @@ export async function uploadAndSavePhoto(data: {
     workOrderId: data.workOrderId,
     statusUpdateId: data.statusUpdateId,
     imageUrl: result.secure_url,
+    publicId: result.public_id,
     caption: data.caption,
     visibleToCustomer: data.visibleToCustomer,
   });

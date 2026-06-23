@@ -4,14 +4,19 @@ import { notFound } from "next/navigation";
 import { requireCustomer } from "@/lib/session";
 import { getWorkOrderById } from "@/services/work-order.service";
 import { getVehicleById } from "@/services/vehicle.service";
-import { stageIndex, STAGE_ORDER, STAGE_LABELS, STAGE_ICONS } from "@/lib/stages";
+import { stageIndex, STAGE_ORDER, STAGE_LABELS } from "@/lib/stages";
 import { Photo } from "@/components/shared/Photo";
 import { Icon } from "@/components/shared/Icon";
 import { StageBar } from "@/components/shared/StageBar";
-import { Timeline } from "@/components/shared/Timeline";
+import { StageDurations } from "@/components/shared/StageDurations";
 import { ReadyBanner } from "@/components/shared/ReadyBanner";
-import { DesktopTimeline } from "./DesktopTimeline";
-import type { WorkOrderStatus } from "@/generated/prisma/client";
+import { OrderLiveProvider } from "@/components/customer/OrderLiveProvider";
+import { CustomerTimeline } from "@/components/customer/CustomerTimeline";
+import { ConnectionIndicator } from "@/components/customer/ConnectionIndicator";
+import { PullToRefresh } from "@/components/customer/PullToRefresh";
+import { InProgressBadge } from "@/components/customer/InProgressBadge";
+import { projectUpdateForCustomer } from "@/lib/order-live";
+import { fmtDayMonth } from "@/lib/format";
 
 const CARE_TIPS = [
   { cat: "Exterior", title: "Cómo lavar tu auto correctamente", tint: "rgba(196,30,42,.2)" },
@@ -19,9 +24,7 @@ const CARE_TIPS = [
   { cat: "Pintura", title: "Aplicación de cera protectora", tint: "rgba(196,120,30,.2)" },
 ];
 
-function fmtD(d: Date | string) {
-  return new Date(d).toLocaleDateString("es-AR", { day: "numeric", month: "short" });
-}
+const fmtD = fmtDayMonth;
 
 export default async function VehiculoClientePage({
   params,
@@ -49,17 +52,24 @@ export default async function VehiculoClientePage({
   const stageName = order?.stage ? STAGE_LABELS[order.stage] : null;
   const eta = order?.estimatedDeliveryDate ? fmtD(order.estimatedDeliveryDate) : null;
 
-  return (
+  // Semilla del seam (proyección segura: sin createdBy ni notas internas).
+  const liveOrder = order
+    ? { id: order.id, status: order.status, stage: order.stage, title: order.title }
+    : null;
+  const liveUpdates = order ? order.statusUpdates.map(projectUpdateForCustomer) : [];
+
+  const body = (
     <>
       {/* MOBILE */}
       <div className="only-mobile p-scroll">
+        <PullToRefresh>
         <div className="od-hero">
           <Photo label={`${vehicle.brand} ${vehicle.model}`} className="od-hero-photo" tint="rgba(196,30,42,.2)" />
           <div className="od-hero-grad" />
           <div className="od-hero-info">
             <span className="od-hero-plate">{vehicle.licensePlate}</span>
             <div className="od-hero-name">{vehicle.brand} {vehicle.model}</div>
-            {order && <div className="od-hero-sub">{order.title} · {order.orderCode}</div>}
+            <div className="od-hero-sub" data-section="hero-subtitle">{[order?.title, vehicle.color, vehicle.year].filter(Boolean).join(" · ")}</div>
           </div>
         </div>
         {order ? (
@@ -67,14 +77,17 @@ export default async function VehiculoClientePage({
             {isReady ? <div data-section="ready-banner"><ReadyBanner total={budgetTotal} /></div> : (
               <div className="od-stage">
                 <div className="od-stage-top">
-                  <div><div className="od-stage-now">{stageName ?? "En proceso"}</div><div style={{ fontSize: 12, color: "var(--muted)", marginTop: 3 }}>En curso ahora</div></div>
+                  <div><div className="od-stage-now">{stageName ?? "En proceso"}</div><div style={{ marginTop: 7 }}><InProgressBadge /></div></div>
                   {eta && <div className="od-stage-eta"><div className="od-stage-eta-n">{eta}</div><div className="od-stage-eta-l">Entrega est.</div></div>}
                 </div>
                 <StageBar stageIndex={idx} />
               </div>
             )}
-            <div className="tl-head"><span className="livedot" style={{ background: isReady ? "var(--success)" : undefined }} /><h3>Seguimiento del trabajo</h3></div>
-            <Timeline updates={order.statusUpdates} mode="customer" orderStatus={order.status as WorkOrderStatus} />
+            <div className="tl-head"><ConnectionIndicator /><h3>Seguimiento del trabajo</h3></div>
+            <CustomerTimeline variant="feed" />
+            <div className="od-blocks">
+              <StageDurations updates={order.statusUpdates} orderStatus={order.status} variant="mobile" />
+            </div>
             <div className="od-blocks">
               {order.servicesRequested.length > 0 && (
                 <div className="od-block">
@@ -99,6 +112,37 @@ export default async function VehiculoClientePage({
             </div>
           </div>
         )}
+        {/* Paridad con la sidebar desktop: datos del vehículo + cuidados (checkpoint 0, opción A) */}
+        <div className="od-blocks" style={{ paddingTop: order ? 0 : 18 }}>
+          <div className="od-block" data-section="vehicle-data">
+            <div className="od-block-h"><Icon name="car" size={15} /> Vehículo</div>
+            <div className="od-kv"><span className="od-kv-k">Modelo</span><span className="od-kv-v">{vehicle.brand} {vehicle.model}</span></div>
+            <div className="od-kv"><span className="od-kv-k">Patente</span><span className="od-kv-v mono">{vehicle.licensePlate}</span></div>
+            {vehicle.color && <div className="od-kv"><span className="od-kv-k">Color</span><span className="od-kv-v">{vehicle.color}</span></div>}
+            {vehicle.year && <div className="od-kv"><span className="od-kv-k">Año</span><span className="od-kv-v mono">{vehicle.year}</span></div>}
+          </div>
+        </div>
+        <div className="od-tutos" data-section="care-tips">
+          <div className="od-tutos-h">
+            <div className="od-block-h" style={{ marginBottom: 0 }}><Icon name="play" size={15} /> Cuidados recomendados</div>
+          </div>
+          <div className="od-tutos-scroll">
+            {CARE_TIPS.map((t) => (
+              <div className="od-tuto" key={t.title}>
+                <div className="od-tuto-thumb">
+                  <Photo className="od-tuto-img" tint={t.tint} />
+                  <span className="od-tuto-play"><Icon name="play" size={16} /></span>
+                </div>
+                <div className="od-tuto-b">
+                  <div className="od-tuto-cat">{t.cat}</div>
+                  <div className="od-tuto-t">{t.title}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div style={{ height: 30 }} />
+        </PullToRefresh>
       </div>
 
       {/* DESKTOP */}
@@ -113,46 +157,25 @@ export default async function VehiculoClientePage({
                 <div className="pwod-hero-info">
                   <span className="pwod-hero-plate">{vehicle.licensePlate}</span>
                   <div className="pwod-hero-name">{vehicle.brand} {vehicle.model}</div>
-                  <div className="pwod-hero-sub">{order ? `${order.title} · ` : ""}{[vehicle.color, vehicle.year].filter(Boolean).join(" · ")}</div>
+                  <div className="pwod-hero-sub" data-section="hero-subtitle">{[order?.title, vehicle.color, vehicle.year].filter(Boolean).join(" · ")}</div>
                 </div>
               </div>
 
               {order ? (
                 <>
                   {isReady ? (
-                    <div className="pwready" data-section="ready-banner">
-                      <div className="pwready-glow" />
-                      <div className="pwready-in">
-                        <div className="pwready-row"><span className="pwready-ic"><Icon name="check" size={30} stroke={2.6} /></span><div><div className="pwready-t">¡Tu vehículo está listo!</div><div className="pwready-s">Podés pasar a retirarlo cuando quieras.</div></div></div>
-                        <div className="pwready-info">
-                          <div className="pwready-cell"><div className="pwready-l">Horario</div><div className="pwready-v">Lun–Vie · 8:30–18</div></div>
-                          <div className="pwready-cell"><div className="pwready-l">Dirección</div><div className="pwready-v mono">Bv. Oroño 1234</div></div>
-                          <div className="pwready-cell"><div className="pwready-l">Total</div><div className="pwready-v mono">{budgetTotal ?? "—"}</div></div>
-                          <div className="pwready-cell"><div className="pwready-l">Pago</div><div className="pwready-v mono">Efvo · transf · tarjeta</div></div>
-                        </div>
-                      </div>
-                    </div>
+                    <div data-section="ready-banner"><ReadyBanner variant="desktop" total={budgetTotal} /></div>
                   ) : (
                     <div className="pwod-stage">
                       <div className="pwod-stage-top">
-                        <div><div className="pwod-stage-now">{stageName ?? "En proceso"}</div><div className="pwod-stage-nowsub">En curso ahora</div></div>
+                        <div><div className="pwod-stage-now">{stageName ?? "En proceso"}</div><div style={{ marginTop: 8 }}><InProgressBadge /></div></div>
                         {eta && <div className="pwod-stage-eta"><div className="pwod-stage-eta-n">{eta}</div><div className="pwod-stage-eta-l">Entrega estimada</div></div>}
                       </div>
-                      <div className="pwod-track">
-                        {STAGE_ORDER.map((s, i) => (
-                          <Fragment key={s}>
-                            {i > 0 && <div className={"pwod-slink" + (i <= idx ? " done" : "")} />}
-                            <div className={"pwod-snode" + (i < idx ? " done" : "") + (i === idx && !isReady ? " current" : "")}>
-                              <div className="pwod-sdot"><Icon name={i < idx ? "check" : STAGE_ICONS[i]} size={17} /></div>
-                              <span className="pwod-slbl">{STAGE_LABELS[s]}</span>
-                            </div>
-                          </Fragment>
-                        ))}
-                      </div>
+                      <StageBar stageIndex={idx} variant="desktop" />
                     </div>
                   )}
 
-                  <DesktopTimeline updates={order.statusUpdates} isReady={isReady} orderStatus={order.status as WorkOrderStatus} />
+                  <CustomerTimeline variant="panel" />
                 </>
               ) : (
                 <div className="pwsb" style={{ textAlign: "center", padding: "40px 20px" }}>
@@ -163,13 +186,14 @@ export default async function VehiculoClientePage({
             </div>
 
             <div className="pwod-side">
-              <div className="pwsb">
+              <div className="pwsb" data-section="vehicle-data">
                 <div className="pwsb-h"><Icon name="car" size={15} /> Vehículo</div>
                 <div className="pwsb-row"><span className="pwsb-k">Modelo</span><span className="pwsb-v">{vehicle.brand} {vehicle.model}</span></div>
                 <div className="pwsb-row"><span className="pwsb-k">Patente</span><span className="pwsb-v mono">{vehicle.licensePlate}</span></div>
                 {vehicle.color && <div className="pwsb-row"><span className="pwsb-k">Color</span><span className="pwsb-v">{vehicle.color}</span></div>}
                 {vehicle.year && <div className="pwsb-row"><span className="pwsb-k">Año</span><span className="pwsb-v mono">{vehicle.year}</span></div>}
               </div>
+              {order && <StageDurations updates={order.statusUpdates} orderStatus={order.status} variant="desktop" />}
               {order && order.servicesRequested.length > 0 && (
                 <div className="pwsb">
                   <div className="pwsb-h"><Icon name="spray" size={15} /> Servicios</div>
@@ -182,7 +206,7 @@ export default async function VehiculoClientePage({
                   <div className="pwsb-treat"><div className="pwsb-treat-row"><span className="tick"><Icon name="check" size={13} stroke={2.6} /></span>{order.description}</div></div>
                 </div>
               )}
-              <div className="pwsb">
+              <div className="pwsb" data-section="care-tips">
                 <div className="pwsb-h"><Icon name="play" size={15} /> Cuidados recomendados</div>
                 {CARE_TIPS.map((t) => (
                   <div className="pwsb-tuto" key={t.title}>
@@ -196,5 +220,13 @@ export default async function VehiculoClientePage({
         </div>
       </div>
     </>
+  );
+
+  return liveOrder ? (
+    <OrderLiveProvider initialOrder={liveOrder} initialUpdates={liveUpdates}>
+      {body}
+    </OrderLiveProvider>
+  ) : (
+    body
   );
 }

@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import Link from "next/link";
 import { Icon } from "@/components/shared/Icon";
 import { STAGE_ORDER, STAGE_LABELS } from "@/lib/stages";
+import { usePointerReorder } from "@/components/admin/usePointerReorder";
 import type { OrderStage } from "@/generated/prisma/client";
 import {
   reorderFlowStepsAction,
@@ -32,20 +33,16 @@ export function FlowEditor({
 }) {
   const [name, setName] = useState(serviceName);
   const [steps, setSteps] = useState(initial);
-  const [drag, setDrag] = useState<number | null>(null);
   const [newTitle, setNewTitle] = useState("");
   const [newStage, setNewStage] = useState<OrderStage>("PREPARACION");
   const [, start] = useTransition();
 
-  function onDrop(target: number) {
-    if (drag === null || drag === target) return;
-    const next = [...steps];
-    const [m] = next.splice(drag, 1);
-    next.splice(target, 0, m);
-    setSteps(next);
-    setDrag(null);
-    start(() => reorderFlowStepsAction(serviceId, next.map((s) => s.id)));
-  }
+  // Reorden por Pointer Events (mouse + touch).
+  const { dragId, registerRow, handleProps } = usePointerReorder(
+    steps,
+    setSteps,
+    (ids) => start(() => reorderFlowStepsAction(serviceId, ids))
+  );
 
   function patch(stepId: string, data: Partial<Step>) {
     setSteps((prev) => prev.map((s) => s.id === stepId ? { ...s, ...data } : s));
@@ -71,7 +68,7 @@ export function FlowEditor({
 
   return (
     <div className="apage">
-      <div className="ahead">
+      <div className="ahead" data-section="header">
         <div className="ahead-l">
           <Link href="/admin/servicios" className="alink" style={{ marginBottom: 6, display: "inline-flex", gap: 6, alignItems: "center" }}>
             <Icon name="chevR" size={14} style={{ transform: "rotate(180deg)" }} /> Servicios
@@ -90,17 +87,14 @@ export function FlowEditor({
         <p>Arrastrá los estados para reordenarlos. Cada paso se precarga en las órdenes que usen este servicio.</p>
       </div>
 
-      <div className="flow-list">
-        {steps.map((s, i) => (
+      <div className="flow-list" data-section="steps-list">
+        {steps.map((s) => (
           <div
             key={s.id}
-            className="flow-step"
-            draggable
-            onDragStart={() => setDrag(i)}
-            onDragOver={(e) => e.preventDefault()}
-            onDrop={() => onDrop(i)}
+            ref={registerRow(s.id)}
+            className={"flow-step" + (dragId === s.id ? " dragging" : "")}
           >
-            <span className="flow-grip"><Icon name="grip" size={18} /></span>
+            <span className="flow-grip" {...handleProps(s.id)}><Icon name="grip" size={18} /></span>
             <div className="flow-body">
               <input
                 className="flow-title-in"
@@ -137,7 +131,7 @@ export function FlowEditor({
         ))}
       </div>
 
-      <div className="flow-step" style={{ marginTop: 12 }}>
+      <div className="flow-step" style={{ marginTop: 12 }} data-section="add-step-form">
         <input
           className="flow-svc-name"
           value={newTitle}

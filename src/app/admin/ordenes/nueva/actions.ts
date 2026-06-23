@@ -7,6 +7,7 @@ import {
   buildInitialTimeline,
   type InitialTimelineStep,
 } from "@/services/work-order.service";
+import { createWorkOrderPhoto } from "@/services/upload.service";
 import { workOrderSchema } from "@/lib/validations";
 
 export { type InitialTimelineStep };
@@ -36,6 +37,7 @@ export async function createOrderAction(data: {
   internalNotes?: string;
   estimatedDeliveryDate?: string; // ISO string desde el cliente
   budgetAmount?: number;
+  photos?: { url: string; publicId?: string }[]; // fotos de ingreso ya subidas a Cloudinary (UploadZone)
 }): Promise<{ error: string } | never> {
   const session = await auth();
   if (!session?.user || !["ADMIN", "STAFF"].includes(session.user.role)) {
@@ -47,7 +49,7 @@ export async function createOrderAction(data: {
     return { error: parsed.error.issues[0]?.message ?? "Datos inválidos" };
   }
 
-  let order: { id: string };
+  let order: Awaited<ReturnType<typeof createWorkOrder>>;
   try {
     order = await createWorkOrder({
       vehicleId: parsed.data.vehicleId,
@@ -62,6 +64,26 @@ export async function createOrderAction(data: {
   } catch (err) {
     const message = err instanceof Error ? err.message : "Error al crear la orden";
     return { error: message };
+  }
+
+  // Fotos de ingreso: se cuelgan del PRIMER paso del timeline (etapa INGRESO, que
+  // createWorkOrder ya crea como isCurrent), reusando el mismo path que addStatusAction.
+  // Best-effort: la orden ya está creada, así que un fallo acá no la revierte.
+  if (data.photos?.length) {
+    const ingresoStepId = order.statusUpdates[0]?.id;
+    for (const p of data.photos) {
+      try {
+        await createWorkOrderPhoto({
+          workOrderId: order.id,
+          statusUpdateId: ingresoStepId,
+          imageUrl: p.url,
+          publicId: p.publicId,
+          visibleToCustomer: true,
+        });
+      } catch {
+        // best-effort: no romper la creación de la orden por una foto
+      }
+    }
   }
 
   redirect(`/admin/ordenes/${order.id}`);

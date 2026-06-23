@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { Logo } from "@/components/shared/Logo";
 import { Icon } from "@/components/shared/Icon";
-import { SERVICES } from "@/lib/public-data";
+import { CONTACT } from "@/lib/contact";
+import { listServices } from "@/services/service.service";
 
 const NAV_LINKS = [
   { href: "/", label: "Inicio" },
@@ -12,7 +13,8 @@ const NAV_LINKS = [
 ];
 
 /** Footer desktop (.dfooter), portado del prototipo. */
-export function Footer() {
+export async function Footer() {
+  const services = await listServices(true);
   return (
     <footer className="dfooter">
       <div className="wrap">
@@ -32,24 +34,24 @@ export function Footer() {
           </div>
           <div className="dfooter-col">
             <span className="dfooter-h">Servicios</span>
-            {SERVICES.slice(0, 5).map((s) => (
-              <Link key={s.name} href="/servicios">{s.name}</Link>
+            {services.slice(0, 5).map((s) => (
+              <Link key={s.id} href="/servicios">{s.name}</Link>
             ))}
           </div>
           <div className="dfooter-col">
             <span className="dfooter-h">Contacto</span>
-            <a href="#"><Icon name="pin" size={15} /> Bv. Oroño 1234, Rosario</a>
-            <a href="#"><Icon name="phone" size={15} /> +54 341 555-0142</a>
-            <a href="#"><Icon name="mail" size={15} /> hola@elgpro.com.ar</a>
-            <a href="#"><Icon name="clock" size={15} /> Lun a Vie · 8:30–18:00</a>
+            <span><Icon name="pin" size={15} /> Rosario, Santa Fe</span>
+            <a href={`tel:+${CONTACT.whatsappNumber}`}><Icon name="phone" size={15} /> {CONTACT.whatsappDisplay}</a>
+            <a href={`mailto:${CONTACT.email}`}><Icon name="mail" size={15} /> {CONTACT.email}</a>
+            <span><Icon name="clock" size={15} /> Lun a Vie · 8:30–18:00</span>
           </div>
         </div>
         <div className="dfooter-bot">
           <span>© 2026 ELG Pro · Paint &amp; Detail</span>
           <div className="dfooter-social">
-            <a href="#" aria-label="Instagram"><Icon name="instagram" size={19} /></a>
-            <a href="#" aria-label="WhatsApp"><Icon name="whatsapp" size={19} /></a>
-            <a href="#" aria-label="Mail"><Icon name="mail" size={19} /></a>
+            <a href={CONTACT.instagramUrl} target="_blank" rel="noopener noreferrer" aria-label="Instagram"><Icon name="instagram" size={19} /></a>
+            <a href={CONTACT.whatsappUrl} target="_blank" rel="noopener noreferrer" aria-label="WhatsApp"><Icon name="whatsapp" size={19} /></a>
+            <a href={`mailto:${CONTACT.email}`} aria-label="Mail"><Icon name="mail" size={19} /></a>
           </div>
         </div>
       </div>

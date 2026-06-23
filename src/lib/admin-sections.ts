@@ -15,18 +15,21 @@
    Ver diseño: diagnostico/admin/01-fuente-de-verdad.md
    ============================================================ */
 
-import type { SectionDef, ScreenLayout } from "./section-contract";
+import type { SectionDef, ScreenLayout, AdminRole } from "./section-contract";
+import { roleCanSee } from "./section-contract";
 
 /* Tipos genéricos extraídos a section-contract.ts (compartidos con el
    portal cliente). Re-export para no romper imports existentes. */
-export type { SectionVisibility, SectionDef, ScreenLayout } from "./section-contract";
+export type { SectionVisibility, SectionDef, ScreenLayout, AdminRole } from "./section-contract";
+export { roleCanSee } from "./section-contract";
 
 export interface ScreenDef {
   route: string;
   title: string;
   layout: ScreenLayout;
-  /** presencia en la navegación (sidebar desktop + nav mobile) */
-  nav?: { label: string; icon: string; section: "Taller" | "Contenido web" };
+  /** presencia en la navegación (sidebar desktop + nav mobile).
+   *  `roles` opcional: si se especifica, la entrada solo aparece para esos roles. */
+  nav?: { label: string; icon: string; section: "Taller" | "Contenido web"; roles?: AdminRole[] };
   sections: SectionDef[];
 }
 
@@ -45,18 +48,8 @@ export const ADMIN_SCREENS: Record<string, ScreenDef> = {
         visibility: "desktop",
         reason: "control propio del layout con sidebar",
       },
-      {
-        id: "global-search",
-        label: "Buscador global",
-        visibility: "desktop",
-        reason: "decorativo, feature pendiente — decisión checkpoint 0 (no portar)",
-      },
-      {
-        id: "notifications-bell",
-        label: "Campana de notificaciones",
-        visibility: "desktop",
-        reason: "decorativa, feature pendiente — decisión checkpoint 0 (no portar)",
-      },
+      // global-search y notifications-bell removidos: eran controles muertos
+      // (input sin handler, campana sin onClick) — eliminados del AdminShell.
     ],
   },
 
@@ -135,7 +128,12 @@ export const ADMIN_SCREENS: Record<string, ScreenDef> = {
       { id: "new-state-form", label: "Form nuevo estado", visibility: "both" },
       { id: "client-info", label: "Cliente (nombre/email)", visibility: "both" },
       { id: "vehicle-info", label: "Vehículo (año/color/etapa)", visibility: "both" },
-      { id: "budget-payment", label: "Presupuesto y estado de pago", visibility: "both" },
+      {
+        id: "budget-payment",
+        label: "Presupuesto y estado de pago",
+        visibility: "both",
+        roles: ["ADMIN"], // datos comerciales: el operario (STAFF) no los ve
+      },
       { id: "services", label: "Servicios solicitados", visibility: "both" },
       { id: "order-internal-notes", label: "Nota interna de la orden", visibility: "both" },
     ],
@@ -194,7 +192,7 @@ export const ADMIN_SCREENS: Record<string, ScreenDef> = {
     route: "/admin/auditoria",
     title: "Auditoría",
     layout: "dual",
-    nav: { label: "Auditoría", icon: "shield", section: "Taller" },
+    nav: { label: "Auditoría", icon: "shield", section: "Taller", roles: ["ADMIN"] },
     sections: [
       { id: "header", label: "Cabecera + contador de eventos", visibility: "both" },
       { id: "logs-list", label: "Eventos (tabla ↔ cards)", visibility: "both" },
@@ -205,10 +203,23 @@ export const ADMIN_SCREENS: Record<string, ScreenDef> = {
     route: "/admin/tutoriales",
     title: "Tutoriales",
     layout: "single", // decisión checkpoint 0, condicionada a verificación runtime (4B)
-    nav: { label: "Tutoriales", icon: "play", section: "Contenido web" },
+    nav: { label: "Tutoriales", icon: "play", section: "Contenido web", roles: ["ADMIN"] },
     sections: [
-      { id: "header", label: "Cabecera + contador", visibility: "both" },
-      { id: "crud-list", label: "Lista con toggles", visibility: "both" },
+      { id: "header", label: "Cabecera + contador + nuevo", visibility: "both" },
+      { id: "tutorial-form", label: "Form alta/edición", visibility: "both" },
+      { id: "crud-list", label: "Lista con toggles + editar/borrar", visibility: "both" },
+    ],
+  },
+
+  trabajos: {
+    route: "/admin/trabajos",
+    title: "Trabajos",
+    layout: "single",
+    nav: { label: "Trabajos", icon: "sparkle", section: "Contenido web", roles: ["ADMIN"] },
+    sections: [
+      { id: "header", label: "Cabecera + contador + nuevo", visibility: "both" },
+      { id: "work-form", label: "Form alta/edición (con upload de fotos)", visibility: "both" },
+      { id: "crud-list", label: "Lista con toggles + editar/borrar", visibility: "both" },
     ],
   },
 
@@ -216,7 +227,7 @@ export const ADMIN_SCREENS: Record<string, ScreenDef> = {
     route: "/admin/servicios",
     title: "Servicios",
     layout: "single",
-    nav: { label: "Servicios", icon: "layers", section: "Contenido web" },
+    nav: { label: "Servicios", icon: "layers", section: "Contenido web", roles: ["ADMIN"] },
     sections: [
       { id: "header", label: "Cabecera + nuevo servicio", visibility: "both" },
       { id: "services-list", label: "Lista con toggles + editar", visibility: "both" },
@@ -247,9 +258,22 @@ export const ADMIN_SCREENS: Record<string, ScreenDef> = {
   },
 };
 
-/** Pantallas que aparecen en la navegación, en orden de declaración. */
-export function navScreens(): ScreenDef[] {
-  return Object.values(ADMIN_SCREENS).filter(
-    (s): s is ScreenDef & { nav: NonNullable<ScreenDef["nav"]> } => Boolean(s.nav)
-  );
+type NavScreen = ScreenDef & { nav: NonNullable<ScreenDef["nav"]> };
+
+/** Pantallas con entrada de navegación, en orden de declaración. */
+export function navScreens(): NavScreen[] {
+  return Object.values(ADMIN_SCREENS).filter((s): s is NavScreen => Boolean(s.nav));
+}
+
+/** Navegación visible para un rol — oculta las entradas gateadas (p. ej. STAFF
+ *  no ve Auditoría / Contenido web). */
+export function navScreensForRole(role: AdminRole): NavScreen[] {
+  return navScreens().filter((s) => roleCanSee(s.nav.roles, role));
+}
+
+/** ¿La ruta admin está permitida para el rol? Usado por los guards de página
+ *  (requireOwner). Una pantalla con `nav.roles` define quién puede entrar. */
+export function screenAllowsRole(route: string, role: AdminRole): boolean {
+  const screen = Object.values(ADMIN_SCREENS).find((s) => s.route === route);
+  return roleCanSee(screen?.nav?.roles, role);
 }

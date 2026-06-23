@@ -119,6 +119,38 @@
 .pwod-slink{ flex:1; height:2px; background:var(--border); margin-top:18px; }
 .pwod-slink.done{ background:var(--primary); }
 
+/* FASE B — la etapa activa VIVE (desktop). Reconstrucción al abrir (llenado
+   izq→der) + etapa actual respirando mientras hay trabajo en curso (PROCESO). */
+.pwod-track .pwod-sdot, .pwod-track .pwod-slink{
+  transition: background-color 440ms cubic-bezier(.23,1,.32,1), border-color 440ms cubic-bezier(.23,1,.32,1);
+}
+@starting-style{
+  .pwod-snode.done .pwod-sdot, .pwod-snode.current .pwod-sdot{ background:#0d0d0d; border-color:var(--border); }
+  .pwod-slink.done{ background:var(--border); }
+}
+.pwod-track > *:nth-child(1) .pwod-sdot{ transition-delay:140ms; }
+.pwod-track > *:nth-child(2){ transition-delay:180ms; }
+.pwod-track > *:nth-child(3) .pwod-sdot{ transition-delay:220ms; }
+.pwod-track > *:nth-child(4){ transition-delay:260ms; }
+.pwod-track > *:nth-child(5) .pwod-sdot{ transition-delay:300ms; }
+.pwod-track > *:nth-child(6){ transition-delay:340ms; }
+.pwod-track > *:nth-child(7) .pwod-sdot{ transition-delay:380ms; }
+
+/* el nodo actual LATE (ping), sincronizado con el badge EN PROGRESO */
+.pwod-snode.current .pwod-sdot{ animation:stage-alive-d 2.4s ease-in-out infinite; }
+@keyframes stage-alive-d{ 0%{ box-shadow:0 0 0 0 rgba(196,30,42,.5); } 55%{ box-shadow:0 0 0 13px rgba(196,30,42,0); } 100%{ box-shadow:0 0 0 0 rgba(196,30,42,0); } }
+/* energía FLUYENDO hacia la etapa activa (conector que entra al nodo actual) */
+.pwod-track .pwod-slink.done:has(+ .pwod-snode.current){
+  background:linear-gradient(90deg, rgba(196,30,42,.55), #ff7a7a, rgba(196,30,42,.55)); background-size:200% 100%;
+  animation:stage-flow-d 2s linear infinite;
+}
+@keyframes stage-flow-d{ from{ background-position:200% 0; } to{ background-position:-200% 0; } }
+@media (prefers-reduced-motion: reduce){
+  .pwod-snode.current .pwod-sdot{ animation:none; }
+  .pwod-track .pwod-slink.done:has(+ .pwod-snode.current){ animation:none; background:var(--primary); }
+  .pwod-track .pwod-sdot, .pwod-track .pwod-slink{ transition:none; }
+}
+
 /* timeline (web) */
 .pwtl-card{ background:var(--surface); border:1px solid var(--border-soft); border-radius:16px; padding:8px 28px 14px; }
 .pwtl-head{ display:flex; align-items:center; gap:10px; padding:20px 0 8px; }
@@ -131,6 +163,12 @@
 .pwtl-dot i{ width:7px; height:7px; border-radius:50%; background:var(--muted-dim); }
 .pwtl-row.current .pwtl-dot{ border-color:var(--primary); background:var(--primary); box-shadow:0 0 0 5px rgba(196,30,42,.16); }
 .pwtl-row.current .pwtl-dot i{ background:#fff; }
+/* el paso ACTUAL (orden EN PROCESO) late, sincronizado con la etapa y el badge */
+.pwtl-row.live .pwtl-dot{ animation:tl-beat-d 2.4s ease-in-out infinite; }
+@keyframes tl-beat-d{ 0%{ box-shadow:0 0 0 0 rgba(196,30,42,.55); } 55%{ box-shadow:0 0 0 9px rgba(196,30,42,0); } 100%{ box-shadow:0 0 0 0 rgba(196,30,42,0); } }
+.pwtl-row.live .pwtl-now{ animation:ahora-glow-d 2.4s ease-in-out infinite; }
+@keyframes ahora-glow-d{ 0%,100%{ box-shadow:0 0 0 0 rgba(196,30,42,0); } 50%{ box-shadow:0 0 10px 1px rgba(196,30,42,.5); } }
+@media (prefers-reduced-motion: reduce){ .pwtl-row.live .pwtl-dot, .pwtl-row.live .pwtl-now{ animation:none; } }
 .pwtl-row.ready .pwtl-dot{ border-color:var(--success); background:var(--success); box-shadow:0 0 0 5px rgba(34,197,94,.16); }
 .pwtl-line{ flex:1; width:2px; background:var(--border); margin:5px 0; min-height:16px; }
 .pwtl-row:last-child .pwtl-line{ display:none; }

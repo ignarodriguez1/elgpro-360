@@ -15,10 +15,11 @@ import { logAudit, type AuditActor } from "@/services/audit.service";
 import { serviceSchema, flowStepSchema, reorderSchema } from "@/lib/validations";
 import type { OrderStage } from "@/generated/prisma/client";
 
-async function assertAdmin(): Promise<AuditActor> {
+// Contenido web (servicios) es solo del dueño (ADMIN), no del operario (STAFF).
+async function assertOwner(): Promise<AuditActor> {
   const session = await auth();
   const user = session?.user;
-  if (!user || (user.role !== "ADMIN" && user.role !== "STAFF")) {
+  if (!user || user.role !== "ADMIN") {
     throw new Error("No autorizado");
   }
   return { id: user.id, email: user.email };
@@ -29,7 +30,7 @@ function invalid(message: string | undefined): never {
 }
 
 export async function reorderServicesAction(orderedIds: string[]) {
-  const actor = await assertAdmin();
+  const actor = await assertOwner();
   const parsed = reorderSchema.safeParse({ orderedIds });
   if (!parsed.success) invalid(parsed.error.issues[0]?.message);
   await reorderServices(parsed.data.orderedIds);
@@ -44,7 +45,7 @@ export async function reorderServicesAction(orderedIds: string[]) {
 }
 
 export async function createServiceAction(name: string) {
-  const actor = await assertAdmin();
+  const actor = await assertOwner();
   const parsed = serviceSchema.pick({ name: true }).safeParse({ name });
   if (!parsed.success) invalid(parsed.error.issues[0]?.message);
   const svc = await createService({ name: parsed.data.name });
@@ -60,7 +61,7 @@ export async function createServiceAction(name: string) {
 }
 
 export async function renameServiceAction(id: string, name: string) {
-  const actor = await assertAdmin();
+  const actor = await assertOwner();
   const parsed = serviceSchema.pick({ name: true }).safeParse({ name });
   if (!parsed.success) invalid(parsed.error.issues[0]?.message);
   await updateService(id, { name: parsed.data.name });
@@ -75,7 +76,7 @@ export async function renameServiceAction(id: string, name: string) {
 }
 
 export async function toggleServiceVisibleAction(id: string, visible: boolean) {
-  const actor = await assertAdmin();
+  const actor = await assertOwner();
   await updateService(id, { visible });
   await logAudit({
     actor,
@@ -89,7 +90,7 @@ export async function toggleServiceVisibleAction(id: string, visible: boolean) {
 }
 
 export async function reorderFlowStepsAction(serviceId: string, orderedIds: string[]) {
-  const actor = await assertAdmin();
+  const actor = await assertOwner();
   const parsed = reorderSchema.safeParse({ orderedIds });
   if (!parsed.success) invalid(parsed.error.issues[0]?.message);
   await reorderFlowSteps(serviceId, parsed.data.orderedIds);
@@ -107,7 +108,7 @@ export async function addFlowStepAction(
   serviceId: string,
   data: { title: string; description?: string; stage: OrderStage; visible: boolean }
 ) {
-  const actor = await assertAdmin();
+  const actor = await assertOwner();
   const parsed = flowStepSchema
     .pick({ title: true, description: true, stage: true, visible: true })
     .safeParse(data);
@@ -128,7 +129,7 @@ export async function updateFlowStepAction(
   stepId: string,
   data: { title?: string; description?: string; stage?: OrderStage; visible?: boolean }
 ) {
-  const actor = await assertAdmin();
+  const actor = await assertOwner();
   const parsed = flowStepSchema
     .pick({ title: true, description: true, stage: true, visible: true })
     .partial()
@@ -147,7 +148,7 @@ export async function updateFlowStepAction(
 }
 
 export async function deleteFlowStepAction(serviceId: string, stepId: string) {
-  const actor = await assertAdmin();
+  const actor = await assertOwner();
   await deleteFlowStep(stepId);
   await logAudit({
     actor,

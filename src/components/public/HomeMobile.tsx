@@ -4,9 +4,9 @@ import { Icon } from "@/components/shared/Icon";
 import { Logo } from "@/components/shared/Logo";
 import { Reveal } from "./Reveal";
 import { SectionHead } from "./SectionHead";
-import { HERO_IMG, FEATURED, PROCESS, WORKS, TESTIMONIAL } from "@/lib/public-data";
+import { HERO_IMG, PROCESS, WORKS, TESTIMONIAL, type ServiceItem } from "@/lib/public-data";
 
-export function HomeMobile() {
+export function HomeMobile({ featured }: { featured: ServiceItem[] }) {
   return (
     <div className="page page-home">
       {/* HERO */}
@@ -59,7 +59,7 @@ export function HomeMobile() {
           Estética automotor integral, de la chapa al brillo final.
         </SectionHead>
         <div className="svc-mini-grid">
-          {FEATURED.map((s, i) => (
+          {featured.map((s, i) => (
             <Reveal key={s.name} className="svc-mini" delay={i * 60}>
               <Link href="/servicios" className="svc-mini-btn">
                 <span className="svc-ic"><Icon name={s.icon} size={22} /></span>

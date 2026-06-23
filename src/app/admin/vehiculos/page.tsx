@@ -32,8 +32,8 @@ export default async function AdminVehiculosPage({
           <thead><tr><th>Patente</th><th>Vehículo</th><th>Cliente</th><th>En curso</th></tr></thead>
           <tbody>
             {vehicles.map((v) => (
-              <tr key={v.id}>
-                <td className="mono"><Link href={`/admin/vehiculos/${v.id}`} style={{ color: "var(--primary)", textDecoration: "none" }}>{v.licensePlate}</Link></td>
+              <tr key={v.id} className="rowlink">
+                <td className="mono"><Link href={`/admin/vehiculos/${v.id}`} className="rowlink-a" style={{ color: "var(--primary)", textDecoration: "none" }}>{v.licensePlate}</Link></td>
                 <td>{v.brand} {v.model} {v.year ? `· ${v.year}` : ""}</td>
                 <td>{v.customer.user.name}</td>
                 <td>{v.workOrders.length > 0 ? "Sí" : "—"}</td>

@@ -5,6 +5,8 @@ import type {
   OrderStage,
 } from "@/generated/prisma/client";
 import { logAudit, type AuditActor } from "./audit.service";
+import { publishOrderSnapshot } from "@/lib/realtime";
+import { generateThumbnailUrl } from "@/lib/cloudinary";
 
 const ORDER_CODE_PREFIX = "OT-";
 const ORDER_CODE_START = 1042;
@@ -155,6 +157,8 @@ export async function createWorkOrder(data: {
             sortOrder: index,
             isCurrent: index === 0,
             confirmed: index === 0,
+            // El paso de ingreso (índice 0) queda alcanzado al crear la OT.
+            reachedAt: index === 0 ? new Date() : null,
             createdByUserId: data.actor.id ?? undefined,
           })),
         },
@@ -253,7 +257,12 @@ export async function listWorkOrders(filters?: {
  * recalcula la stage de la orden a partir de la etapa de ese paso.
  * Solo opera si la orden está en PROCESO (idempotente respecto del ciclo).
  */
-export async function advanceToNextStep(workOrderId: string, actor?: AuditActor) {
+export async function advanceToNextStep(
+  workOrderId: string,
+  actor?: AuditActor,
+  // Gate operativo: imagen del estado ACTUAL antes de confirmar (o marca "sin imagen").
+  gate?: { photo?: { url: string; publicId?: string }; noImageReason?: string }
+) {
   const order = await prisma.workOrder.findUnique({
     where: { id: workOrderId },
     select: { status: true },
@@ -287,12 +296,26 @@ export async function advanceToNextStep(workOrderId: string, actor?: AuditActor)
     }
     await tx.workOrderStatusUpdate.update({
       where: { id: next.id },
-      data: { isCurrent: true, confirmed: true },
+      data: { isCurrent: true, confirmed: true, reachedAt: next.reachedAt ?? new Date() },
     });
     await tx.workOrder.update({
       where: { id: workOrderId },
       data: { stage: next.stage ?? undefined },
     });
+    // Gate: la imagen documenta el ESTADO ACTUAL (el paso que se deja), así que
+    // cuelga del paso `current`. Si no hay imagen, se asienta la marca en el audit.
+    if (gate?.photo && current) {
+      await tx.workOrderPhoto.create({
+        data: {
+          workOrderId,
+          statusUpdateId: current.id,
+          imageUrl: gate.photo.url,
+          thumbnailUrl: generateThumbnailUrl(gate.photo.url),
+          publicId: gate.photo.publicId,
+          visibleToCustomer: true,
+        },
+      });
+    }
     if (actor) {
       await logAudit(
         {
@@ -300,14 +323,20 @@ export async function advanceToNextStep(workOrderId: string, actor?: AuditActor)
           action: "STEP_ADVANCED",
           entity: "WorkOrder",
           entityId: workOrderId,
-          summary: `Avanzó al paso "${next.title}"`,
-          diff: { before: { step: current?.title ?? null }, after: { step: next.title } },
+          summary: `Avanzó al paso "${next.title}"${gate?.photo ? " (con imagen)" : " (sin imagen)"}`,
+          diff: {
+            before: { step: current?.title ?? null },
+            after: { step: next.title },
+            image: gate?.photo ? "con imagen" : "sin imagen",
+            ...(gate?.noImageReason ? { noImageReason: gate.noImageReason } : {}),
+          },
         },
         tx
       );
     }
   });
 
+  await publishOrderSnapshot(workOrderId);
   return next;
 }
 
@@ -328,7 +357,7 @@ export async function markStepAsCurrent(statusUpdateId: string, actor?: AuditAct
     });
     await tx.workOrderStatusUpdate.update({
       where: { id: target.id },
-      data: { isCurrent: true, confirmed: true },
+      data: { isCurrent: true, confirmed: true, reachedAt: target.reachedAt ?? new Date() },
     });
     await tx.workOrder.update({
       where: { id: target.workOrderId },
@@ -348,6 +377,7 @@ export async function markStepAsCurrent(statusUpdateId: string, actor?: AuditAct
     }
   });
 
+  await publishOrderSnapshot(target.workOrderId);
   return target;
 }
 
@@ -371,7 +401,7 @@ export async function markAsReady(workOrderId: string, actor: AuditActor) {
   }
   assertTransition(order.status, "LISTO");
 
-  return prisma.$transaction(async (tx) => {
+  const readyOrder = await prisma.$transaction(async (tx) => {
     const last = await tx.workOrderStatusUpdate.findFirst({
       where: { workOrderId },
       orderBy: { sortOrder: "desc" },
@@ -401,6 +431,7 @@ export async function markAsReady(workOrderId: string, actor: AuditActor) {
             confirmed: true,
             custom: true,
             sortOrder: nextOrder,
+            reachedAt: new Date(),
             createdByUserId: actor.id ?? undefined,
           },
         },
@@ -424,6 +455,9 @@ export async function markAsReady(workOrderId: string, actor: AuditActor) {
 
     return updated;
   });
+
+  await publishOrderSnapshot(workOrderId);
+  return readyOrder;
 }
 
 export interface AdminStats {
@@ -504,10 +538,42 @@ export async function markAsDelivered(workOrderId: string, actor: AuditActor) {
   }
   assertTransition(order.status, "ENTREGADO");
 
-  return prisma.$transaction(async (tx) => {
+  const deliveredOrder = await prisma.$transaction(async (tx) => {
+    // TE3: el cierre del ciclo deja un hito visible en el timeline del cliente
+    // (simétrico con markAsReady, que crea "Listo para retirar").
+    const last = await tx.workOrderStatusUpdate.findFirst({
+      where: { workOrderId },
+      orderBy: { sortOrder: "desc" },
+      select: { sortOrder: true },
+    });
+    const nextOrder = (last?.sortOrder ?? -1) + 1;
+
+    await tx.workOrderStatusUpdate.updateMany({
+      where: { workOrderId },
+      data: { isCurrent: false },
+    });
+
     const updated = await tx.workOrder.update({
       where: { id: workOrderId },
-      data: { status: "ENTREGADO", actualDeliveryDate: new Date() },
+      data: {
+        status: "ENTREGADO",
+        actualDeliveryDate: new Date(),
+        statusUpdates: {
+          create: {
+            title: "Vehículo entregado",
+            description: "El vehículo fue retirado por el cliente.",
+            stage: "DETAIL_ENTREGA",
+            visibleToCustomer: true,
+            notifyCustomer: false,
+            isCurrent: true,
+            confirmed: true,
+            custom: true,
+            sortOrder: nextOrder,
+            reachedAt: new Date(),
+            createdByUserId: actor.id ?? undefined,
+          },
+        },
+      },
       include: {
         vehicle: { include: { customer: { include: { user: true } } } },
       },
@@ -527,4 +593,7 @@ export async function markAsDelivered(workOrderId: string, actor: AuditActor) {
 
     return updated;
   });
+
+  await publishOrderSnapshot(workOrderId);
+  return deliveredOrder;
 }

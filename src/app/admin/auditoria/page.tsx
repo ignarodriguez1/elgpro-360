@@ -1,8 +1,8 @@
-import { requireAdmin } from "@/lib/session";
+import { requireOwner } from "@/lib/session";
 import { listRecentAuditLogs } from "@/services/audit.service";
 
 export default async function AuditoriaPage() {
-  await requireAdmin();
+  await requireOwner();
   const logs = await listRecentAuditLogs(150);
 
   const fmt = (d: Date | string) =>
@@ -15,7 +15,7 @@ export default async function AuditoriaPage() {
 
   return (
     <div className="apage">
-      <div className="ahead">
+      <div className="ahead" data-section="header">
         <div className="ahead-l">
           <h2>Auditoría</h2>
           <div className="ahead-sub">
@@ -24,7 +24,8 @@ export default async function AuditoriaPage() {
         </div>
       </div>
 
-      <div className="apanel">
+      {/* Desktop: tabla */}
+      <div className="apanel only-desktop" data-section="logs-list">
         <table className="atable">
           <thead>
             <tr>
@@ -54,6 +55,25 @@ export default async function AuditoriaPage() {
             )}
           </tbody>
         </table>
+      </div>
+
+      {/* Mobile: cards */}
+      <div className="only-mobile" data-section="logs-list">
+        <div className="alist">
+          {logs.map((l) => (
+            <div key={l.id} className="alist-card">
+              <div className="alist-top">
+                <span className="alist-title"><span className="chip">{l.action}</span></span>
+                <span className="mono" style={{ fontSize: 11, color: "var(--muted-dim)", whiteSpace: "nowrap" }}>{fmt(l.createdAt)}</span>
+              </div>
+              <div className="alist-meta">
+                <span>{l.actor?.name ?? l.actorEmail}</span>
+              </div>
+              {l.summary && <div className="alist-meta"><span>{l.summary}</span></div>}
+            </div>
+          ))}
+          {logs.length === 0 && <div className="alist-empty">Sin eventos registrados aún.</div>}
+        </div>
       </div>
     </div>
   );

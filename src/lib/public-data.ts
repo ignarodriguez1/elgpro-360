@@ -29,6 +29,32 @@ export const SERVICES: ServiceItem[] = [
 
 export const FEATURED: ServiceItem[] = [SERVICES[0], SERVICES[4], SERVICES[5], SERVICES[7]];
 
+/**
+ * Resolver de PRESENTACIÓN para servicios DB-driven. La DB (modelo Service) es la
+ * fuente de verdad de qué servicios existen / están visibles / su orden. Pero el
+ * modelo NO tiene `icon` ni `tint` (campos visuales de la card): esos salen de este
+ * mapa keyeado por nombre. Servicios nuevos sin match caen a defaults. La imagen la
+ * resuelve cada página priorizando `service.imageUrl` y cayendo a `img` (curada).
+ */
+const SERVICE_VISUALS = new Map(
+  SERVICES.map((s) => [s.name, { icon: s.icon, tint: s.tint, img: s.img }] as const)
+);
+const FALLBACK_TINTS = [
+  "rgba(196,30,42,.16)",
+  "rgba(34,197,94,.14)",
+  "rgba(245,158,11,.14)",
+  "rgba(80,140,255,.14)",
+];
+
+export function serviceVisual(
+  name: string,
+  index = 0
+): { icon: IconName; tint: string; img?: string } {
+  const v = SERVICE_VISUALS.get(name);
+  if (v) return { icon: v.icon, tint: v.tint, img: v.img };
+  return { icon: "spray", tint: FALLBACK_TINTS[index % FALLBACK_TINTS.length] };
+}
+
 export interface ProcessStep { n: string; icon: IconName; title: string; desc: string; }
 export const PROCESS: ProcessStep[] = [
   { n: "01", icon: "arrow", title: "Ingreso", desc: "Recibimos tu auto, documentamos su estado con fotos y armamos su historia clínica." },

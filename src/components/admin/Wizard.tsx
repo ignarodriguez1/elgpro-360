@@ -52,6 +52,7 @@ export function Wizard({ clients, services }: { clients: Client[]; services: Ser
   const [description, setDescription] = useState("");
   const [serviceIds, setServiceIds] = useState<string[]>([]);
   const [eta, setEta] = useState("");
+  const [photoUrls, setPhotoUrls] = useState<{ url: string; publicId: string }[]>([]);
   const [preview, setPreview] = useState<TimelineStep[]>([]);
   const [error, setError] = useState("");
 
@@ -86,6 +87,7 @@ export function Wizard({ clients, services }: { clients: Client[]; services: Ser
         description: description || undefined,
         serviceIds,
         estimatedDeliveryDate: eta || undefined,
+        photos: photoUrls.length ? photoUrls : undefined,
       });
       if (res && "error" in res) setError(res.error);
     });
@@ -203,7 +205,19 @@ export function Wizard({ clients, services }: { clients: Client[]; services: Ser
           <>
             <h3>Fotos iniciales</h3>
             <p className="sub">Documentá el estado de ingreso del vehículo (opcional — también podés cargarlas luego).</p>
-            <UploadZone onUpload={() => {}} />
+            <UploadZone
+              onUpload={(files) =>
+                setPhotoUrls((prev) => [...prev, ...files.map((f) => ({ url: f.url, publicId: f.publicId }))])
+              }
+            />
+            {photoUrls.length > 0 && (
+              <p style={{ color: "var(--muted)", fontSize: 13, marginTop: 12 }}>
+                <Icon name="check" size={14} /> {photoUrls.length} foto
+                {photoUrls.length !== 1 ? "s" : ""} cargada
+                {photoUrls.length !== 1 ? "s" : ""} · se asociará
+                {photoUrls.length !== 1 ? "n" : ""} al ingreso de la orden
+              </p>
+            )}
           </>
         )}
 
@@ -216,6 +230,7 @@ export function Wizard({ clients, services }: { clients: Client[]; services: Ser
               <Row label="Vehículo" value={vehicle ? `${vehicle.brand} ${vehicle.model} · ${vehicle.licensePlate}` : ""} />
               <Row label="Trabajo" value={title} />
               <Row label="Servicios" value={services.filter((s) => serviceIds.includes(s.id)).map((s) => s.name).join(", ")} />
+              <Row label="Fotos de ingreso" value={photoUrls.length ? `${photoUrls.length} foto${photoUrls.length !== 1 ? "s" : ""}` : "Sin fotos"} />
               <div className="afield">
                 <label className="afield-label">Entrega estimada (opcional)</label>
                 <input type="date" value={eta} onChange={(e) => setEta(e.target.value)} />

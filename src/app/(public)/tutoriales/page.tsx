@@ -3,6 +3,7 @@ import { PageHead } from "@/components/public/PageHead";
 import { Photo } from "@/components/shared/Photo";
 import { Icon } from "@/components/shared/Icon";
 import { listTutorials } from "@/services/tutorial.service";
+import { youtubeThumbFromUrl } from "@/lib/youtube";
 
 export const dynamic = "force-dynamic";
 
@@ -46,7 +47,7 @@ export default async function TutorialesPublicPage({
                 {filtered.map((t, i) => (
                   <Link key={t.id} href={`/tutoriales/${t.slug}`} className="dtuto-card drise in">
                     <div className="dtuto-thumb-wrap">
-                      <Photo className="dtuto-thumb" tint={TINTS[i % TINTS.length]} grad />
+                      <Photo src={youtubeThumbFromUrl(t.videoUrl) ?? undefined} className="dtuto-thumb" tint={TINTS[i % TINTS.length]} grad />
                       <span className="dtuto-play"><Icon name="play" size={22} /></span>
                     </div>
                     <div className="dtuto-body">
@@ -88,7 +89,7 @@ export default async function TutorialesPublicPage({
               {filtered.map((t, i) => (
                 <Link key={t.id} href={`/tutoriales/${t.slug}`} className="tuto-card" style={{ display: "block" }}>
                   <div className="tuto-thumb-wrap">
-                    <Photo className="tuto-thumb" tint={TINTS[i % TINTS.length]} grad />
+                    <Photo src={youtubeThumbFromUrl(t.videoUrl) ?? undefined} className="tuto-thumb" tint={TINTS[i % TINTS.length]} grad />
                     <span className="tuto-play"><Icon name="play" size={20} /></span>
                   </div>
                   <div className="tuto-body">

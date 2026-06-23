@@ -1,9 +1,9 @@
-import { requireAdmin } from "@/lib/session";
+import { requireOwner } from "@/lib/session";
 import { listServices } from "@/services/service.service";
 import { ServicesList } from "@/components/admin/ServicesList";
 
 export default async function AdminServiciosPage() {
-  await requireAdmin();
+  await requireOwner();
   const services = await listServices(true);
 
   const data = services.map((s) => ({

@@ -40,7 +40,7 @@ export default async function PerfilClientePage() {
           ))}
         </div>
         <div className="perf-logout" style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-          <Link href="/" className="btn btn-ghost btn-block">
+          <Link href="/" className="btn btn-ghost btn-block" data-section="public-site-link">
             <Icon name="home" size={17} /> Ver sitio público
           </Link>
           <LogoutButton />
@@ -60,7 +60,12 @@ export default async function PerfilClientePage() {
               <div className="pwsb-row" key={r.l}><span className="pwsb-k">{r.l}</span><span className="pwsb-v">{r.v}</span></div>
             ))}
           </div>
-          <LogoutButton />
+          <div style={{ display: "flex", gap: 10 }}>
+            <Link href="/" className="pw-btn pw-btn-ghost" data-section="public-site-link">
+              <Icon name="home" size={16} /> Ver sitio público
+            </Link>
+            <LogoutButton />
+          </div>
         </div>
       </div>
     </>

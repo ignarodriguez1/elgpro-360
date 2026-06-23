@@ -37,9 +37,9 @@ export default async function AdminClientesPage({
             {customers.map((c) => {
               const initials = c.name.split(" ").slice(0, 2).map((w) => w[0]).join("").toUpperCase();
               return (
-                <tr key={c.id}>
+                <tr key={c.id} className="rowlink">
                   <td>
-                    <Link href={`/admin/clientes/${c.id}`} className="atable-cli" style={{ textDecoration: "none", color: "inherit" }}>
+                    <Link href={`/admin/clientes/${c.id}`} className="atable-cli rowlink-a" style={{ textDecoration: "none", color: "inherit" }}>
                       <span className="atable-av">{initials}</span>{c.name}
                     </Link>
                   </td>

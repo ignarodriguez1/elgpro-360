@@ -36,7 +36,7 @@ export function NewStateForm({ orderId, currentStageIndex = 0 }: NewStateFormPro
   const [internal, setInternal] = useState("");
   const [visible, setVisible] = useState(true);
   const [notify, setNotify] = useState(true);
-  const [photoUrls, setPhotoUrls] = useState<string[]>([]);
+  const [photoUrls, setPhotoUrls] = useState<{ url: string; publicId: string }[]>([]);
   const [error, setError] = useState<string | null>(null);
   const isMobile = useIsMobile();
 
@@ -72,7 +72,7 @@ export function NewStateForm({ orderId, currentStageIndex = 0 }: NewStateFormPro
         internalDescription: internal || undefined,
         visibleToCustomer: visible,
         notifyCustomer: notify,
-        photoUrls,
+        photos: photoUrls,
       });
       if (!res.ok) {
         setError(res.error);
@@ -84,7 +84,12 @@ export function NewStateForm({ orderId, currentStageIndex = 0 }: NewStateFormPro
   }
 
   if (!open) {
-    return (
+    // Mobile: trigger compacto para el dock fijo. Desktop: botón inline.
+    return isMobile ? (
+      <button className="tod-newstate" type="button" onClick={() => setOpen(true)}>
+        <Icon name="plus" size={18} /> Estado
+      </button>
+    ) : (
       <button className="abtn abtn-primary" onClick={() => setOpen(true)} style={{ marginTop: 16 }}>
         <Icon name="plus" size={16} /> Nuevo estado
       </button>
@@ -144,7 +149,7 @@ export function NewStateForm({ orderId, currentStageIndex = 0 }: NewStateFormPro
 
       <div className="nsf-field">
         <label className="nsf-label">Fotos</label>
-        <UploadZone onUpload={(files) => setPhotoUrls((prev) => [...prev, ...files.map((f) => f.url)])} />
+        <UploadZone onUpload={(files) => setPhotoUrls((prev) => [...prev, ...files.map((f) => ({ url: f.url, publicId: f.publicId }))])} />
       </div>
 
       <ToggleRow

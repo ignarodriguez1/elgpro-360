@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Logo } from "@/components/shared/Logo";
 import { Icon } from "@/components/shared/Icon";
+import { CONTACT } from "@/lib/contact";
 
 const NAV_LINKS = [
   { href: "/", label: "Inicio" },
@@ -29,16 +30,16 @@ export function MobileFooter() {
         </div>
         <div className="footer-col">
           <span className="footer-h">Contacto</span>
-          <a href="#"><Icon name="pin" size={15} /> Bv. Oroño 1234, Rosario</a>
-          <a href="#"><Icon name="phone" size={15} /> +54 341 555-0142</a>
-          <a href="#"><Icon name="mail" size={15} /> hola@elgpro.com.ar</a>
-          <a href="#"><Icon name="clock" size={15} /> Lun a Vie · 8:30–18:00</a>
+          <span><Icon name="pin" size={15} /> Rosario, Santa Fe</span>
+          <a href={`tel:+${CONTACT.whatsappNumber}`}><Icon name="phone" size={15} /> {CONTACT.whatsappDisplay}</a>
+          <a href={`mailto:${CONTACT.email}`}><Icon name="mail" size={15} /> {CONTACT.email}</a>
+          <span><Icon name="clock" size={15} /> Lun a Vie · 8:30–18:00</span>
         </div>
       </div>
       <div className="footer-social">
-        <a href="#" aria-label="Instagram"><Icon name="instagram" size={20} /></a>
-        <a href="#" aria-label="WhatsApp"><Icon name="whatsapp" size={20} /></a>
-        <a href="#" aria-label="Mail"><Icon name="mail" size={20} /></a>
+        <a href={CONTACT.instagramUrl} target="_blank" rel="noopener noreferrer" aria-label="Instagram"><Icon name="instagram" size={20} /></a>
+        <a href={CONTACT.whatsappUrl} target="_blank" rel="noopener noreferrer" aria-label="WhatsApp"><Icon name="whatsapp" size={20} /></a>
+        <a href={`mailto:${CONTACT.email}`} aria-label="Mail"><Icon name="mail" size={20} /></a>
       </div>
       <div className="footer-legal">
         <span>© 2026 ELG Pro · Paint &amp; Detail</span>

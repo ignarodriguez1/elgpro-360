@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import type { Role, OrderStage } from "@/generated/prisma/client";
 import { logAudit, type AuditActor } from "./audit.service";
+import { publishOrderSnapshot } from "@/lib/realtime";
 
 /**
  * Crea un estado intercalado manualmente en el timeline de una orden (no venía
@@ -19,13 +20,36 @@ export async function createStatusUpdate(data: {
   actor: AuditActor;
   photoIds?: string[];
 }) {
-  return prisma.$transaction(async (tx) => {
-    const last = await tx.workOrderStatusUpdate.findFirst({
+  const created = await prisma.$transaction(async (tx) => {
+    // Un estado custom documenta el momento ACTUAL: se inserta JUSTO DESPUÉS del
+    // paso actual (y de otros customs ya intercalados ahí, para mantener el orden
+    // cronológico), NO al final detrás de los pasos futuros del plan. Re-secuencia
+    // corriendo +1 lo que venga después del punto de inserción.
+    const steps = await tx.workOrderStatusUpdate.findMany({
       where: { workOrderId: data.workOrderId },
-      orderBy: { sortOrder: "desc" },
-      select: { sortOrder: true },
+      orderBy: { sortOrder: "asc" },
+      select: { sortOrder: true, isCurrent: true, custom: true },
     });
-    const sortOrder = (last?.sortOrder ?? -1) + 1;
+    const currentIdx = steps.findIndex((s) => s.isCurrent);
+    let sortOrder: number;
+    if (currentIdx === -1) {
+      // Sin paso actual (edge): al final, como fallback.
+      sortOrder = (steps[steps.length - 1]?.sortOrder ?? -1) + 1;
+    } else {
+      // Saltar customs ya intercalados justo después del actual.
+      let i = currentIdx + 1;
+      while (i < steps.length && steps[i].custom) i++;
+      if (i < steps.length) {
+        sortOrder = steps[i].sortOrder;
+        await tx.workOrderStatusUpdate.updateMany({
+          where: { workOrderId: data.workOrderId, sortOrder: { gte: sortOrder } },
+          data: { sortOrder: { increment: 1 } },
+        });
+      } else {
+        // El paso actual es el último (sin futuros): va al final.
+        sortOrder = (steps[steps.length - 1]?.sortOrder ?? -1) + 1;
+      }
+    }
 
     const update = await tx.workOrderStatusUpdate.create({
       data: {
@@ -38,6 +62,7 @@ export async function createStatusUpdate(data: {
         notifyCustomer: data.notifyCustomer ?? false,
         custom: data.custom ?? true,
         sortOrder,
+        reachedAt: new Date(),
         createdByUserId: data.actor.id ?? undefined,
       },
       include: {
@@ -76,6 +101,9 @@ export async function createStatusUpdate(data: {
 
     return update;
   });
+
+  await publishOrderSnapshot(data.workOrderId);
+  return created;
 }
 
 export async function listStatusUpdates(

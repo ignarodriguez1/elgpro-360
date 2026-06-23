@@ -388,9 +388,12 @@
 .dfooter-tag{ color:var(--muted); font-size:15px; line-height:1.6; margin:22px 0 0; max-width:320px; }
 .dfooter-col{ display:flex; flex-direction:column; gap:13px; }
 .dfooter-h{ font-family:var(--display); font-weight:600; text-transform:uppercase; letter-spacing:.14em; font-size:12px; color:var(--muted-dim); margin-bottom:4px; }
-.dfooter-col a, .dfooter-col button{ display:flex; align-items:center; gap:10px; text-align:left; color:var(--muted); text-decoration:none; font-size:14.5px; background:none; border:none; padding:0; cursor:pointer; font-family:var(--body); transition:color .16s; }
+/* Items de columna: incluye los <span> de contacto (ciudad/horarios) que NO son
+   links — antes quedaban fuera del selector y se veían sin estilo. */
+.dfooter-col a, .dfooter-col button, .dfooter-col span:not(.dfooter-h){ display:flex; align-items:center; gap:10px; text-align:left; color:var(--muted); text-decoration:none; font-size:14.5px; font-family:var(--body); line-height:1.45; }
+.dfooter-col a, .dfooter-col button{ background:none; border:none; padding:0; cursor:pointer; transition:color .16s; }
 .dfooter-col a:hover, .dfooter-col button:hover{ color:var(--text); }
-.dfooter-col a svg{ color:var(--primary); flex-shrink:0; }
+.dfooter-col a svg, .dfooter-col button svg, .dfooter-col span:not(.dfooter-h) svg{ color:var(--primary); flex-shrink:0; }
 .dfooter-bot{ display:flex; align-items:center; justify-content:space-between; padding-top:28px; }
 .dfooter-bot span{ font-size:13px; color:var(--muted-dim); }
 .dfooter-social{ display:flex; gap:11px; }
