@@ -122,10 +122,15 @@
 .svc-full-name{ font-size:24px; margin:14px 0 8px; }
 .svc-full-desc{ font-size:14px; color:var(--muted); line-height:1.55; margin:0; }
 
+/* ---------- estado vacío (servicios sin habilitados) ---------- */
+.svc-empty{ text-align:center; padding:56px 8px; }
+.svc-empty h3{ font-family:var(--display); font-weight:600; text-transform:uppercase; font-size:24px; color:var(--text); margin:0 0 10px; }
+.svc-empty p{ font-size:14.5px; color:var(--muted); line-height:1.55; margin:0 auto; max-width:380px; }
+
 /* ---------- filters ---------- */
 .filters{ display:flex; gap:9px; overflow-x:auto; padding:6px var(--pad) 4px; scrollbar-width:none; }
 .filters::-webkit-scrollbar{ display:none; }
-.chip{ display:inline-flex; align-items:center; gap:6px; font-family:var(--display); font-weight:500; text-transform:uppercase; letter-spacing:.08em; font-size:11px; height:30px; padding:0 13px; border-radius:999px; background:var(--surface); border:1px solid var(--border); color:var(--muted); text-decoration:none; white-space:nowrap; transition:all .16s ease; }
+.chip{ display:inline-flex; align-items:center; justify-content:center; line-height:1; gap:6px; font-family:var(--display); font-weight:500; text-transform:uppercase; letter-spacing:.08em; font-size:11px; height:30px; padding:0 13px; border-radius:999px; background:var(--surface); border:1px solid var(--border); color:var(--muted); text-decoration:none; white-space:nowrap; transition:all .16s ease; }
 .chip:hover{ color:var(--text); border-color:#3a3a3a; }
 .chip.active{ background:var(--primary); border-color:var(--primary); color:#fff; }
 
@@ -141,7 +146,7 @@
 .work-swap{ position:absolute; top:10px; right:10px; width:30px; height:30px; border-radius:8px; background:rgba(0,0,0,.5); backdrop-filter:blur(4px); display:flex; align-items:center; justify-content:center; color:#fff; }
 
 /* ---------- lightbox ---------- */
-.lightbox{ position:absolute; inset:0; z-index:70; background:rgba(8,8,8,.96); display:flex; flex-direction:column; padding:54px 16px 24px; overflow-y:auto; animation:fadein .25s ease; }
+.lightbox{ position:fixed; inset:0; z-index:70; background:rgba(8,8,8,.96); display:flex; flex-direction:column; padding:54px 16px 24px; overflow-y:auto; animation:fadein .25s ease; }
 .lb-inner{ display:flex; flex-direction:column; gap:14px; }
 .lb-close{ position:absolute; top:54px; right:16px; z-index:5; width:42px; height:42px; border-radius:11px; background:var(--surface); border:1px solid var(--border); color:#fff; display:flex; align-items:center; justify-content:center; cursor:pointer; }
 .lb-stage{ position:relative; border-radius:var(--r-lg); overflow:hidden; }
@@ -358,7 +363,7 @@
 
 /* filters desktop */
 .dfilters{ display:flex; gap:10px; flex-wrap:wrap; }
-.dchip{ font-family:var(--display); font-weight:500; text-transform:uppercase; letter-spacing:.08em; font-size:13px; height:42px; padding:0 20px; border-radius:999px;
+.dchip{ display:inline-flex; align-items:center; justify-content:center; line-height:1; font-family:var(--display); font-weight:500; text-transform:uppercase; letter-spacing:.08em; font-size:13px; height:42px; padding:0 20px; border-radius:999px;
   background:var(--surface); border:1px solid var(--border); color:var(--muted); cursor:pointer; transition:all .16s; }
 .dchip:hover{ color:var(--text); border-color:#3a3a3a; }
 .dchip.active{ background:var(--primary); border-color:var(--primary); color:#fff; }
@@ -465,7 +470,7 @@
 .dacceso-back:hover{ color:var(--text); }
 
 /* ===================== LIGHTBOX ===================== */
-.dlightbox{ position:absolute; inset:0; z-index:80; background:rgba(8,8,8,.92); backdrop-filter:blur(8px); display:flex; align-items:center; justify-content:center; padding:50px; animation:fadein .25s ease; }
+.dlightbox{ position:fixed; inset:0; z-index:80; background:rgba(8,8,8,.92); backdrop-filter:blur(8px); display:flex; align-items:center; justify-content:center; padding:50px; animation:fadein .25s ease; }
 .dlb-inner{ display:grid; grid-template-columns:1.4fr .8fr; gap:0; max-width:1100px; width:100%; max-height:80vh; background:var(--surface); border:1px solid var(--border); border-radius:var(--r-lg); overflow:hidden; box-shadow:0 50px 120px -30px #000; }
 .dlb-stage{ position:relative; background:#0c0c0c; }
 .dlb-photo{ width:100%; height:100%; border-radius:0; min-height:520px; }
@@ -578,6 +583,10 @@
   color:var(--muted); text-decoration:none; font-size:13.5px; background:none; border:none; padding:0; cursor:pointer; font-family:var(--body);
 }
 .footer-col a svg{ color:var(--primary); flex-shrink:0; }
+/* Spans de contacto (Ubicación/Horarios) — paridad con el footer desktop;
+   antes quedaban fuera del selector y se veían como texto plano. */
+.footer-col span:not(.footer-h){ display:flex; align-items:center; gap:9px; text-align:left; color:var(--muted); font-size:13.5px; font-family:var(--body); line-height:1.5; }
+.footer-col span:not(.footer-h) svg{ color:var(--primary); flex-shrink:0; }
 .footer-social{ display:flex; gap:12px; margin:34px 0 22px; }
 .footer-social a{
   width:46px; height:46px; border-radius:12px; background:var(--surface); border:1px solid var(--border);

@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
   // "Servicios destacados": los primeros 4 visibles (respeta orden y toggle del admin).
-  const services = await listServices(true);
+  const services = await listServices(false);
   const featured: ServiceItem[] = services.slice(0, 4).map((s, i) => {
     const v = serviceVisual(s.name, i);
     return {

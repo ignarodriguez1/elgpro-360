@@ -5,6 +5,6 @@ export const dynamic = "force-dynamic";
 
 export default async function ContactoPage() {
   // DB-driven: el dropdown solo ofrece servicios visibles (toggle del admin).
-  const services = (await listServices(true)).map((s) => s.name);
+  const services = (await listServices(false)).map((s) => s.name);
   return <ContactForm services={services} />;
 }

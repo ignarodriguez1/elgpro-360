@@ -9,7 +9,7 @@ export const dynamic = "force-dynamic";
 
 export default async function ServiciosPage() {
   // DB-driven: solo servicios visibles. El toggle del admin se refleja acá.
-  const services = (await listServices(true)).map((s, i) => {
+  const services = (await listServices(false)).map((s, i) => {
     const v = serviceVisual(s.name, i);
     return {
       name: s.name,
@@ -32,19 +32,26 @@ export default async function ServiciosPage() {
           />
           <section className="dsection-sm" style={{ paddingTop: 60 }}>
             <div className="wrap">
-              <div className="dsvc-full-grid">
-                {services.map((s) => (
-                  <Link key={s.name} href="/contacto" className="dsvc-card drise in" style={{ display: "flex" }}>
-                    <Photo src={s.img} className="dsvc-img" tint={s.tint} grad />
-                    <span className="dsvc-go"><Icon name="arrowUR" size={17} /></span>
-                    <span className="dsvc-body">
-                      <span className="dsvc-ic"><Icon name={s.icon} size={22} /></span>
-                      <span className="dsvc-name">{s.name}</span>
-                      <span className="dsvc-desc">{s.desc}</span>
-                    </span>
-                  </Link>
-                ))}
-              </div>
+              {services.length === 0 ? (
+                <div className="svc-empty drise in">
+                  <h3>Pronto, nuevos servicios</h3>
+                  <p>Estamos renovando nuestro catálogo. Escribinos y te asesoramos sin compromiso.</p>
+                </div>
+              ) : (
+                <div className="dsvc-full-grid">
+                  {services.map((s) => (
+                    <Link key={s.name} href="/contacto" className="dsvc-card drise in" style={{ display: "flex" }}>
+                      <Photo src={s.img} className="dsvc-img" tint={s.tint} grad />
+                      <span className="dsvc-go"><Icon name="arrowUR" size={17} /></span>
+                      <span className="dsvc-body">
+                        <span className="dsvc-ic"><Icon name={s.icon} size={22} /></span>
+                        <span className="dsvc-name">{s.name}</span>
+                        <span className="dsvc-desc">{s.desc}</span>
+                      </span>
+                    </Link>
+                  ))}
+                </div>
+              )}
             </div>
           </section>
 
@@ -72,16 +79,23 @@ export default async function ServiciosPage() {
             </p>
           </header>
           <section className="section-tight svc-full-list">
-            {services.map((s) => (
-              <Link key={s.name} href="/contacto" className="svc-full" style={{ display: "block" }}>
-                <Photo src={s.img} className="svc-full-img" tint={s.tint} grad />
-                <div className="svc-full-body">
-                  <span className="svc-ic"><Icon name={s.icon} size={20} /></span>
-                  <h3 className="svc-full-name display">{s.name}</h3>
-                  <p className="svc-full-desc">{s.desc}</p>
-                </div>
-              </Link>
-            ))}
+            {services.length === 0 ? (
+              <div className="svc-empty rise in">
+                <h3>Pronto, nuevos servicios</h3>
+                <p>Estamos renovando nuestro catálogo. Escribinos y te asesoramos sin compromiso.</p>
+              </div>
+            ) : (
+              services.map((s) => (
+                <Link key={s.name} href="/contacto" className="svc-full" style={{ display: "block" }}>
+                  <Photo src={s.img} className="svc-full-img" tint={s.tint} grad />
+                  <div className="svc-full-body">
+                    <span className="svc-ic"><Icon name={s.icon} size={20} /></span>
+                    <h3 className="svc-full-name display">{s.name}</h3>
+                    <p className="svc-full-desc">{s.desc}</p>
+                  </div>
+                </Link>
+              ))
+            )}
           </section>
 
           <div className="ctaband rise in">

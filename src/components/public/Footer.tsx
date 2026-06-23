@@ -14,7 +14,7 @@ const NAV_LINKS = [
 
 /** Footer desktop (.dfooter), portado del prototipo. */
 export async function Footer() {
-  const services = await listServices(true);
+  const services = await listServices(false);
   return (
     <footer className="dfooter">
       <div className="wrap">
