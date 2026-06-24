@@ -9,7 +9,7 @@ const OUT_MS = 650; // duración del lift de salida (coincide con la transición
 
 // Script inline: corre ANTES del paint. Si la intro ya se vio esta sesión, o hay
 // prefers-reduced-motion, marca <html> para que el CSS oculte el overlay sin flash.
-const PRE = `try{if(sessionStorage.getItem('${KEY}')||matchMedia('(prefers-reduced-motion: reduce)').matches){document.documentElement.classList.add('intro-skip')}}catch(e){}`;
+const PRE = `try{var d=document.documentElement;if(sessionStorage.getItem('${KEY}')||matchMedia('(prefers-reduced-motion: reduce)').matches){d.classList.add('intro-skip')}else{d.classList.add('intro-active')}}catch(e){}`;
 
 /**
  * Intro de marca: solo en el home, una vez por sesión.
@@ -52,6 +52,9 @@ export function Intro() {
       try {
         sessionStorage.setItem(KEY, "1");
       } catch {}
+      // El telón empieza a levantar → avisar al hero que entre coreografiado.
+      document.documentElement.classList.remove("intro-active");
+      window.dispatchEvent(new Event("elg:intro-done"));
       setPhase("out");
       doneTimer = window.setTimeout(() => {
         markDone();

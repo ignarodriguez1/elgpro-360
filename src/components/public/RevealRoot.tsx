@@ -65,7 +65,22 @@ export function RevealRoot({ children }: { children: React.ReactNode }) {
     const sweep = () =>
       collect().forEach((el) => (inView(el) ? reveal(el) : io.observe(el)));
 
-    sweep();
+    // Si el intro de marca está tapando el viewport (primer ingreso al home), NO
+    // revelar lo in-view todavía: que el hero entre coreografiado cuando el telón
+    // levante (evento "elg:intro-done"). Lo de abajo del fold se observa igual.
+    const introActive = document.documentElement.classList.contains("intro-active");
+    let onIntroDone: (() => void) | null = null;
+    let introTimer = 0;
+    if (introActive) {
+      collect().forEach((el) => {
+        if (!inView(el)) io.observe(el);
+      });
+      onIntroDone = () => sweep();
+      window.addEventListener("elg:intro-done", onIntroDone, { once: true });
+      introTimer = window.setTimeout(sweep, 3000); // red de seguridad si el intro no avisa
+    } else {
+      sweep();
+    }
 
     // Cambios de DOM sin cambio de ruta (filtros que re-renderizan la grilla).
     let raf = 0;
@@ -84,6 +99,8 @@ export function RevealRoot({ children }: { children: React.ReactNode }) {
       io.disconnect();
       mo.disconnect();
       if (raf) cancelAnimationFrame(raf);
+      if (onIntroDone) window.removeEventListener("elg:intro-done", onIntroDone);
+      if (introTimer) window.clearTimeout(introTimer);
     };
   }, [pathname]);
 
