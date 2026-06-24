@@ -236,3 +236,96 @@ export function CustomerTrackingSkeleton() {
     </div>
   );
 }
+
+/** Detalle admin (cliente / vehículo / servicio) y perfil del portal: header + paneles. */
+export function DetailSkeleton() {
+  return (
+    <div style={WRAP} aria-busy="true" aria-label="Cargando">
+      <div style={HEAD}>
+        <div style={{ flex: 1 }}>
+          <Bar h={12} w={90} mb={12} />
+          <Bar h={24} w={220} mb={8} />
+          <Bar h={12} w={120} />
+        </div>
+      </div>
+      <div className="sk-two-col">
+        <div style={{ display: "flex", flexDirection: "column", gap: 16, minWidth: 0 }}>
+          <div className="sk" style={{ height: 170, borderRadius: 16 }} />
+          <Panel lines={4} />
+        </div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 16, minWidth: 0 }}>
+          <Panel lines={3} />
+          <Panel lines={2} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/** Formulario admin (nueva orden / wizard): header + pasos + campos. */
+export function AdminFormSkeleton() {
+  return (
+    <div style={WRAP} aria-busy="true" aria-label="Cargando">
+      <div style={HEAD}>
+        <div style={{ flex: 1 }}>
+          <Bar h={26} w={180} mb={10} />
+          <Bar h={12} w={260} />
+        </div>
+      </div>
+      <div className="sk-card" style={{ maxWidth: 720, display: "flex", flexDirection: "column", gap: 20 }}>
+        <div style={{ display: "flex", gap: 8, marginBottom: 6 }}>
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="sk" style={{ height: 8, flex: 1, borderRadius: 999 }} />
+          ))}
+        </div>
+        {Array.from({ length: 5 }).map((_, i) => (
+          <div key={i} style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            <Bar h={11} w="28%" />
+            <div className="sk" style={{ height: 44, borderRadius: 10 }} />
+          </div>
+        ))}
+        <div className="sk" style={{ height: 46, width: 160, borderRadius: 10, alignSelf: "flex-end" }} />
+      </div>
+    </div>
+  );
+}
+
+/** Página pública interna (servicios/trabajos/tutoriales) y tutoriales del portal:
+ *  header tipográfico grande + grilla de cards. */
+export function PublicPageSkeleton() {
+  return (
+    <div style={{ ...WRAP, paddingTop: "clamp(40px, 8vw, 92px)" }} aria-busy="true" aria-label="Cargando">
+      <div style={{ marginBottom: 36 }}>
+        <Bar h={12} w={120} mb={16} />
+        <Bar h={44} w={320} r={12} mb={16} />
+        <Bar h={13} w={280} />
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 18 }}>
+        {Array.from({ length: 6 }).map((_, i) => (
+          <div key={i} className="sk-card" style={{ padding: 0, overflow: "hidden" }}>
+            <div className="sk" style={{ height: 170, borderRadius: 0 }} />
+            <div style={{ padding: 18 }}>
+              <Bar h={11} w="35%" mb={12} />
+              <Bar h={16} w="70%" />
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/** Tutorial público (detalle): header + reproductor 16:9 + texto. */
+export function PublicTutorialSkeleton() {
+  return (
+    <div style={{ ...WRAP, paddingTop: "clamp(40px, 8vw, 92px)", maxWidth: 860 }} aria-busy="true" aria-label="Cargando">
+      <Bar h={12} w={110} mb={16} />
+      <Bar h={40} w={300} r={12} mb={14} />
+      <Bar h={13} w={260} mb={28} />
+      <div className="sk" style={{ aspectRatio: "16 / 9", width: "100%", borderRadius: 16, marginBottom: 24 }} />
+      <Bar h={12} w="92%" mb={10} />
+      <Bar h={12} w="86%" mb={10} />
+      <Bar h={12} w="70%" />
+    </div>
+  );
+}

@@ -133,3 +133,36 @@ El efecto combinado: tocás el menú admin → no hay prefetch (R1) → arranca 
 - Confirmar que al tocar el menú **aparece el skeleton de inmediato**, no pantalla quieta.
 - Si hay deploy: comparar contra `next start` local para aislar el dev server.
 - Registrar números concretos. Sin números medidos, no está verificado.
+
+---
+
+## Fase 2 — Grupo 2 implementado y verificado (2026-06-23)
+
+> Aprobado por Valentín ("dale, segui con todo"). Grupo 1: N/A (los menús ya son `<Link>`; único pendiente menor `SessionNotice.tsx:75`). Grupo 3: N/A (singleton ya presente).
+
+**Implementado (cobertura completa — 22 `loading.tsx`):**
+- `src/components/shared/RouteSkeletons.tsx` — skeletons honestos (tree-agnósticos, `aria-busy`, basados en `.sk`): `AdminPageSkeleton`, `AdminListSkeleton`, `OrderDetailSkeleton` (hero + barra de etapas + timeline + sidebar), `DetailSkeleton`, `AdminFormSkeleton`, `CustomerDashboardSkeleton`, `CustomerTrackingSkeleton`, `PublicPageSkeleton`, `PublicTutorialSkeleton`.
+- **Admin (13):** `/admin` (fallback), `/admin/ordenes`, `/admin/ordenes/[id]` (forma real de OT), `/admin/ordenes/nueva` (wizard), `/admin/clientes`, `/admin/clientes/[id]`, `/admin/vehiculos`, `/admin/vehiculos/[id]`, `/admin/servicios`, `/admin/servicios/[id]`, `/admin/trabajos`, `/admin/tutoriales`, `/admin/auditoria`.
+- **Portal (4):** `/clientes/dashboard`, `/clientes/vehiculos/[id]` (cubre orden/historial anidados), `/clientes/tutoriales`, `/clientes/perfil`.
+- **Web pública (5):** `/servicios`, `/trabajos`, `/tutoriales`, `/tutoriales/[slug]` (reproductor), `/contacto`. **Home excluido a propósito:** un skeleton antes del hero le resta a la primera impresión de marketing, y la entrada coreografiada ya da feedback. (Reversible si se prefiere.)
+- `shared.css`: `.sk-two-col` (2 col desktop / 1 mobile) + `@media (prefers-reduced-motion: reduce){ .sk{ animation:none } }`.
+
+**Verificación adicional:** skeleton público confirmado en soft-nav (Inicio → Servicios), 21 bloques `.sk` con la silueta header + grilla de cards. `tsc --noEmit` exit 0 tras la cobertura completa. Sin errores de server.
+
+**Verificado en Chrome real (login admin@elgpro.com):**
+
+| Navegación | Tiempo a skeleton (primer feedback) | Tiempo a contenido | Antes (sin loading.tsx) |
+|---|---|---|---|
+| Menú → Órdenes (desktop, soft-nav) | **136 ms** | — | pantalla quieta |
+| Menú → OT detalle (desktop, soft-nav) | **93 ms** | 3324 ms* | **~3,3 s congelado** |
+| Menú → Vehículos (mobile, burger→overlay) | **99 ms** | — | pantalla quieta |
+
+*El tiempo a contenido incluye el compile del dev en la primera visita; en prod es mucho menor. El punto: el skeleton aparece a ~100ms **sea cual sea** la latencia del server.
+
+**Hallazgos de verificación:**
+- Confirmado **soft-navigation** (el eval sobrevivió a la navegación) → **AdminShell hidrata** en este entorno y el menú hace client-nav. Para la NAVEGACIÓN del admin, R1 no está bloqueando acá.
+- Skeleton con la forma correcta por ruta (13 bloques `.sk` en listas, 46 en OT detalle).
+- Contenido real renderiza bien en todas las rutas probadas (clientes, OT detalle, auditoría, vehículos). `tsc --noEmit` exit 0. Sin errores de server (solo warning SSL de pg, preexistente).
+- El skeleton no se logró congelar en screenshot (el dev carga el contenido más rápido que la latencia eval→captura); verificado por DOM (timing + estructura), más preciso que una foto.
+
+**Nota R1:** el login admin (form cliente con `signIn`) hidrató y funcionó; AdminShell hidrata. R1 sigue documentado como bloqueante para las **islas que importan server actions** (avanzar etapa, etc.) — eso es un track aparte y NO se tocó. La mejora de navegación no depende de R1.
