@@ -689,3 +689,22 @@
   }
   .rise, .drise{ opacity:1 !important; transform:none !important; }
 }
+
+/* ============================================================
+   ELG PRO — Intro de marca (solo home, una vez por sesión)
+   Cubre el viewport mientras carga; levanta para descubrir el hero.
+   Solo transform/opacity. prefers-reduced-motion lo saltea (script inline).
+   ============================================================ */
+.intro{ position:fixed; inset:0; z-index:200; background:var(--bg); display:flex; align-items:center; justify-content:center;
+  transition: opacity .65s var(--ease-out-strong), transform .65s var(--ease-out-strong); }
+.intro-inner{ display:flex; flex-direction:column; align-items:center; gap:22px; animation: introIn .85s var(--ease-out-strong) both; }
+.intro-line{ width:130px; height:2px; background:var(--primary); border-radius:2px; transform:scaleX(0); transform-origin:center;
+  animation: introLine .7s var(--ease-out-strong) .42s forwards; }
+@keyframes introIn{ from{ opacity:0; transform:translateY(14px); } to{ opacity:1; transform:none; } }
+@keyframes introLine{ to{ transform:scaleX(1); } }
+.intro-out{ opacity:0; transform:scale(1.03); pointer-events:none; }
+html.intro-skip .intro{ display:none !important; }
+@media (prefers-reduced-motion: reduce){
+  .intro-inner, .intro-line{ animation:none !important; }
+  .intro{ transition:none !important; }
+}

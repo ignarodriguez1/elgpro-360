@@ -1,5 +1,6 @@
 import { HomeDesktop } from "@/components/public/HomeDesktop";
 import { HomeMobile } from "@/components/public/HomeMobile";
+import { Intro } from "@/components/public/Intro";
 import { serviceVisual, type ServiceItem } from "@/lib/public-data";
 import { listServices } from "@/services/service.service";
 
@@ -21,6 +22,7 @@ export default async function HomePage() {
 
   return (
     <>
+      <Intro />
       <div className="only-desktop"><HomeDesktop featured={featured} /></div>
       <div className="only-mobile"><HomeMobile featured={featured} /></div>
     </>
