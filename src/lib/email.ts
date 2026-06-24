@@ -1,5 +1,5 @@
 import { Resend } from "resend";
-import { InviteEmail } from "@/../emails/InviteEmail";
+import { LoginCodeEmail } from "@/../emails/LoginCodeEmail";
 import { StatusUpdateEmail } from "@/../emails/StatusUpdateEmail";
 import { ReadyForPickupEmail } from "@/../emails/ReadyForPickupEmail";
 
@@ -17,20 +17,35 @@ function getResend(): Resend {
 }
 const from = process.env.EMAIL_FROM || "ELG Pro <noreply@elgpro.com>";
 
-export async function sendInviteEmail(data: {
-  to: string;
-  customerName: string;
-  inviteUrl: string;
-}) {
-  return getResend().emails.send({
-    from,
-    to: data.to,
-    subject: "Bienvenido a ELG Pro 360 — Activá tu cuenta",
-    react: InviteEmail({
-      customerName: data.customerName,
-      inviteUrl: data.inviteUrl,
-    }),
-  });
+/**
+ * El SDK de Resend NO lanza ante errores de la API (key inválida, dominio sin
+ * verificar, 4xx/5xx): resuelve con `{ data: null, error }`. Si se ignora ese
+ * `error`, un envío rechazado se confunde con uno exitoso ("parece que funciona,
+ * no funciona"). Este wrapper traduce ese `error` en una excepción real, para
+ * que los callers —que ya envuelven el envío en try/catch best-effort— puedan
+ * reflejar el fallo de verdad (emailSent=false, "notificado" no marcado, etc.).
+ */
+async function sendOrThrow(
+  pending: Promise<{ data: unknown; error: { message?: string; name?: string } | null }>
+) {
+  const { data, error } = await pending;
+  if (error) {
+    throw new Error(
+      `Resend no pudo enviar el email: ${error.message ?? error.name ?? "error desconocido"}`
+    );
+  }
+  return data;
+}
+
+export async function sendLoginCodeEmail(data: { to: string; code: string }) {
+  return sendOrThrow(
+    getResend().emails.send({
+      from,
+      to: data.to,
+      subject: `Tu código de acceso a ELG Pro: ${data.code}`,
+      react: LoginCodeEmail({ code: data.code }),
+    })
+  );
 }
 
 export async function sendStatusUpdateEmail(data: {
@@ -41,18 +56,20 @@ export async function sendStatusUpdateEmail(data: {
   updateDescription?: string | null;
   orderTitle: string;
 }) {
-  return getResend().emails.send({
-    from,
-    to: data.to,
-    subject: `Actualización: ${data.orderTitle}`,
-    react: StatusUpdateEmail({
-      customerName: data.customerName,
-      vehicleName: data.vehicleName,
-      updateTitle: data.updateTitle,
-      updateDescription: data.updateDescription,
-      orderTitle: data.orderTitle,
-    }),
-  });
+  return sendOrThrow(
+    getResend().emails.send({
+      from,
+      to: data.to,
+      subject: `Actualización: ${data.orderTitle}`,
+      react: StatusUpdateEmail({
+        customerName: data.customerName,
+        vehicleName: data.vehicleName,
+        updateTitle: data.updateTitle,
+        updateDescription: data.updateDescription,
+        orderTitle: data.orderTitle,
+      }),
+    })
+  );
 }
 
 export async function sendReadyForPickupEmail(data: {
@@ -61,14 +78,16 @@ export async function sendReadyForPickupEmail(data: {
   vehicleName: string;
   orderTitle: string;
 }) {
-  return getResend().emails.send({
-    from,
-    to: data.to,
-    subject: `Tu ${data.vehicleName} está listo para retirar`,
-    react: ReadyForPickupEmail({
-      customerName: data.customerName,
-      vehicleName: data.vehicleName,
-      orderTitle: data.orderTitle,
-    }),
-  });
+  return sendOrThrow(
+    getResend().emails.send({
+      from,
+      to: data.to,
+      subject: `Tu ${data.vehicleName} está listo para retirar`,
+      react: ReadyForPickupEmail({
+        customerName: data.customerName,
+        vehicleName: data.vehicleName,
+        orderTitle: data.orderTitle,
+      }),
+    })
+  );
 }

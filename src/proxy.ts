@@ -12,7 +12,6 @@ const publicPaths = [
   "/tutoriales",
   "/contacto",
   "/clientes/login",
-  "/clientes/activar",
   "/admin/login",
   "/api/auth",
 ];

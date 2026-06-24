@@ -10,7 +10,8 @@ import { Icon } from "@/components/shared/Icon";
 import { Photo } from "@/components/shared/Photo";
 import { NewStateForm } from "@/components/admin/NewStateForm";
 import { StageDurations } from "@/components/shared/StageDurations";
-import { STAGE_LABELS, stageIndex, STAGE_ORDER } from "@/lib/stages";
+import { stageIndex } from "@/lib/stages";
+import { computeServicePhases, currentPhaseLabel } from "@/lib/service-phases";
 import { fmtDayMonth } from "@/lib/format";
 
 export default async function AdminOrdenDetailPage({
@@ -28,13 +29,24 @@ export default async function AdminOrdenDetailPage({
     notFound();
   }
 
-  const idx = order.status === "LISTO" || order.status === "ENTREGADO"
-    ? STAGE_ORDER.length
-    : stageIndex(order.stage);
+  // Barra EMERGENTE: derivada de los steps reales (el admin ve TODOS), no del
+  // escalar order.stage. Misma fuente que el timeline vertical, plegada.
+  const phases = computeServicePhases(order.statusUpdates, {
+    orderStatus: order.status,
+    orderCreatedAt: order.createdAt,
+  });
 
   const listo = order.status === "LISTO" || order.status === "ENTREGADO";
+  // Solo para autocompletar el título en NewStateForm (NO es la barra): usa el
+  // cache legacy order.stage. order.stage ya no alimenta la barra.
+  const idx = stageIndex(order.stage);
   const fmt = fmtDayMonth;
   const currentStepTitle = order.statusUpdates.find((u) => u.isCurrent)?.title ?? null;
+  // Etapas del plan sin completar (no avanzadas). Alimenta: ocultar "Avanzar etapa"
+  // cuando no quedan, y el modal de confirmación de "Marcar listo".
+  const pendingStepTitles = order.statusUpdates
+    .filter((u) => !u.confirmed)
+    .map((u) => u.title);
 
   // Datos comerciales (presupuesto/pago): solo el dueño (ADMIN), no el operario.
   const isOwner = user.role === "ADMIN";
@@ -65,14 +77,14 @@ export default async function AdminOrdenDetailPage({
 
         <div className="tod-prog" data-section="stage-track">
           <div className="tod-prog-top">
-            <span className="tod-prog-now">{listo ? "Trabajo finalizado" : STAGE_LABELS[order.stage]}</span>
+            <span className="tod-prog-now">{listo ? "Trabajo finalizado" : (currentPhaseLabel(phases) ?? "En proceso")}</span>
             <span className="tod-prog-eta">{order.estimatedDeliveryDate ? fmt(order.estimatedDeliveryDate) : ""}</span>
           </div>
           <div className="tod-bar">
-            {STAGE_ORDER.map((s, i) => <span key={s} className={"tod-bar-seg" + (i < idx ? " done" : "") + (i === idx && !listo ? " current" : "")} />)}
+            {phases.map((p, i) => <span key={`${p.stage}-${i}`} className={"tod-bar-seg" + (p.state === "done" ? " done" : "") + (p.state === "current" ? " current" : "")} />)}
           </div>
           <div className="tod-bar-lbls">
-            {STAGE_ORDER.map((s, i) => <span key={s} className={"tod-bar-lbl" + (i <= idx || listo ? " on" : "")}>{STAGE_LABELS[s]}</span>)}
+            {phases.map((p, i) => <span key={`${p.stage}-${i}`} className={"tod-bar-lbl" + (p.state !== "pending" ? " on" : "")}>{p.label}</span>)}
           </div>
         </div>
 
@@ -107,7 +119,7 @@ export default async function AdminOrdenDetailPage({
             <div className="osb-row"><span className="osb-k">Patente</span><span className="osb-v mono">{order.vehicle.licensePlate}</span></div>
             {order.vehicle.year && <div className="osb-row"><span className="osb-k">Año</span><span className="osb-v mono">{order.vehicle.year}</span></div>}
             {order.vehicle.color && <div className="osb-row"><span className="osb-k">Color</span><span className="osb-v">{order.vehicle.color}</span></div>}
-            <div className="osb-row"><span className="osb-k">Etapa</span><span className="osb-v">{STAGE_LABELS[order.stage]}</span></div>
+            <div className="osb-row"><span className="osb-k">Etapa</span><span className="osb-v">{currentPhaseLabel(phases) ?? "—"}</span></div>
           </div>
 
           <StageDurations updates={order.statusUpdates} orderStatus={order.status} variant="admin" />
@@ -140,11 +152,13 @@ export default async function AdminOrdenDetailPage({
 
       {/* Dock de acciones fijo: siempre al alcance del pulgar, sin scrollear. */}
       <div className="tod-dock">
-        <span data-section="new-state-form" style={{ display: "contents" }}>
-          <NewStateForm orderId={order.id} currentStageIndex={idx} />
-        </span>
+        {order.status === "PROCESO" && (
+          <span data-section="new-state-form" style={{ display: "contents" }}>
+            <NewStateForm orderId={order.id} currentStageIndex={idx} />
+          </span>
+        )}
         <span data-section="lifecycle-actions" style={{ display: "contents" }}>
-          <OrderActions orderId={order.id} status={order.status} currentStepTitle={currentStepTitle} variant="mobile" />
+          <OrderActions orderId={order.id} status={order.status} currentStepTitle={currentStepTitle} pendingStepTitles={pendingStepTitles} variant="mobile" />
         </span>
       </div>
     </div>
@@ -179,16 +193,16 @@ export default async function AdminOrdenDetailPage({
           {/* Barra de etapas */}
           <div className="od2-stages" data-section="stage-track">
             <div className="od2-stages-track">
-              {STAGE_ORDER.map((s, i) => (
-                <React.Fragment key={s}>
+              {phases.map((p, i) => (
+                <React.Fragment key={`${p.stage}-${i}`}>
                   <div
-                    className={"od2-snode" + (i < idx ? " done" : "") + (i === idx && !listo ? " current" : "")}
+                    className={"od2-snode" + (p.state === "done" ? " done" : "") + (p.state === "current" ? " current" : "")}
                   >
                     <div className="od2-sdot">{i + 1}</div>
-                    <div className="od2-slbl">{STAGE_LABELS[s]}</div>
+                    <div className="od2-slbl">{p.label}</div>
                   </div>
-                  {i < STAGE_ORDER.length - 1 && (
-                    <div className={"od2-slink" + (i < idx ? " done" : "")} />
+                  {i < phases.length - 1 && (
+                    <div className={"od2-slink" + (p.state === "done" ? " done" : "")} />
                   )}
                 </React.Fragment>
               ))}
@@ -203,16 +217,18 @@ export default async function AdminOrdenDetailPage({
             <Timeline updates={order.statusUpdates} mode="admin" orderStatus={order.status} />
           </div>
 
-          <div data-section="new-state-form">
-            <NewStateForm orderId={order.id} currentStageIndex={idx} />
-          </div>
+          {order.status === "PROCESO" && (
+            <div data-section="new-state-form">
+              <NewStateForm orderId={order.id} currentStageIndex={idx} />
+            </div>
+          )}
         </div>
 
         {/* ── columna lateral ── */}
         <aside className="od2-side">
           {/* Acción principal */}
           <div data-section="lifecycle-actions">
-            <OrderActions orderId={order.id} status={order.status} currentStepTitle={currentStepTitle} />
+            <OrderActions orderId={order.id} status={order.status} currentStepTitle={currentStepTitle} pendingStepTitles={pendingStepTitles} />
           </div>
 
           {/* Cliente */}
@@ -255,7 +271,7 @@ export default async function AdminOrdenDetailPage({
             )}
             <div className="osb-row">
               <span className="osb-k">Etapa</span>
-              <span className="osb-v">{STAGE_LABELS[order.stage]}</span>
+              <span className="osb-v">{currentPhaseLabel(phases) ?? "—"}</span>
             </div>
             {isOwner && (
               <>

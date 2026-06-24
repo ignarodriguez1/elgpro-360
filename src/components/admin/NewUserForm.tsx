@@ -3,16 +3,17 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Icon } from "@/components/shared/Icon";
-import { createCustomerAction } from "@/app/admin/clientes/actions";
+import { createTeamUserAction } from "@/app/admin/usuarios/actions";
 
-export function NewCustomerForm() {
+type Role = "STAFF" | "ADMIN";
+
+export function NewUserForm() {
   const router = useRouter();
   const [pending, start] = useTransition();
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
-  const [notes, setNotes] = useState("");
+  const [role, setRole] = useState<Role>("STAFF");
   const [error, setError] = useState<string | null>(null);
   const [created, setCreated] = useState(false);
 
@@ -20,12 +21,7 @@ export function NewCustomerForm() {
     if (pending) return;
     setError(null);
     start(async () => {
-      const res = await createCustomerAction({
-        name,
-        email,
-        phone: phone || undefined,
-        notes: notes || undefined,
-      });
+      const res = await createTeamUserAction({ name, email, role });
       if (!res.ok) {
         setError(res.error);
         return;
@@ -33,8 +29,7 @@ export function NewCustomerForm() {
       setCreated(true);
       setName("");
       setEmail("");
-      setPhone("");
-      setNotes("");
+      setRole("STAFF");
       router.refresh();
     });
   }
@@ -46,11 +41,11 @@ export function NewCustomerForm() {
         style={{ padding: 18, marginBottom: 16, borderColor: "rgba(34,197,94,.3)" }}
       >
         <div className="afield-label" style={{ color: "var(--success)", marginBottom: 6 }}>
-          Cliente creado
+          Usuario creado
         </div>
         <p style={{ fontSize: 14, color: "var(--muted-light)" }}>
-          La cuenta quedó lista. El cliente entra al portal desde la pantalla de
-          login pidiendo un código con su email — sin contraseña ni activación.
+          Ya puede ingresar al panel desde la pantalla de login pidiendo un código
+          con su email — sin contraseña.
         </p>
         <button
           className="abtn abtn-ghost"
@@ -70,7 +65,7 @@ export function NewCustomerForm() {
   if (!open) {
     return (
       <button className="abtn abtn-primary" type="button" onClick={() => setOpen(true)}>
-        <Icon name="plus" size={17} /> Nuevo cliente
+        <Icon name="plus" size={17} /> Nuevo usuario
       </button>
     );
   }
@@ -78,7 +73,7 @@ export function NewCustomerForm() {
   return (
     <div className="apanel" style={{ padding: 20, marginBottom: 16 }}>
       <h3 style={{ fontFamily: "var(--display)", textTransform: "uppercase", marginBottom: 14 }}>
-        Nuevo cliente
+        Nuevo usuario
       </h3>
       <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
         <div className="afield">
@@ -87,20 +82,19 @@ export function NewCustomerForm() {
         </div>
         <div className="afield">
           <label className="afield-label">Email</label>
-          <input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="cliente@email.com" type="email" />
+          <input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="persona@elgpro.com" type="email" />
         </div>
         <div className="afield">
-          <label className="afield-label">Teléfono (opcional)</label>
-          <input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+54 ..." />
-        </div>
-        <div className="afield">
-          <label className="afield-label">Notas (opcional)</label>
-          <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} />
+          <label className="afield-label">Rol</label>
+          <select value={role} onChange={(e) => setRole(e.target.value as Role)}>
+            <option value="STAFF">Operario (STAFF) — acceso al taller</option>
+            <option value="ADMIN">Administrador (ADMIN) — acceso total</option>
+          </select>
         </div>
         {error && <p className="form-error-text">{error}</p>}
         <div style={{ display: "flex", gap: 10 }}>
           <button className="abtn abtn-primary" type="button" onClick={submit} disabled={pending}>
-            {pending ? "Creando..." : "Crear cliente"}
+            {pending ? "Creando..." : "Crear usuario"}
           </button>
           <button className="abtn abtn-ghost" type="button" onClick={() => setOpen(false)} disabled={pending}>
             Cancelar

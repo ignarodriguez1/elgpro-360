@@ -1,6 +1,6 @@
 "use server";
 
-import { auth } from "@/lib/auth";
+import { getCurrentUser } from "@/lib/session";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
@@ -8,8 +8,7 @@ import { logAudit, type AuditActor } from "@/services/audit.service";
 
 // Contenido web (portfolio) es solo del dueño (ADMIN), no del operario (STAFF).
 async function assertOwner(): Promise<AuditActor> {
-  const session = await auth();
-  const user = session?.user;
+  const user = await getCurrentUser();
   if (!user || user.role !== "ADMIN") {
     throw new Error("No autorizado");
   }

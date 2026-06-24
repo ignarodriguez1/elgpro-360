@@ -39,6 +39,7 @@ model User {
   email           String    @unique
   passwordHash    String?
   role            Role      @default(CUSTOMER)
+  active          Boolean   @default(true) // cuenta habilitada: false bloquea login y revalida sesiones activas
   emailVerified   DateTime?
   inviteToken     String?   @unique
   inviteExpiresAt DateTime?
@@ -48,6 +49,27 @@ model User {
   customerProfile CustomerProfile?
   statusUpdates   WorkOrderStatusUpdate[]
   auditLogs       AuditLog[]
+}
+
+/// Código de login de un solo uso (OTP passwordless). Atado a `email` SUELTO —no
+/// a User— a propósito: sostiene la no-enumeración (el pedido se comporta igual
+/// exista o no el usuario) y permite pre-crear cuentas sin credencial. El código
+/// viaja en claro SOLO por email; acá se guarda HASHEADO (bcrypt). `attempts`
+/// habilita el rate-limit de verificación (se quema el código al 5º fallo).
+/// `consumedAt` marca single-use: un código usado o invalidado deja de ser válido.
+model LoginCode {
+  id         String    @id @default(cuid())
+  email      String
+  codeHash   String
+  expiresAt  DateTime
+  attempts   Int       @default(0)
+  consumedAt DateTime?
+  requestIp  String? // IP del pedido (rate-limit por IP, req. 2). Nullable: dev/local sin proxy.
+  createdAt  DateTime  @default(now())
+
+  @@index([email])
+  @@index([email, createdAt]) // ventana de rate-limit por email (req. 2)
+  @@index([requestIp, createdAt]) // ventana de rate-limit por IP (req. 2)
 }
 
 model CustomerProfile {

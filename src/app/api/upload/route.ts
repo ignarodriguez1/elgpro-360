@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { getCurrentUser } from "@/lib/session";
 import { getStorageProvider } from "@/services/storage";
 
 const MAX_BYTES = 10 * 1024 * 1024; // 10MB
@@ -10,11 +10,11 @@ const MAX_BYTES = 10 * 1024 * 1024; // 10MB
  * es uniforme para local/Cloudinary/GCS. Devuelve { url, thumbnailUrl, ref }.
  */
 export async function POST(request: Request) {
-  const session = await auth();
-  if (!session?.user) {
+  const user = await getCurrentUser();
+  if (!user) {
     return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   }
-  if (session.user.role !== "ADMIN" && session.user.role !== "STAFF") {
+  if (user.role !== "ADMIN" && user.role !== "STAFF") {
     return NextResponse.json({ error: "Sin permisos" }, { status: 403 });
   }
 

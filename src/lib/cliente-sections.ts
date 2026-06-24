@@ -55,21 +55,8 @@ export const CLIENTE_SCREENS: Record<string, ClienteScreenDef> = {
     sections: [
       { id: "hero-bg", label: "Fondo hero + veil", visibility: "both" },
       { id: "logo", label: "Logo", visibility: "both" },
-      { id: "form", label: "Card de login (email/password + error)", visibility: "both" },
-      { id: "aux-links", label: "Links activar / olvidé contraseña", visibility: "both" },
-    ],
-  },
-
-  activar: {
-    route: "/clientes/activar",
-    title: "Activar cuenta",
-    layout: "dual",
-    sections: [
-      { id: "state-invalid", label: "Estado token inválido", visibility: "both" },
-      { id: "state-success", label: "Estado cuenta activada + ir al login", visibility: "both" },
-      { id: "form", label: "Form contraseña + confirmación", visibility: "both" },
-      // hoy falta la foto en desktop — se cumple en Fase 4
-      { id: "hero-bg", label: "Fondo hero con foto", visibility: "both" },
+      { id: "form", label: "Card de login OTP (email → código de 6 dígitos + error)", visibility: "both" },
+      { id: "aux-links", label: "Link cambiar email / reenviar código (paso código)", visibility: "both" },
     ],
   },
 

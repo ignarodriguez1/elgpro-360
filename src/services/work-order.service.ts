@@ -408,10 +408,21 @@ export async function markAsReady(workOrderId: string, actor: AuditActor) {
       select: { sortOrder: true },
     });
     const nextOrder = (last?.sortOrder ?? -1) + 1;
+    const closedAt = new Date();
 
     await tx.workOrderStatusUpdate.updateMany({
       where: { workOrderId },
       data: { isCurrent: false },
+    });
+
+    // Cierre = completar el plan. Las etapas que no se avanzaron (confirmed:false)
+    // se registran como alcanzadas con la fecha de cierre. Todas comparten el mismo
+    // timestamp, así que el cierre en lote queda "delatado" (no finge avances
+    // escalonados que nunca ocurrieron). Decisión de Valentín: si las hicieron pero
+    // se olvidaron de avanzar, el timeline queda completo y honesto a la vez.
+    await tx.workOrderStatusUpdate.updateMany({
+      where: { workOrderId, confirmed: false },
+      data: { confirmed: true, reachedAt: closedAt },
     });
 
     const updated = await tx.workOrder.update({

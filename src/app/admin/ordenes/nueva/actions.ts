@@ -1,7 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
+import { getCurrentUser } from "@/lib/session";
 import {
   createWorkOrder,
   buildInitialTimeline,
@@ -39,8 +39,8 @@ export async function createOrderAction(data: {
   budgetAmount?: number;
   photos?: { url: string; publicId?: string }[]; // fotos de ingreso ya subidas a Cloudinary (UploadZone)
 }): Promise<{ error: string } | never> {
-  const session = await auth();
-  if (!session?.user || !["ADMIN", "STAFF"].includes(session.user.role)) {
+  const user = await getCurrentUser();
+  if (!user || !["ADMIN", "STAFF"].includes(user.role)) {
     return { error: "Sin permisos" };
   }
 
@@ -59,7 +59,7 @@ export async function createOrderAction(data: {
       internalNotes: parsed.data.internalNotes,
       estimatedDeliveryDate: parsed.data.estimatedDeliveryDate,
       budgetAmount: parsed.data.budgetAmount,
-      actor: { id: session.user.id, email: session.user.email },
+      actor: { id: user.id, email: user.email },
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Error al crear la orden";

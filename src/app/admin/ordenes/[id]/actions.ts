@@ -1,6 +1,6 @@
 "use server";
 
-import { auth } from "@/lib/auth";
+import { getCurrentUser } from "@/lib/session";
 import { revalidatePath } from "next/cache";
 import { createStatusUpdate } from "@/services/status-update.service";
 import {
@@ -20,8 +20,7 @@ import type { OrderStage } from "@/generated/prisma/client";
 
 /** Devuelve el actor (id + email) si la sesión es ADMIN/STAFF; si no, null. */
 async function getActor(): Promise<AuditActor | null> {
-  const session = await auth();
-  const user = session?.user;
+  const user = await getCurrentUser();
   if (!user || (user.role !== "ADMIN" && user.role !== "STAFF")) return null;
   return { id: user.id, email: user.email };
 }

@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { requireCustomer } from "@/lib/session";
 import { getWorkOrderById } from "@/services/work-order.service";
 import { getVehicleById } from "@/services/vehicle.service";
-import { stageIndex, STAGE_ORDER, STAGE_LABELS } from "@/lib/stages";
+import { computeServicePhases, currentPhaseLabel } from "@/lib/service-phases";
 import { Photo } from "@/components/shared/Photo";
 import { Icon } from "@/components/shared/Icon";
 import { StageBar } from "@/components/shared/StageBar";
@@ -48,8 +48,19 @@ export default async function VehiculoClientePage({
   }
   const isReady = order?.status === "LISTO";
   const budgetTotal = order?.budgetAmount != null ? `$${Number(order.budgetAmount).toLocaleString("es-AR")}` : null;
-  const idx = order ? (isReady ? STAGE_ORDER.length : stageIndex(order.stage)) : 0;
-  const stageName = order?.stage ? STAGE_LABELS[order.stage] : null;
+  // Barra EMERGENTE: derivada de los steps reales (mismo set que el vertical),
+  // no del escalar `order.stage`. SSR (no cableada al OrderLiveProvider — eso es
+  // enhancement gateado por R1). `order.statusUpdates` ya viene filtrado por
+  // visibilidad para el cliente en getWorkOrderById.
+  const phases = order
+    ? computeServicePhases(order.statusUpdates, {
+        orderStatus: order.status,
+        orderCreatedAt: order.createdAt,
+      })
+    : [];
+  // Texto de "etapa actual" derivado de los MISMOS phases que la barra (no de
+  // order.stage) → header y barra no pueden contradecirse. null → "En proceso".
+  const stageName = currentPhaseLabel(phases);
   const eta = order?.estimatedDeliveryDate ? fmtD(order.estimatedDeliveryDate) : null;
 
   // Semilla del seam (proyección segura: sin createdBy ni notas internas).
@@ -80,7 +91,7 @@ export default async function VehiculoClientePage({
                   <div><div className="od-stage-now">{stageName ?? "En proceso"}</div><div style={{ marginTop: 7 }}><InProgressBadge /></div></div>
                   {eta && <div className="od-stage-eta"><div className="od-stage-eta-n">{eta}</div><div className="od-stage-eta-l">Entrega est.</div></div>}
                 </div>
-                <StageBar stageIndex={idx} />
+                <StageBar phases={phases} />
               </div>
             )}
             <div className="tl-head"><ConnectionIndicator /><h3>Seguimiento del trabajo</h3></div>
@@ -171,7 +182,7 @@ export default async function VehiculoClientePage({
                         <div><div className="pwod-stage-now">{stageName ?? "En proceso"}</div><div style={{ marginTop: 8 }}><InProgressBadge /></div></div>
                         {eta && <div className="pwod-stage-eta"><div className="pwod-stage-eta-n">{eta}</div><div className="pwod-stage-eta-l">Entrega estimada</div></div>}
                       </div>
-                      <StageBar stageIndex={idx} variant="desktop" />
+                      <StageBar phases={phases} variant="desktop" />
                     </div>
                   )}
 

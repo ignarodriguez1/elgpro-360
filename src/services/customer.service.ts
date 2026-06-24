@@ -1,7 +1,5 @@
 import { prisma } from "@/lib/prisma";
 import { Prisma } from "@/generated/prisma/client";
-import { hash } from "bcryptjs";
-import { randomBytes } from "crypto";
 import { logAudit, type AuditActor } from "./audit.service";
 
 function isKnownError(e: unknown, code: string): boolean {
@@ -17,9 +15,9 @@ export async function createCustomer(
   },
   actor?: AuditActor
 ) {
-  const inviteToken = randomBytes(32).toString("hex");
-  const inviteExpiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
-
+  // Passwordless: el cliente se crea SIN credencial. La primera vez que quiera
+  // entrar al portal, pide un código por email igual que cualquier login — no hay
+  // invite ni set-password inicial.
   try {
     const user = await prisma.$transaction(async (tx) => {
       const created = await tx.user.create({
@@ -27,8 +25,6 @@ export async function createCustomer(
           name: data.name,
           email: data.email,
           role: "CUSTOMER",
-          inviteToken,
-          inviteExpiresAt,
           customerProfile: {
             create: {
               phone: data.phone,
@@ -53,49 +49,13 @@ export async function createCustomer(
       return created;
     });
 
-    return { user, inviteToken };
+    return user;
   } catch (e) {
     if (isKnownError(e, "P2002")) {
       throw new Error("Ya existe un usuario con ese email.");
     }
     throw e;
   }
-}
-
-export async function activateCustomer(token: string, password: string) {
-  const passwordHash = await hash(password, 12);
-
-  return prisma.$transaction(async (tx) => {
-    const user = await tx.user.findUnique({ where: { inviteToken: token } });
-
-    if (!user) throw new Error("Token inválido");
-    if (user.inviteExpiresAt && user.inviteExpiresAt < new Date()) {
-      throw new Error("Token expirado");
-    }
-
-    const updated = await tx.user.update({
-      where: { id: user.id },
-      data: {
-        passwordHash,
-        emailVerified: new Date(),
-        inviteToken: null,
-        inviteExpiresAt: null,
-      },
-    });
-
-    await logAudit(
-      {
-        actor: { id: user.id, email: user.email },
-        action: "CUSTOMER_UPDATED",
-        entity: "Customer",
-        entityId: user.id,
-        summary: "Cuenta de cliente activada",
-      },
-      tx
-    );
-
-    return updated;
-  });
 }
 
 export async function listCustomers(search?: string) {

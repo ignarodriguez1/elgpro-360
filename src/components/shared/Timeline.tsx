@@ -134,13 +134,15 @@ export function Timeline({ updates, mode, orderStatus, variant = "feed", liveSlo
             const arrived = arrivedIds?.includes(u.id);
             // `live`: el paso actual de una orden EN PROCESO late (no en LISTO/ENTREGADO).
             const live = u.isCurrent && orderStatus === "PROCESO";
+            // Completado: alcanzado y ya no es el paso actual → se marca con ✓ (no gris).
+            const done = u.confirmed === true && !u.isCurrent;
             return (
               <div
                 key={u.id}
-                className={c.row + (u.isCurrent ? " current" : "") + (ready ? " ready" : "") + (arrived ? " arrived" : "") + (live ? " live" : "")}
+                className={c.row + (u.isCurrent ? " current" : "") + (done ? " done" : "") + (ready ? " ready" : "") + (arrived ? " arrived" : "") + (live ? " live" : "")}
               >
                 <div className={c.rail}>
-                  <div className={c.dot}><i /></div>
+                  <div className={c.dot}>{done ? <Icon name="check" size={11} stroke={2.6} /> : <i />}</div>
                   <div className={c.line} />
                 </div>
                 <div className={c.body}>
@@ -170,6 +172,8 @@ export function Timeline({ updates, mode, orderStatus, variant = "feed", liveSlo
                       <span className={c.date}>{fmtDate(u.createdAt)} · {fmtTime(u.createdAt)}</span>
                     ) : u.confirmed === false ? (
                       <span className={c.date}>Pendiente</span>
+                    ) : done ? (
+                      <span className={c.date}>Completado</span>
                     ) : null}
                   </div>
                   {u.description && <p className={c.desc}>{u.description}</p>}
@@ -224,13 +228,14 @@ export function Timeline({ updates, mode, orderStatus, variant = "feed", liveSlo
     <div className="atl">
       {updates.map((u, i) => {
         const internal = !u.visibleToCustomer;
+        const done = u.confirmed === true && !u.isCurrent;
         return (
           <div
             key={u.id}
-            className={"atl-row" + (u.isCurrent ? " current" : "") + (internal ? " internal" : "")}
+            className={"atl-row" + (u.isCurrent ? " current" : "") + (done ? " done" : "") + (internal ? " internal" : "")}
           >
             <div className="atl-rail">
-              <div className="atl-dot"><i /></div>
+              <div className="atl-dot">{done ? <Icon name="check" size={12} stroke={2.6} /> : <i />}</div>
               <div className="atl-line" />
             </div>
             <div className="atl-body">
@@ -243,6 +248,8 @@ export function Timeline({ updates, mode, orderStatus, variant = "feed", liveSlo
                     <span className="atl-date">{fmtDate(u.createdAt)} · {fmtTime(u.createdAt)}</span>
                   ) : u.confirmed === false ? (
                     <span className="atl-date">Pendiente</span>
+                  ) : done ? (
+                    <span className="atl-date">Completado</span>
                   ) : null}
                 </div>
                 <div className="atl-tags">

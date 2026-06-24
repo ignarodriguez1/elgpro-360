@@ -40,11 +40,15 @@ export function OrderActions({
   orderId,
   status,
   currentStepTitle,
+  pendingStepTitles = [],
   variant = "desktop",
 }: {
   orderId: string;
   status: WorkOrderStatus;
   currentStepTitle?: string | null;
+  /** Etapas del plan sin completar. Si hay, "Avanzar etapa" se muestra y "Marcar
+   *  listo" pide confirmación; si está vacío, no hay nada que avanzar. */
+  pendingStepTitles?: string[];
   variant?: "desktop" | "mobile";
 }) {
   const [pending, start] = useTransition();
@@ -54,6 +58,11 @@ export function OrderActions({
   const [gateOpen, setGateOpen] = useState(false);
   const [photo, setPhoto] = useState<{ url: string; publicId?: string } | null>(null);
   const [reason, setReason] = useState("");
+
+  // Estado del modal de confirmación de "Marcar listo" con etapas pendientes.
+  const [readyConfirmOpen, setReadyConfirmOpen] = useState(false);
+  const pendingCount = pendingStepTitles.length;
+  const hasNextStep = pendingCount > 0;
 
   function run(fn: () => Promise<ActionResult>) {
     if (pending) return;
@@ -88,6 +97,30 @@ export function OrderActions({
 
   const ready = () => run(() => markReadyAction(orderId));
   const deliver = () => run(() => markDeliveredAction(orderId));
+
+  // Click en "Marcar listo": si quedan etapas sin completar, confirma primero
+  // (se registrarán como completadas); si no, cierra directo.
+  function onReadyClick() {
+    if (pending) return;
+    if (hasNextStep) {
+      setError(null);
+      setReadyConfirmOpen(true);
+    } else {
+      ready();
+    }
+  }
+  function confirmReady() {
+    if (pending) return;
+    setError(null);
+    start(async () => {
+      const res = await markReadyAction(orderId);
+      if (!res.ok) {
+        setError(res.error);
+        return;
+      }
+      setReadyConfirmOpen(false);
+    });
+  }
 
   const gateModal = gateOpen ? (
     <div style={veilStyle} onClick={() => !pending && setGateOpen(false)}>
@@ -150,6 +183,37 @@ export function OrderActions({
     </div>
   ) : null;
 
+  const readyModal = readyConfirmOpen ? (
+    <div style={veilStyle} onClick={() => !pending && setReadyConfirmOpen(false)}>
+      <div style={dialogStyle} onClick={(e) => e.stopPropagation()}>
+        <div style={{ fontWeight: 700, fontSize: 16, color: "var(--text)" }}>Marcar listo para retirar</div>
+        <p style={{ fontSize: 13, color: "var(--muted)", margin: "6px 0 10px" }}>
+          {pendingCount === 1 ? "Queda 1 etapa sin avanzar." : `Quedan ${pendingCount} etapas sin avanzar.`} Al marcar listo se registran como completadas con la fecha de ahora:
+        </p>
+        <ul style={{ margin: "0 0 12px", paddingLeft: 18, color: "var(--text)", fontSize: 13, display: "flex", flexDirection: "column", gap: 4 }}>
+          {pendingStepTitles.map((t, i) => <li key={i}>{t}</li>)}
+        </ul>
+
+        {error && <p style={{ color: "var(--primary)", fontSize: 13, marginBottom: 8 }}>{error}</p>}
+
+        <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+          <button className="abtn abtn-primary" type="button" disabled={pending} onClick={confirmReady}>
+            <Icon name="check" size={16} /> Marcar listo igual
+          </button>
+          <button
+            className="abtn abtn-ghost"
+            type="button"
+            disabled={pending}
+            onClick={() => setReadyConfirmOpen(false)}
+            style={{ marginLeft: "auto" }}
+          >
+            Cancelar
+          </button>
+        </div>
+      </div>
+    </div>
+  ) : null;
+
   if (variant === "mobile") {
     if (status === "ENTREGADO") {
       return (
@@ -161,7 +225,7 @@ export function OrderActions({
     return (
       <>
         <div className="tod-actions">
-          {status === "PROCESO" && (
+          {status === "PROCESO" && hasNextStep && (
             <button
               className="tbtn tbtn-primary"
               type="button"
@@ -177,10 +241,12 @@ export function OrderActions({
               className="tbtn tbtn-success"
               type="button"
               title="Marcar listo"
+              style={!hasNextStep ? { flex: 1 } : undefined}
               disabled={pending}
-              onClick={ready}
+              onClick={onReadyClick}
             >
               <Icon name="check" size={22} stroke={2.5} />
+              {!hasNextStep && <span style={{ marginLeft: 6 }}>Marcar listo</span>}
             </button>
           )}
           {status === "LISTO" && (
@@ -201,6 +267,7 @@ export function OrderActions({
           </p>
         )}
         {gateModal}
+        {readyModal}
       </>
     );
   }
@@ -217,7 +284,7 @@ export function OrderActions({
   return (
     <div>
       <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-        {status === "PROCESO" && (
+        {status === "PROCESO" && hasNextStep && (
           <button
             className="abtn abtn-ghost"
             type="button"
@@ -232,7 +299,7 @@ export function OrderActions({
             className="abtn abtn-primary"
             type="button"
             disabled={pending}
-            onClick={ready}
+            onClick={onReadyClick}
           >
             <Icon name="check" size={16} /> Marcar listo para retirar
           </button>
@@ -252,6 +319,7 @@ export function OrderActions({
         <p style={{ color: "var(--primary)", fontSize: 13, marginTop: 8 }}>{error}</p>
       )}
       {gateModal}
+      {readyModal}
     </div>
   );
 }

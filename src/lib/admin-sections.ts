@@ -152,6 +152,19 @@ export const ADMIN_SCREENS: Record<string, ScreenDef> = {
     ],
   },
 
+  usuarios: {
+    route: "/admin/usuarios",
+    title: "Equipo",
+    layout: "dual",
+    // Solo el dueño (ADMIN) gestiona el equipo interno (alta de operarios/admins).
+    nav: { label: "Equipo", icon: "users", section: "Taller", roles: ["ADMIN"] },
+    sections: [
+      { id: "header", label: "Cabecera + contador", visibility: "both" },
+      { id: "new-user-form", label: "Alta de usuario (rol STAFF/ADMIN)", visibility: "both" },
+      { id: "list", label: "Listado de equipo (tabla ↔ cards)", visibility: "both" },
+    ],
+  },
+
   clienteDetalle: {
     route: "/admin/clientes/[id]",
     title: "Detalle de cliente",

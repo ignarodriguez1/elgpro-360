@@ -1,27 +1,18 @@
 "use server";
 
-import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
+import { getCurrentUser } from "@/lib/session";
 import { revalidatePath } from "next/cache";
 import { createCustomer, updateCustomer } from "@/services/customer.service";
-import { sendInviteEmail } from "@/lib/email";
 import { createCustomerSchema, updateCustomerSchema } from "@/lib/validations";
 import { type ActionResult, toActionError } from "@/lib/action-result";
 import type { AuditActor } from "@/services/audit.service";
 
 async function getActor(): Promise<AuditActor | null> {
-  const session = await auth();
-  const user = session?.user;
+  // getCurrentUser revalida `active`: un usuario desactivado no opera, aunque su
+  // JWT siga vigente.
+  const user = await getCurrentUser();
   if (!user || (user.role !== "ADMIN" && user.role !== "STAFF")) return null;
   return { id: user.id, email: user.email };
-}
-
-/** Construye el origin actual a partir de los headers de la request. */
-async function currentOrigin(): Promise<string> {
-  const h = await headers();
-  const host = h.get("host") ?? "localhost:3000";
-  const proto = h.get("x-forwarded-proto") ?? (host.startsWith("localhost") ? "http" : "https");
-  return `${proto}://${host}`;
 }
 
 export async function createCustomerAction(data: {
@@ -29,7 +20,7 @@ export async function createCustomerAction(data: {
   email: string;
   phone?: string;
   notes?: string;
-}): Promise<ActionResult<{ inviteUrl: string; emailSent: boolean }>> {
+}): Promise<ActionResult> {
   const actor = await getActor();
   if (!actor) return { ok: false, error: "Sin permisos" };
 
@@ -39,21 +30,11 @@ export async function createCustomerAction(data: {
   }
 
   try {
-    const { user, inviteToken } = await createCustomer(parsed.data, actor);
-    const inviteUrl = `${await currentOrigin()}/clientes/activar?token=${inviteToken}`;
-
-    // Envío del invite: best-effort. Si Resend no está configurado, el admin
-    // comparte el inviteUrl manualmente (se devuelve en data).
-    let emailSent = false;
-    try {
-      await sendInviteEmail({ to: user.email, customerName: user.name, inviteUrl });
-      emailSent = true;
-    } catch {
-      // Email no crítico: el inviteUrl sirve como fallback.
-    }
-
+    // Passwordless: se crea el cliente sin credencial. Entra al portal pidiendo
+    // un código con su email — no hay invite ni link de activación que enviar.
+    await createCustomer(parsed.data, actor);
     revalidatePath("/admin/clientes");
-    return { ok: true, data: { inviteUrl, emailSent } };
+    return { ok: true };
   } catch (err) {
     return toActionError(err, "No se pudo crear el cliente");
   }

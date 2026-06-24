@@ -68,7 +68,8 @@ export function RevealRoot({ children }: { children: React.ReactNode }) {
     // Si el intro de marca está tapando el viewport (primer ingreso al home), NO
     // revelar lo in-view todavía: que el hero entre coreografiado cuando el telón
     // levante (evento "elg:intro-done"). Lo de abajo del fold se observa igual.
-    const introActive = document.documentElement.classList.contains("intro-active");
+    const introActive =
+      typeof window !== "undefined" && (window as { __elgIntro?: number }).__elgIntro === 1;
     let onIntroDone: (() => void) | null = null;
     let introTimer = 0;
     if (introActive) {

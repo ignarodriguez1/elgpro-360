@@ -27,6 +27,14 @@ export const updateCustomerSchema = z.object({
   notes: z.string().optional(),
 });
 
+// Alta de miembro del equipo interno. Solo STAFF o ADMIN: los clientes se dan de
+// alta por su propio flujo (createCustomerSchema), nunca desde acá.
+export const createTeamUserSchema = z.object({
+  name: z.string().min(2, "El nombre debe tener al menos 2 caracteres"),
+  email: z.email("Email inválido"),
+  role: z.enum(["STAFF", "ADMIN"]),
+});
+
 export const vehicleSchema = z.object({
   customerId: z.string().min(1, "Cliente requerido"),
   licensePlate: z.string().min(1, "Patente requerida"),

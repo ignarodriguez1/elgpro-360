@@ -163,6 +163,9 @@
 .pwtl-dot i{ width:7px; height:7px; border-radius:50%; background:var(--muted-dim); }
 .pwtl-row.current .pwtl-dot{ border-color:var(--primary); background:var(--primary); box-shadow:0 0 0 5px rgba(196,30,42,.16); }
 .pwtl-row.current .pwtl-dot i{ background:#fff; }
+/* completado: alcanzado y ya no es el actual → ✓ rojo + línea roja (camino recorrido) */
+.pwtl-row.done .pwtl-dot{ border-color:var(--primary); background:var(--primary); color:#fff; }
+.pwtl-row.done .pwtl-line{ background:var(--primary); }
 /* el paso ACTUAL (orden EN PROCESO) late, sincronizado con la etapa y el badge */
 .pwtl-row.live .pwtl-dot{ animation:tl-beat-d 2.4s ease-in-out infinite; }
 @keyframes tl-beat-d{ 0%{ box-shadow:0 0 0 0 rgba(196,30,42,.55); } 55%{ box-shadow:0 0 0 9px rgba(196,30,42,0); } 100%{ box-shadow:0 0 0 0 rgba(196,30,42,0); } }

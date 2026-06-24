@@ -5,6 +5,7 @@ import { getCustomerById } from "@/services/customer.service";
 import { Icon } from "@/components/shared/Icon";
 import { EditCustomerForm } from "@/components/admin/EditCustomerForm";
 import { NewVehicleForm } from "@/components/admin/NewVehicleForm";
+import { UserActiveToggle } from "@/components/admin/UserActiveToggle";
 
 export default async function AdminClienteDetailPage({
   params,
@@ -45,6 +46,24 @@ export default async function AdminClienteDetailPage({
           }}
         />
       </div>
+
+      {/* Estado de la cuenta — desactivar/activar es solo del dueño (ADMIN). */}
+      {user.role === "ADMIN" && (
+        <div
+          className="apanel"
+          style={{ padding: 18, marginTop: 16, display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12 }}
+        >
+          <div>
+            <div className="afield-label" style={{ marginBottom: 4 }}>Estado de la cuenta</div>
+            <p style={{ fontSize: 14, margin: 0, color: customer.active ? "var(--success)" : "#ff5d68" }}>
+              {customer.active
+                ? "Activa — puede ingresar al portal pidiendo un código."
+                : "Desactivada — no puede ingresar; sus sesiones activas se cortan."}
+            </p>
+          </div>
+          <UserActiveToggle userId={customer.id} active={customer.active} />
+        </div>
+      )}
 
       <div className="apanel" style={{ padding: 18, marginTop: 16 }} data-section="vehicles-list">
         <h3 style={{ fontFamily: "var(--display)", textTransform: "uppercase", marginBottom: 12 }}>Vehículos</h3>

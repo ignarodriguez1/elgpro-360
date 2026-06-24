@@ -5,16 +5,14 @@ import {
   Container,
   Section,
   Text,
-  Button,
   Hr,
 } from "@react-email/components";
 
-interface InviteEmailProps {
-  customerName: string;
-  inviteUrl: string;
+interface LoginCodeEmailProps {
+  code: string;
 }
 
-export function InviteEmail({ customerName, inviteUrl }: InviteEmailProps) {
+export function LoginCodeEmail({ code }: LoginCodeEmailProps) {
   return (
     <Html>
       <Head />
@@ -23,19 +21,17 @@ export function InviteEmail({ customerName, inviteUrl }: InviteEmailProps) {
           <Text style={logoStyle}>ELG PRO</Text>
 
           <Section style={contentStyle}>
-            <Text style={headingStyle}>Bienvenido, {customerName}</Text>
+            <Text style={headingStyle}>Tu código de acceso</Text>
             <Text style={textStyle}>
-              Te invitamos a activar tu cuenta en ELG Pro 360, donde vas a poder
-              seguir el estado de los trabajos en tu vehículo en tiempo real.
+              Usá este código para ingresar a ELG Pro 360. Tené en cuenta que
+              vence en 10 minutos.
             </Text>
 
-            <Button style={buttonStyle} href={inviteUrl}>
-              Activar mi cuenta
-            </Button>
+            <Text style={codeStyle}>{code}</Text>
 
             <Text style={smallTextStyle}>
-              Este enlace expira en 7 días. Si no solicitaste esta cuenta,
-              ignorá este email.
+              Si no pediste este código, ignorá este email. Nunca lo compartas con
+              nadie.
             </Text>
           </Section>
 
@@ -55,7 +51,19 @@ const logoStyle = { color: "#C41E2A", fontSize: "28px", fontWeight: "800" as con
 const contentStyle = { backgroundColor: "#1A1A1A", borderRadius: "8px", padding: "32px", marginTop: "24px" };
 const headingStyle = { color: "#F5F5F5", fontSize: "22px", fontWeight: "600" as const };
 const textStyle = { color: "#B0B0B0", fontSize: "15px", lineHeight: "1.6" };
-const buttonStyle = { backgroundColor: "#C41E2A", color: "#FFFFFF", padding: "12px 32px", borderRadius: "6px", fontSize: "15px", fontWeight: "600" as const, textDecoration: "none", display: "inline-block", marginTop: "16px" };
+const codeStyle = {
+  color: "#FFFFFF",
+  backgroundColor: "#0C0C0C",
+  border: "1px solid #C41E2A",
+  borderRadius: "8px",
+  padding: "16px",
+  margin: "24px 0",
+  fontSize: "34px",
+  fontWeight: "800" as const,
+  letterSpacing: "10px",
+  textAlign: "center" as const,
+  fontFamily: "monospace",
+};
 const smallTextStyle = { color: "#6B7280", fontSize: "13px", marginTop: "20px" };
 const hrStyle = { borderColor: "#374151", marginTop: "32px" };
 const footerStyle = { color: "#6B7280", fontSize: "12px", textAlign: "center" as const };

@@ -42,7 +42,11 @@
 
 /* ======================= MAIN ======================= */
 .amain{ flex:1; display:flex; flex-direction:column; min-width:0; }
-.atop{ height:72px; flex-shrink:0; display:flex; align-items:center; justify-content:space-between; padding:0 28px; border-bottom:1px solid var(--border); background:rgba(15,15,15,.7); backdrop-filter:blur(10px); }
+/* position+z-index: backdrop-filter ya crea un stacking context; sin z-index propio
+   quedaba en z-auto y el contenido (.acontent, posterior en el DOM) tapaba el dropdown
+   del UserMenu (.umenu-pop z-80 queda atrapado acá dentro). z-50 lo deja sobre el
+   contenido pero debajo de lightboxes (z-80) y modales (z-200). */
+.atop{ position:relative; z-index:50; height:72px; flex-shrink:0; display:flex; align-items:center; justify-content:space-between; padding:0 28px; border-bottom:1px solid var(--border); background:rgba(15,15,15,.7); backdrop-filter:blur(10px); }
 .atop-l{ display:flex; align-items:center; gap:14px; min-width:0; }
 .atop-title{ font-family:var(--display); font-weight:600; text-transform:uppercase; font-size:22px; letter-spacing:.01em; }
 .atop-crumb{ display:flex; align-items:center; gap:8px; font-size:13px; color:var(--muted); }
@@ -158,6 +162,9 @@
 .atl-row.current .atl-dot i{ background:#fff; }
 .atl-row.internal .atl-dot{ border-color:var(--warning); }
 .atl-row.internal .atl-dot i{ background:var(--warning); }
+/* completado: alcanzado y ya no es el actual → ✓ rojo + línea roja (camino recorrido) */
+.atl-row.done .atl-dot{ border-color:var(--primary); background:var(--primary); color:#fff; }
+.atl-row.done .atl-line{ background:var(--primary); }
 .atl-line{ flex:1; width:2px; background:var(--border); margin:5px 0; min-height:16px; }
 .atl-row:last-child .atl-line{ display:none; }
 

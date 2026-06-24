@@ -9,7 +9,10 @@ const OUT_MS = 650; // duración del lift de salida (coincide con la transición
 
 // Script inline: corre ANTES del paint. Si la intro ya se vio esta sesión, o hay
 // prefers-reduced-motion, marca <html> para que el CSS oculte el overlay sin flash.
-const PRE = `try{var d=document.documentElement;if(sessionStorage.getItem('${KEY}')||matchMedia('(prefers-reduced-motion: reduce)').matches){d.classList.add('intro-skip')}else{d.classList.add('intro-active')}}catch(e){}`;
+// Si se va a saltar → marca .intro-skip (CSS lo oculta sin flash). Si va a correr
+// → setea window.__elgIntro (flag JS robusto que React no resetea al hidratar,
+// a diferencia de una clase en <html>). RevealRoot lo lee para retener el hero.
+const PRE = `try{var d=document.documentElement;if(sessionStorage.getItem('${KEY}')||matchMedia('(prefers-reduced-motion: reduce)').matches){d.classList.add('intro-skip')}else{window.__elgIntro=1}}catch(e){}`;
 
 /**
  * Intro de marca: solo en el home, una vez por sesión.
@@ -53,7 +56,7 @@ export function Intro() {
         sessionStorage.setItem(KEY, "1");
       } catch {}
       // El telón empieza a levantar → avisar al hero que entre coreografiado.
-      document.documentElement.classList.remove("intro-active");
+      (window as { __elgIntro?: number }).__elgIntro = 0;
       window.dispatchEvent(new Event("elg:intro-done"));
       setPhase("out");
       doneTimer = window.setTimeout(() => {

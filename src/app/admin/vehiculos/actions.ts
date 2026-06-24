@@ -1,6 +1,6 @@
 "use server";
 
-import { auth } from "@/lib/auth";
+import { getCurrentUser } from "@/lib/session";
 import { revalidatePath } from "next/cache";
 import {
   createVehicle,
@@ -12,8 +12,7 @@ import { type ActionResult, toActionError } from "@/lib/action-result";
 import type { AuditActor } from "@/services/audit.service";
 
 async function getActor(): Promise<AuditActor | null> {
-  const session = await auth();
-  const user = session?.user;
+  const user = await getCurrentUser();
   if (!user || (user.role !== "ADMIN" && user.role !== "STAFF")) return null;
   return { id: user.id, email: user.email };
 }
