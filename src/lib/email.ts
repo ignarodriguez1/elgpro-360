@@ -1,5 +1,6 @@
 import { Resend } from "resend";
 import { LoginCodeEmail } from "@/../emails/LoginCodeEmail";
+import { AccountWelcomeEmail } from "@/../emails/AccountWelcomeEmail";
 import { StatusUpdateEmail } from "@/../emails/StatusUpdateEmail";
 import { ReadyForPickupEmail } from "@/../emails/ReadyForPickupEmail";
 
@@ -44,6 +45,31 @@ export async function sendLoginCodeEmail(data: { to: string; code: string }) {
       to: data.to,
       subject: `Tu código de acceso a ELG Pro: ${data.code}`,
       react: LoginCodeEmail({ code: data.code }),
+    })
+  );
+}
+
+/**
+ * Email de bienvenida al crear una cuenta (equipo o cliente). Passwordless: no
+ * lleva token ni link de set-password; solo avisa que la cuenta existe y manda al
+ * login, donde la persona activa ingresando con su email (primer OTP).
+ */
+export async function sendAccountWelcomeEmail(data: {
+  to: string;
+  name: string;
+  intro: string;
+  loginUrl: string;
+}) {
+  return sendOrThrow(
+    getResend().emails.send({
+      from,
+      to: data.to,
+      subject: "Activá tu cuenta en ELG Pro 360",
+      react: AccountWelcomeEmail({
+        name: data.name,
+        intro: data.intro,
+        loginUrl: data.loginUrl,
+      }),
     })
   );
 }

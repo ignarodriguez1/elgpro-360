@@ -14,7 +14,7 @@ export function NewCustomerForm() {
   const [phone, setPhone] = useState("");
   const [notes, setNotes] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const [created, setCreated] = useState(false);
+  const [created, setCreated] = useState<{ emailSent: boolean } | null>(null);
 
   function submit() {
     if (pending) return;
@@ -30,7 +30,7 @@ export function NewCustomerForm() {
         setError(res.error);
         return;
       }
-      setCreated(true);
+      setCreated({ emailSent: res.data!.emailSent });
       setName("");
       setEmail("");
       setPhone("");
@@ -49,15 +49,16 @@ export function NewCustomerForm() {
           Cliente creado
         </div>
         <p style={{ fontSize: 14, color: "var(--muted-light)" }}>
-          La cuenta quedó lista. El cliente entra al portal desde la pantalla de
-          login pidiendo un código con su email — sin contraseña ni activación.
+          {created.emailSent
+            ? "Le enviamos un email para que active su cuenta ingresando con su email al portal."
+            : "El email no se pudo enviar. Avisale que ingrese al portal con su email — va a recibir un código de acceso al instante."}
         </p>
         <button
           className="abtn abtn-ghost"
           type="button"
           style={{ marginTop: 12 }}
           onClick={() => {
-            setCreated(false);
+            setCreated(null);
             setOpen(false);
           }}
         >

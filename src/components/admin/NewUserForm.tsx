@@ -15,7 +15,7 @@ export function NewUserForm() {
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<Role>("STAFF");
   const [error, setError] = useState<string | null>(null);
-  const [created, setCreated] = useState(false);
+  const [created, setCreated] = useState<{ emailSent: boolean } | null>(null);
 
   function submit() {
     if (pending) return;
@@ -26,7 +26,7 @@ export function NewUserForm() {
         setError(res.error);
         return;
       }
-      setCreated(true);
+      setCreated({ emailSent: res.data!.emailSent });
       setName("");
       setEmail("");
       setRole("STAFF");
@@ -44,15 +44,16 @@ export function NewUserForm() {
           Usuario creado
         </div>
         <p style={{ fontSize: 14, color: "var(--muted-light)" }}>
-          Ya puede ingresar al panel desde la pantalla de login pidiendo un código
-          con su email — sin contraseña.
+          {created.emailSent
+            ? "Le enviamos un email para que active su cuenta ingresando con su email."
+            : "El email no se pudo enviar. Avisale que ingrese al panel con su email — va a recibir un código de acceso al instante."}
         </p>
         <button
           className="abtn abtn-ghost"
           type="button"
           style={{ marginTop: 12 }}
           onClick={() => {
-            setCreated(false);
+            setCreated(null);
             setOpen(false);
           }}
         >

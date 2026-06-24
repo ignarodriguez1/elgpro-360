@@ -3,6 +3,8 @@
 import { getCurrentUser } from "@/lib/session";
 import { revalidatePath } from "next/cache";
 import { createTeamUser, setUserActive } from "@/services/user.service";
+import { sendAccountWelcomeEmail } from "@/lib/email";
+import { currentOrigin } from "@/lib/origin";
 import { createTeamUserSchema } from "@/lib/validations";
 import { type ActionResult, toActionError } from "@/lib/action-result";
 import type { AuditActor } from "@/services/audit.service";
@@ -23,7 +25,7 @@ export async function createTeamUserAction(data: {
   name: string;
   email: string;
   role: "STAFF" | "ADMIN";
-}): Promise<ActionResult> {
+}): Promise<ActionResult<{ emailSent: boolean }>> {
   const actor = await getOwnerActor();
   if (!actor) return { ok: false, error: "Sin permisos" };
 
@@ -34,9 +36,29 @@ export async function createTeamUserAction(data: {
 
   try {
     // Passwordless: el usuario entra al panel pidiendo un código con su email.
-    await createTeamUser(parsed.data, actor);
+    const created = await createTeamUser(parsed.data, actor);
+
+    // Email de bienvenida/activación: best-effort y HONESTO. Si Resend falla, el
+    // usuario igual existe y puede entrar; el admin se entera por emailSent=false
+    // y le avisa a mano. No se afirma envío sin verificarlo.
+    let emailSent = false;
+    try {
+      await sendAccountWelcomeEmail({
+        to: created.email,
+        name: created.name,
+        intro: "Te sumaron al equipo de ELG Pro 360 con acceso al panel de gestión.",
+        loginUrl: `${await currentOrigin()}/admin/login`,
+      });
+      emailSent = true;
+    } catch (err) {
+      console.error(
+        "[usuarios] email de bienvenida falló:",
+        err instanceof Error ? err.message : err
+      );
+    }
+
     revalidatePath("/admin/usuarios");
-    return { ok: true };
+    return { ok: true, data: { emailSent } };
   } catch (err) {
     return toActionError(err, "No se pudo crear el usuario");
   }

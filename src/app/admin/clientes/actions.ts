@@ -3,6 +3,8 @@
 import { getCurrentUser } from "@/lib/session";
 import { revalidatePath } from "next/cache";
 import { createCustomer, updateCustomer } from "@/services/customer.service";
+import { sendAccountWelcomeEmail } from "@/lib/email";
+import { currentOrigin } from "@/lib/origin";
 import { createCustomerSchema, updateCustomerSchema } from "@/lib/validations";
 import { type ActionResult, toActionError } from "@/lib/action-result";
 import type { AuditActor } from "@/services/audit.service";
@@ -20,7 +22,7 @@ export async function createCustomerAction(data: {
   email: string;
   phone?: string;
   notes?: string;
-}): Promise<ActionResult> {
+}): Promise<ActionResult<{ emailSent: boolean }>> {
   const actor = await getActor();
   if (!actor) return { ok: false, error: "Sin permisos" };
 
@@ -31,10 +33,29 @@ export async function createCustomerAction(data: {
 
   try {
     // Passwordless: se crea el cliente sin credencial. Entra al portal pidiendo
-    // un código con su email — no hay invite ni link de activación que enviar.
-    await createCustomer(parsed.data, actor);
+    // un código con su email — no hay invite ni set-password.
+    const user = await createCustomer(parsed.data, actor);
+
+    // Email de bienvenida/activación: best-effort y honesto (igual que en equipo).
+    let emailSent = false;
+    try {
+      await sendAccountWelcomeEmail({
+        to: user.email,
+        name: user.name,
+        intro:
+          "Te damos acceso al portal de clientes de ELG Pro 360, donde vas a poder seguir el estado de tu vehículo en tiempo real.",
+        loginUrl: `${await currentOrigin()}/clientes/login`,
+      });
+      emailSent = true;
+    } catch (err) {
+      console.error(
+        "[clientes] email de bienvenida falló:",
+        err instanceof Error ? err.message : err
+      );
+    }
+
     revalidatePath("/admin/clientes");
-    return { ok: true };
+    return { ok: true, data: { emailSent } };
   } catch (err) {
     return toActionError(err, "No se pudo crear el cliente");
   }
