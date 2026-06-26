@@ -152,10 +152,10 @@
 .ready-info-v.mono { font-family: var(--mono); font-weight: 500; font-size: 13px; }
 
 /* ---------- Photo lightbox ---------- */
-.p-lb { position: fixed; inset: 0; z-index: 90; background: rgba(8,8,8,.96); display: flex; flex-direction: column; animation: fadein .22s ease; }
+.p-lb { position: fixed; inset: 0; z-index: 90; background: rgba(8,8,8,.96); display: flex; flex-direction: column; animation: fadein .22s ease; touch-action: none; overscroll-behavior: contain; }
 .p-lb-top { display: flex; align-items: center; justify-content: space-between; padding: 24px 18px 10px; }
 .p-lb-count { font-family: var(--mono); font-size: 13px; color: var(--muted); }
-.p-lb-stage { flex: 1; min-height: 0; position: relative; display: flex; align-items: center; justify-content: center; padding: 8px 14px; }
+.p-lb-stage { flex: 1; min-height: 0; overflow: hidden; position: relative; display: flex; align-items: center; justify-content: center; padding: 8px 14px; }
 /* visor: la imagen ENTRA (contain) en el área disponible preservando su proporción,
    en cualquier pantalla. Antes: cuadrado de ancho completo + object-fit:cover (recorte)
    → quedaba enorme y sin adaptarse a mobile. */
