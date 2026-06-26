@@ -155,8 +155,12 @@
 .p-lb { position: fixed; inset: 0; z-index: 90; background: rgba(8,8,8,.96); display: flex; flex-direction: column; animation: fadein .22s ease; }
 .p-lb-top { display: flex; align-items: center; justify-content: space-between; padding: 24px 18px 10px; }
 .p-lb-count { font-family: var(--mono); font-size: 13px; color: var(--muted); }
-.p-lb-stage { flex: 1; position: relative; display: flex; align-items: center; }
-.p-lb-photo { width: 100%; max-height: 80vh; aspect-ratio: 1; border-radius: 0; }
+.p-lb-stage { flex: 1; min-height: 0; position: relative; display: flex; align-items: center; justify-content: center; padding: 8px 14px; }
+/* visor: la imagen ENTRA (contain) en el área disponible preservando su proporción,
+   en cualquier pantalla. Antes: cuadrado de ancho completo + object-fit:cover (recorte)
+   → quedaba enorme y sin adaptarse a mobile. */
+.p-lb-photo { width: 100%; height: 100%; max-height: 100%; aspect-ratio: auto; background: transparent; border-radius: 0; }
+.p-lb-photo img { object-fit: contain; }
 .p-lb-cap { padding: 14px 20px 30px; }
 .p-lb-cap-t { font-family: var(--display); font-weight: 600; text-transform: uppercase; font-size: 18px; }
 .p-lb-cap-d { font-family: var(--mono); font-size: 12px; color: var(--muted); margin-top: 5px; }
