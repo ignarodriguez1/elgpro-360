@@ -71,8 +71,11 @@ export async function requestLoginCodeAction(emailRaw: string): Promise<RequestC
 
   const { code } = await createLoginCode(email, ip === "unknown" ? null : ip);
 
-  const user = await prisma.user.findUnique({
-    where: { email },
+  // Lookup case-insensitive: `email` ya viene en minúsculas, pero cuentas legadas
+  // pueden tener mayúsculas (autocapitalización de iOS al darlas de alta). Sin
+  // esto, un alta con "Pepe@icloud.com" nunca recibiría su código.
+  const user = await prisma.user.findFirst({
+    where: { email: { equals: email, mode: "insensitive" } },
     select: { id: true, active: true },
   });
   // req. 7: a una cuenta desactivada NO se le manda código (igual que a un email
@@ -87,6 +90,14 @@ export async function requestLoginCodeAction(emailRaw: string): Promise<RequestC
         err instanceof Error ? err.message : err
       );
     }
+  } else if (!user) {
+    // Observabilidad: pedido de código para un email NO registrado. NO cambia la
+    // respuesta al cliente (no-enumeración intacta); solo deja rastro server-side
+    // para distinguir tipeos legítimos de sondeo de cuentas. Greppable por tag.
+    console.warn(`[login][email-no-registrado] intento con "${email}" (ip: ${ip})`);
+  } else {
+    // Existe pero está desactivada: también útil de rastrear (ej. ex-empleado).
+    console.warn(`[login][cuenta-desactivada] intento con "${email}" (ip: ${ip})`);
   }
 
   return { ok: true };

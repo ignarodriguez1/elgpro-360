@@ -55,7 +55,12 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           throw err;
         }
 
-        const user = await prisma.user.findUnique({ where: { email } });
+        // Lookup case-insensitive: el email se guarda normalizado a minúsculas,
+        // pero cuentas legadas pueden tener mayúsculas (ej. autocapitalización de
+        // iOS al darlas de alta). `email` ya viene en minúsculas.
+        const user = await prisma.user.findFirst({
+          where: { email: { equals: email, mode: "insensitive" } },
+        });
         // Código válido pero sin cuenta: no debería pasar (solo se emiten códigos
         // a usuarios existentes), pero nunca creamos sesión sin User.
         if (!user) throw new InvalidCodeError();

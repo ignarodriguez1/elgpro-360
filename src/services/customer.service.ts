@@ -23,7 +23,9 @@ export async function createCustomer(
       const created = await tx.user.create({
         data: {
           name: data.name,
-          email: data.email,
+          // Email normalizado a minúsculas: es la clave de login (OTP) y debe
+          // matchear sin importar cómo se tipeó (iOS autocapitaliza la 1ra letra).
+          email: data.email.trim().toLowerCase(),
           role: "CUSTOMER",
           customerProfile: {
             create: {

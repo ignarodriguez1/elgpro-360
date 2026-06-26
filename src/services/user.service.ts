@@ -18,7 +18,9 @@ export async function createTeamUser(
   try {
     return await prisma.$transaction(async (tx) => {
       const created = await tx.user.create({
-        data: { name: data.name, email: data.email, role: data.role },
+        // Email normalizado a minúsculas: es la clave de login (OTP) y debe
+        // matchear sin importar cómo se tipeó (iOS autocapitaliza la 1ra letra).
+        data: { name: data.name, email: data.email.trim().toLowerCase(), role: data.role },
       });
       if (actor) {
         await logAudit(
