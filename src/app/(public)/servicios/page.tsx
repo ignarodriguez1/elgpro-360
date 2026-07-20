@@ -78,7 +78,7 @@ export default async function ServiciosPage() {
               Estética automotor integral con acabado de fábrica y materiales premium.
             </p>
           </header>
-          <section className="section-tight svc-full-list">
+          <section className="section-tight svc-full-list" style={{ paddingTop: 16 }}>
             {services.length === 0 ? (
               <div className="svc-empty rise">
                 <h3>Pronto, nuevos servicios</h3>

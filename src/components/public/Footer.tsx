@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { Logo } from "@/components/shared/Logo";
+import { HomeLogoLink } from "./HomeLogoLink";
 import { Icon } from "@/components/shared/Icon";
+import { EmailText } from "@/components/shared/EmailText";
 import { CONTACT } from "@/lib/contact";
 import { listServices } from "@/services/service.service";
 
@@ -20,7 +22,7 @@ export async function Footer() {
       <div className="wrap">
         <div className="dfooter-top drise">
           <div>
-            <Logo size={34} tagline location />
+            <HomeLogoLink><Logo size={34} tagline location /></HomeLogoLink>
             <p className="dfooter-tag">
               La historia clínica de tu auto y el seguimiento del trabajo, en un solo lugar.
               Rosario, Santa Fe.
@@ -40,9 +42,9 @@ export async function Footer() {
           </div>
           <div className="dfooter-col">
             <span className="dfooter-h">Contacto</span>
-            <span><Icon name="pin" size={15} /> Rosario, Santa Fe</span>
+            <a href={CONTACT.directionsUrl} target="_blank" rel="noopener noreferrer"><Icon name="pin" size={15} /> {CONTACT.addressStreet} · {CONTACT.addressCity}</a>
             <a href={`tel:+${CONTACT.whatsappNumber}`}><Icon name="phone" size={15} /> {CONTACT.whatsappDisplay}</a>
-            <a href={`mailto:${CONTACT.email}`}><Icon name="mail" size={15} /> {CONTACT.email}</a>
+            <a href={`mailto:${CONTACT.email}`}><Icon name="mail" size={15} /> <EmailText /></a>
             <span><Icon name="clock" size={15} /> Lun a Vie · 8:30–18:00</span>
           </div>
         </div>

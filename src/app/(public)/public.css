@@ -4,7 +4,21 @@
 
 /* ---------- HERO ---------- */
 .hero{ position:relative; min-height:560px; display:flex; flex-direction:column; justify-content:flex-end; overflow:hidden; }
-.hero-bg{ position:absolute; inset:0; border-radius:0; }
+.hero-bg{ position:absolute; left:0; right:0; top:-10%; height:120%; border-radius:0; }
+/* Parallax de fondo (scroll-driven, corre en el compositor). La capa se
+   sobredimensiona para moverse sin revelar bordes. Mobile: amplitud liviana. */
+@supports (animation-timeline: scroll()){
+  .hero-bg{ animation:heroBgParallax 1ms linear both; animation-timeline:scroll(root block); animation-range:0 100vh; }
+  /* 10% (no 12%): el range 0-100vh es más largo que el hero (560px), así el bg sólo
+     recorre ~66% mientras el hero está en vista; a 12% el borde superior quedaría al
+     filo en el último sliver. 10% cubre siempre. */
+  @keyframes heroBgParallax{ from{ transform:translate3d(0,0,0); } to{ transform:translate3d(0,10%,0); } }
+  /* Foreground mobile: el copy sube y se atenúa como en desktop (dosis táctil, sin
+     pointer) para que el hero del teléfono no scrollee plano. Mismo hold-then-fade:
+     nítido en la primera lectura, recién ahí atenúa. Cierra la brecha mobile↔desktop. */
+  .hero-inner{ animation:heroFgParallax 1ms linear both; animation-timeline:scroll(root block); animation-range:0 70vh; }
+  @keyframes heroFgParallax{ 0%{ transform:translate3d(0,0,0); opacity:1; } 30%{ transform:translate3d(0,-1.5%,0); opacity:1; } 100%{ transform:translate3d(0,-4%,0); opacity:.5; } }
+}
 .hero-veil{ position:absolute; inset:0; background:linear-gradient(180deg, rgba(15,15,15,.45) 0%, rgba(15,15,15,.15) 30%, rgba(15,15,15,.78) 72%, var(--bg) 100%); }
 .hero-inner{ position:relative; padding:0 var(--pad) 34px; }
 .hero-title{ font-family:var(--display); font-weight:700; text-transform:uppercase; font-size:50px; line-height:.94; margin:14px 0 0; letter-spacing:-.005em; }
@@ -16,7 +30,7 @@
 /* ---------- CONCEPT band ---------- */
 .concept{ display:flex; align-items:center; gap:16px; padding:26px var(--pad); background:var(--surface); border-top:1px solid var(--border-soft); border-bottom:1px solid var(--border-soft); }
 .concept-mark{ font-family:var(--display); font-size:40px; color:var(--primary); font-weight:300; line-height:1; }
-.concept-text{ font-size:15px; line-height:1.5; color:var(--muted); margin:0; }
+.concept-text{ font-size:15px; line-height:1.5; color:var(--muted); margin:0; max-width:460px; }
 .concept-text strong{ color:var(--text); font-weight:600; }
 .concept-plus{ color:var(--primary); font-weight:700; margin:0 7px; }
 
@@ -40,6 +54,7 @@
 .proc-dot{ width:13px; height:13px; border-radius:50%; background:var(--bg); border:2px solid var(--primary); margin-top:5px; flex-shrink:0; }
 .proc-step:not(:last-child) .proc-rail::after{ content:""; flex:1; width:2px; background:linear-gradient(var(--border), transparent); margin:4px 0; }
 .proc-body{ padding-bottom:30px; }
+.proc-step:last-child .proc-body{ padding-bottom:0; }
 .proc-head{ display:flex; align-items:center; gap:11px; }
 .proc-n{ font-size:13px; color:var(--primary); letter-spacing:.1em; }
 .proc-ic{ color:var(--muted); }
@@ -49,16 +64,27 @@
 /* ---------- tracking feature ---------- */
 .track-feat{ padding:54px var(--pad); background:linear-gradient(180deg, var(--bg), #131313); border-top:1px solid var(--border-soft); }
 .track-feat-intro{ display:flex; flex-direction:column; align-items:flex-start; gap:13px; }
-.track-feat-title{ font-size:38px; line-height:1.0; margin:0; }
+.track-feat-title{ font-size:38px; line-height:1.0; letter-spacing:-.005em; margin:0; }
 .track-demo{ margin-top:26px; background:var(--surface); border:1px solid var(--border); border-radius:var(--r-lg); padding:16px; box-shadow:0 30px 60px -30px rgba(0,0,0,.8); }
 .track-demo-head{ display:flex; align-items:center; justify-content:space-between; padding-bottom:14px; border-bottom:1px solid var(--border-soft); margin-bottom:14px; }
 .track-tl{ display:flex; flex-direction:column; }
 .track-tl-row{ display:flex; gap:13px; }
 .track-tl-rail{ display:flex; flex-direction:column; align-items:center; padding-top:4px; }
 .track-tl-dot{ width:11px; height:11px; border-radius:50%; background:var(--surface-2); border:2px solid var(--border); flex-shrink:0; }
-.track-tl-row.active .track-tl-dot{ background:var(--primary); border-color:var(--primary); box-shadow:0 0 0 4px rgba(196,30,42,.18); }
+/* Mismo refactor que el dot desktop: box-shadow (paint-bound) → ::after hueco,
+   escalable por transform, para que el beat "en vivo" también exista acá. */
+.track-tl-row.active .track-tl-dot{ background:var(--primary); border-color:var(--primary); position:relative; }
+.track-tl-row.active .track-tl-dot::after{ content:""; position:absolute; inset:-4px; border-radius:50%; border:4px solid rgba(196,30,42,.18); }
+.track-tl-row.active .track-tl-dot::before{ content:""; position:absolute; inset:0; border-radius:50%; background:var(--primary); opacity:0; pointer-events:none; }
 .track-tl-line{ flex:1; width:2px; background:var(--border); margin:3px 0; }
-.track-tl-card{ flex:1; padding-bottom:18px; display:flex; flex-direction:column; gap:9px; }
+.track-tl-card{ flex:1; padding-bottom:18px; display:flex; flex-direction:column; gap:9px; position:relative; }
+.track-tl-reg{ position:absolute; inset:0; display:flex; flex-direction:column; gap:9px; opacity:0; pointer-events:none; }
+.track-tl-reg-label{ font-family:var(--mono); font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:var(--primary); line-height:1.15; }
+.track-tl-reg-bar{ height:8px; width:68%; border-radius:4px; background:var(--surface-2); }
+.track-tl-reg-thumbs{ display:flex; gap:8px; }
+.track-tl-reg-thumbs i{ width:52px; height:52px; border-radius:9px; background:var(--surface-2); }
+.track-tl-reg-bar, .track-tl-reg-thumbs i{ animation:regShimmer 1.2s ease-in-out infinite; }
+.track-tl-reg-thumbs i:nth-child(2){ animation-delay:.12s; }
 .track-tl-top{ display:flex; align-items:center; justify-content:space-between; }
 .track-tl-t{ font-family:var(--display); font-weight:500; font-size:15px; line-height:1.15; text-transform:uppercase; letter-spacing:.02em; }
 .track-tl-row.active .track-tl-t{ color:var(--text); }
@@ -93,7 +119,7 @@
 /* ---------- testimonial ---------- */
 .testi{ margin:10px var(--pad) 0; background:var(--surface); border:1px solid var(--border-soft); border-radius:var(--r-lg); padding:28px 22px; position:relative; }
 .testi-q{ color:var(--primary); opacity:.5; }
-.testi-text{ font-size:18px; line-height:1.5; color:var(--text); margin:14px 0 22px; font-weight:500; }
+.testi-text{ font-size:20px; line-height:1.5; color:var(--text); margin:14px 0 22px; font-weight:500; max-width:520px; }
 .testi-by{ display:flex; align-items:center; gap:13px; }
 .testi-av{ width:44px; height:44px; border-radius:50%; background:var(--surface-2); border:1px solid var(--border); display:flex; align-items:center; justify-content:center; color:var(--muted); }
 .testi-name{ font-family:var(--display); font-weight:600; font-size:16px; text-transform:uppercase; letter-spacing:.02em; }
@@ -102,25 +128,43 @@
 /* ---------- cta band ---------- */
 .ctaband{ position:relative; overflow:hidden; margin:54px 0 0; padding:50px var(--pad); background:var(--primary); }
 .ctaband-glow{ position:absolute; inset:0; background:radial-gradient(80% 60% at 80% 0%, rgba(255,255,255,.22), transparent 55%); }
-.ctaband-title{ font-size:42px; line-height:.98; color:#fff; margin:10px 0 0; position:relative; }
-.ctaband-sub{ color:rgba(255,255,255,.85); font-size:15px; margin:14px 0 24px; position:relative; max-width:300px; }
+.ctaband-title{ font-size:42px; line-height:.98; letter-spacing:-.005em; color:#fff; margin:10px 0 0; position:relative; }
+.ctaband-sub{ color:rgba(255,255,255,.85); font-size:15px; line-height:1.55; margin:14px 0 24px; position:relative; max-width:300px; }
 .ctaband-btn{ background:#fff; color:var(--primary); position:relative; }
 .ctaband-btn:active{ background:#f0f0f0; }
 
 /* ---------- page header ---------- */
 .page-header{ position:relative; padding:96px var(--pad) 30px; overflow:hidden; }
 .page-header-glow{ position:absolute; top:-40px; right:-40px; width:240px; height:240px; background:radial-gradient(circle, rgba(196,30,42,.22), transparent 65%); pointer-events:none; }
-.page-header-title{ font-size:46px; line-height:1.0; margin:12px 0 0; }
+.page-header-title{ font-size:46px; line-height:1.0; margin:12px 0 0; font-weight:700; letter-spacing:-.005em; }
 .page-header-sub{ color:var(--muted); font-size:15px; line-height:1.55; margin:16px 0 0; max-width:320px; }
 
 /* ---------- servicios full ---------- */
 .svc-full-list{ display:flex; flex-direction:column; gap:14px; }
 .svc-full{ background:var(--surface); border:1px solid var(--border-soft); border-radius:var(--r-lg); overflow:hidden; }
 .svc-full-img{ width:100%; aspect-ratio:2.2; border-radius:0; }
+/* Parallax sutil en imágenes full-bleed de servicios (ambos árboles). view() se
+   activa al cruzar el viewport; la imagen se sobredimensiona y se desplaza dentro
+   del frame (que clipea por .photo overflow:hidden). Solo transform, compositor. */
+@supports (animation-timeline: view()){
+  .svc-full-img img, .dsvc-img img{
+    top:-10%; bottom:auto; height:120%;
+    animation:svcImgParallax 1ms linear both;
+    animation-timeline:view();
+    animation-range:cover;
+  }
+  /* M2 — bajado de ±7% a ±3% A PROPÓSITO: dos grillas haciendo el mismo truco ES
+     movimiento a lo bruto. Servicios cede profundidad para que el PORTFOLIO la
+     tenga. La escasez es el efecto. */
+  @keyframes svcImgParallax{ from{ transform:translate3d(0,-3%,0); } to{ transform:translate3d(0,3%,0); } }
+  @media (prefers-reduced-motion: reduce){
+    .svc-full-img img, .dsvc-img img{ top:0; bottom:0; height:100%; animation:none; transform:none; }
+  }
+}
 .svc-full-body{ padding:18px 18px 22px; margin-top:-30px; position:relative; }
 .svc-full .svc-ic{ background:var(--bg); }
 .svc-full-name{ font-size:24px; margin:14px 0 8px; }
-.svc-full-desc{ font-size:14px; color:var(--muted); line-height:1.55; margin:0; }
+.svc-full-desc{ font-size:14px; color:var(--muted); line-height:1.55; margin:0; max-width:480px; }
 
 /* ---------- estado vacío (servicios sin habilitados) ---------- */
 .svc-empty{ text-align:center; padding:56px 8px; }
@@ -130,7 +174,7 @@
 /* ---------- filters ---------- */
 .filters{ display:flex; gap:9px; overflow-x:auto; padding:6px var(--pad) 4px; scrollbar-width:none; }
 .filters::-webkit-scrollbar{ display:none; }
-.chip{ display:inline-flex; align-items:center; justify-content:center; line-height:1; gap:6px; font-family:var(--display); font-weight:500; text-transform:uppercase; letter-spacing:.08em; font-size:11px; height:30px; padding:0 13px; border-radius:999px; background:var(--surface); border:1px solid var(--border); color:var(--muted); text-decoration:none; white-space:nowrap; transition:all .16s ease; }
+.chip{ display:inline-flex; align-items:center; justify-content:center; line-height:1; gap:6px; font-family:var(--display); font-weight:500; text-transform:uppercase; letter-spacing:.08em; font-size:11px; height:30px; padding:0 13px; border-radius:999px; background:var(--surface); border:1px solid var(--border); color:var(--muted); text-decoration:none; white-space:nowrap; transition:background .16s ease, border-color .16s ease, color .16s ease, transform .16s var(--ease-out-strong); }
 .chip:hover{ color:var(--text); border-color:#3a3a3a; }
 .chip.active{ background:var(--primary); border-color:var(--primary); color:#fff; }
 
@@ -157,7 +201,7 @@
 .lb-nav{ position:absolute; top:50%; transform:translateY(-50%); width:42px; height:42px; border-radius:50%; background:rgba(0,0,0,.5); backdrop-filter:blur(4px); border:1px solid rgba(255,255,255,.15); color:#fff; display:flex; align-items:center; justify-content:center; cursor:pointer; }
 .lb-prev{ left:10px; } .lb-next{ right:10px; }
 .lb-swap{ display:flex; gap:7px; background:var(--surface); border:1px solid var(--border); border-radius:999px; padding:5px; }
-.lb-swap button{ flex:1; height:40px; border:none; border-radius:999px; background:none; color:var(--muted); font-family:var(--display); font-weight:500; text-transform:uppercase; letter-spacing:.06em; font-size:13px; cursor:pointer; transition:all .16s; }
+.lb-swap button{ flex:1; height:40px; border:none; border-radius:999px; background:none; color:var(--muted); font-family:var(--display); font-weight:500; text-transform:uppercase; letter-spacing:.06em; font-size:13px; cursor:pointer; transition:color .16s ease, background .16s ease; }
 .lb-swap button.active{ background:var(--primary); color:#fff; }
 .lb-info{ padding:4px 2px; }
 .lb-info .work-cat{ position:static; display:inline-block; margin-bottom:10px; }
@@ -198,14 +242,38 @@
 .form-sent .btn{ margin-top:10px; }
 
 /* ---------- map + contact cards ---------- */
-.map-wrap{ position:relative; margin-top:24px; border-radius:var(--r); overflow:hidden; border:1px solid var(--border-soft); }
+.map-wrap{ position:relative; display:block; border-radius:var(--r); overflow:hidden; border:1px solid var(--border-soft); transition:border-color .16s; }
+.map-wrap:hover{ border-color:var(--primary); }
 .map-img{ width:100%; aspect-ratio:1.7; border-radius:0; }
-.map-pin{ position:absolute; inset:0; margin:auto; width:48px; height:48px; display:flex; align-items:flex-end; justify-content:center; color:var(--primary); filter:drop-shadow(0 6px 10px rgba(0,0,0,.6)); }
-.contact-cards{ display:grid; grid-template-columns:1fr 1fr; gap:11px; margin-top:14px; }
+/* El pin marca un punto REAL: la imagen está centrada en CONTACT.lat/lon, así que
+   la PUNTA del icono —no su centro— tiene que caer en el centro del mapa. En el
+   viewBox 24x24 la punta está en y=21 (87.5%), de ahí el -37.5% (=50%-87.5%) del
+   propio alto. Sin esto el pin apunta ~60m al sur del taller. */
+.map-pin{ position:absolute; inset:0; margin:auto; width:26px; height:26px; display:flex; color:var(--primary); filter:drop-shadow(0 6px 10px rgba(0,0,0,.6)); transform:translateY(-37.5%); }
+/* El crédito de OSM vive FUERA del mapa (pedido del dueño: superficie limpia).
+   Es obligatorio por ODbL y por eso sigue siendo visible y enlazado — se puede
+   mover, no sacar. Al estar afuera, el mapa vuelve a ser un <a> simple: ya no hay
+   riesgo de anidar links y desapareció la capa .map-hit. */
+.map-block{ display:flex; flex-direction:column; gap:6px; margin-top:24px; }
+.map-credit{ align-self:flex-end; font-family:var(--mono); font-size:9.5px; letter-spacing:.02em; color:var(--muted-dim); text-decoration:none; }
+.map-credit:hover{ color:var(--muted); }
+/* UNA sola columna, y no es capricho: a 390px media columna deja 91px para el
+   valor, y 4 de los 5 no entran (dirección 221px, teléfono 124px, email 207px,
+   horarios 117px). Con `1fr 1fr` además el email inflaba su propio track —`1fr`
+   es `minmax(auto,1fr)` y ese `auto` es min-content, o sea el token entero sin
+   cortes— quedando 133px vs 288px y desbordando la grilla 83px afuera. */
+.contact-cards{ display:grid; grid-template-columns:minmax(0, 1fr); gap:11px; margin-top:14px; }
 .contact-card{ display:flex; align-items:center; gap:11px; background:var(--surface); border:1px solid var(--border-soft); border-radius:var(--r); padding:14px; text-decoration:none; }
+/* min-width:0 en el bloque de texto: por defecto un flex item NO se achica abajo
+   de su min-content, y el email es un token sin cortes → empujaba la card afuera.
+   Mismo bug que el `1fr` de la grilla, en versión flexbox. Sin esto, a 320px la
+   página scrollea 31px de costado. */
+.contact-card > div{ min-width:0; }
 .contact-card span{ width:40px; height:40px; border-radius:10px; background:rgba(196,30,42,.10); border:1px solid rgba(196,30,42,.24); color:#ff5d68; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
 .cc-h{ font-family:var(--display); font-weight:500; text-transform:uppercase; letter-spacing:.08em; font-size:10px; color:var(--muted); }
-.cc-v{ font-size:11.5px; color:var(--text); margin-top:2px; }
+/* Red de seguridad: a 320px ni la fila entera alcanza para el email (201px de
+   espacio real vs 207px que mide). Antes que empujar la página, que corte. */
+.cc-v{ font-size:11.5px; color:var(--text); margin-top:2px; overflow-wrap:break-word; }
 
 /* ---------- acceso ---------- */
 .page-acceso{ position:relative; min-height:100%; }
@@ -243,13 +311,46 @@
 .dhead-l{ display:flex; flex-direction:column; gap:16px; align-items:flex-start; max-width:640px; }
 .dhead h2{ font-family:var(--display); font-weight:600; text-transform:uppercase; font-size:56px; line-height:1.0; margin:0; letter-spacing:-.005em; }
 .dhead p{ color:var(--muted); font-size:17px; line-height:1.6; margin:0; max-width:520px; }
-.dlink{ display:inline-flex; align-items:center; gap:9px; color:var(--primary); font-family:var(--display); font-weight:500; text-transform:uppercase; letter-spacing:.08em; font-size:15px; background:none; border:none; cursor:pointer; white-space:nowrap; transition:gap .2s; }
-.dlink:hover{ gap:14px; }
+
+/* Portfolio del home en DOS COLUMNAS: el título queda STICKY a la izquierda
+   mientras la pila de trabajos scrollea a la derecha — así "TRABAJOS REALIZADOS"
+   se ve durante todo el recorrido de la galería. La pila (columna derecha) mantiene
+   su propio sticky escalonado. Colapsa a 1 columna ≤920px (ver ese media query).
+   `align-items:start` es lo que habilita el sticky del aside dentro del grid: sin
+   eso el item se estira a la altura de la fila (la pila, alta) y no tendría recorrido
+   para clavarse. */
+.dwork-cols{ display:grid; grid-template-columns:minmax(280px,360px) 1fr; gap:52px; align-items:start; }
+.dwork-aside{ position:sticky; top:116px; align-self:start; flex-direction:column; align-items:flex-start; justify-content:flex-start; gap:20px; margin-bottom:0; max-width:none; }
+.dlink{ display:inline-flex; align-items:center; gap:9px; color:var(--primary); font-family:var(--display); font-weight:500; text-transform:uppercase; letter-spacing:.08em; font-size:15px; background:none; border:none; cursor:pointer; white-space:nowrap; }
+/* Emil: no animar layout (gap). El ícono se corre por transform en su lugar. */
+.dlink svg{ transition:transform .2s var(--ease-out-strong); }
+.dlink:hover svg{ transform:translateX(5px); }
 
 /* ===================== NAVBAR ===================== */
 .dnav{ position:sticky; top:0; z-index:40; display:flex; align-items:center; justify-content:space-between;
-  padding:22px 48px; transition:background .3s ease, padding .3s ease, border-color .3s ease; border-bottom:1px solid transparent; }
-.dnav.scrolled{ background:rgba(15,15,15,.78); backdrop-filter:blur(18px) saturate(160%); -webkit-backdrop-filter:blur(18px) saturate(160%); border-bottom:1px solid var(--border); padding-top:16px; padding-bottom:16px; }
+  padding:22px 48px; transition:background .3s ease, border-color .3s ease, transform .3s var(--ease-out-strong); border-bottom:1px solid transparent; }
+/* SIN cambio de padding al scrollear (antes: 22px→16px). El header es sticky y
+   por lo tanto está EN FLUJO: achicarlo 12px corría TODO el contenido de abajo
+   = CLS real y visible. Verificado: altura 89px→77px al aparecer .scrolled.
+   El frost (fondo + blur + borde) ya comunica el estado sin mover layout. */
+.dnav.scrolled{ background:rgba(15,15,15,.78); backdrop-filter:blur(18px) saturate(160%); -webkit-backdrop-filter:blur(18px) saturate(160%); border-bottom:1px solid var(--border); }
+/* Hide-on-scroll-down / reveal-on-scroll-up. Foco de teclado siempre revela. */
+.dnav.dnav-hidden{ transform:translateY(-100%); }
+.dnav:focus-within{ transform:none; }
+/* El chrome ya NO va envuelto en .only-* (ver layout.tsx): aquel wrapper tenía la
+   altura exacta del header y confinaba el sticky con travel CERO. Gateamos acá,
+   así el containing block del sticky es .dweb y el header se pega de verdad. */
+/* Mismo patrón que el switch de shared.css: el DEFAULT es desktop y una única
+   media query invierte ambos. Con `max-width:859px` + `min-width:860px` quedaba un
+   HUECO en anchos fraccionarios (859.5px, comunes con zoom o DPR raros): ahí no se
+   ocultaba ninguno de los dos y se veían LOS DOS HEADERS a la vez. */
+.navbar{ display:none !important; }
+.menu-overlay{ display:none !important; }
+@media (max-width: 859px){
+  .dnav{ display:none !important; }
+  .navbar{ display:flex !important; }
+  .menu-overlay{ display:flex !important; }
+}
 .dnav-logo{ background:none; border:none; cursor:pointer; padding:0; }
 .dnav-links{ display:flex; align-items:center; gap:6px; }
 .dnav-link{ font-family:var(--display); font-weight:500; text-transform:uppercase; letter-spacing:.08em; font-size:14px;
@@ -264,7 +365,7 @@
 /* ===================== BUTTONS ===================== */
 .dbtn{ font-family:var(--display); font-weight:500; text-transform:uppercase; letter-spacing:.06em; font-size:16px; white-space:nowrap;
   display:inline-flex; align-items:center; justify-content:center; gap:11px; padding:0 30px; height:58px; border-radius:var(--r-sm);
-  border:none; cursor:pointer; text-decoration:none; transition:background .18s, transform .12s, border-color .18s, color .18s; }
+  border:none; cursor:pointer; text-decoration:none; transition:background .18s ease, transform .16s var(--ease-out-strong), border-color .18s ease, color .18s ease; }
 .dbtn:hover{ transform:translateY(-2px); }
 .dbtn:active{ transform:translateY(0); }
 .dbtn-primary{ background:var(--primary); color:#fff; box-shadow:0 12px 32px -10px var(--primary-glow); }
@@ -276,10 +377,41 @@
 
 /* ===================== HERO ===================== */
 .dhero{ position:relative; min-height:760px; display:flex; align-items:center; overflow:hidden; }
-.dhero-bg{ position:absolute; inset:0; border-radius:0; }
+.dhero-bg-layer{ position:absolute; inset:0; }
+/* Capa sobredimensionada en ambos ejes: el scroll la mueve en Y, el puntero (JS,
+   sobre .dhero-bg-layer) en X/Y; el margen evita revelar bordes al componer. */
+.dhero-bg{ position:absolute; left:-3%; right:-3%; top:-16%; height:132%; border-radius:0; }
 .dhero-veil{ position:absolute; inset:0; background:linear-gradient(100deg, rgba(15,15,15,.96) 0%, rgba(15,15,15,.82) 34%, rgba(15,15,15,.35) 62%, rgba(15,15,15,.15) 100%); }
 .dhero-veil2{ position:absolute; inset:0; background:linear-gradient(180deg, rgba(15,15,15,.4), transparent 20%, transparent 70%, var(--bg) 100%); }
 .dhero .wrap{ position:relative; width:100%; display:grid; grid-template-columns:1.35fr .82fr; gap:50px; align-items:center; }
+/* Parallax por capas del hero desktop: fondo con lag + contenido a distinta
+   velocidad que se aleja y atenúa (profundidad). Scroll-driven, transform/opacity. */
+@supports (animation-timeline: scroll()){
+  .dhero-bg{ animation:dheroBgParallax 1ms linear both; animation-timeline:scroll(root block); animation-range:0 100vh; }
+  @keyframes dheroBgParallax{ from{ transform:translate3d(0,0,0); } to{ transform:translate3d(0,14%,0); } }
+  /* M4 — handoff del hero: termina en 75vh (antes 90vh) y baja a .35 (antes .55),
+     así el hero se va LIMPIO antes de que aterrice la banda de concepto. */
+  .dhero .wrap{ animation:dheroFgParallax 1ms linear both; animation-timeline:scroll(root block); animation-range:0 75vh; }
+  /* hold-then-fade: el titular queda nítido (opacity:1) durante toda la primera
+     lectura (~22vh) y RECIÉN ahí atenúa a .35 — se lee como un gesto editado
+     ("el hero se va"), no un desvanecimiento desde el pixel 1. Translate monotónico. */
+  @keyframes dheroFgParallax{ 0%{ transform:translate3d(0,0,0); opacity:1; } 30%{ transform:translate3d(0,-2%,0); opacity:1; } 100%{ transform:translate3d(0,-7%,0); opacity:.35; } }
+  /* La track card en su PROPIO plano: el .wrap sube -7%, el plano baja +4% → neto
+     ~-3%. Así la glass card (el elemento más premium: blur+sombra) lagea respecto
+     del titular y la composición se abre en profundidad en vez de deslizar rígida.
+     Va en el wrapper .dhero-track-plane, no en .dhero-track, para NO chocar con el
+     transform del reveal .drise. Mismo range 0-75vh que el padre → handoff limpio. */
+  .dhero-track-plane{ animation:dheroTrackPlane 1ms linear both; animation-timeline:scroll(root block); animation-range:0 75vh; }
+  @keyframes dheroTrackPlane{ from{ transform:translate3d(0,0,0); } to{ transform:translate3d(0,4%,0); } }
+}
+.dhero-track-plane{ min-width:0; }
+/* Movimiento reducido: hero estático (sin parallax ni atenuación). */
+@media (prefers-reduced-motion: reduce){
+  /* .dhero-track-plane lleva su propio scroll-parallax (independiente del .wrap),
+     así que necesita su kill explícito. (El pointer parallax se retiró; .dhero-bg-layer
+     ya no se anima y salió de esta lista.) */
+  .dhero-bg, .hero-bg, .hero-inner, .dhero .wrap, .dhero-track-plane{ animation:none !important; transform:none !important; opacity:1 !important; }
+}
 .dhero-copy{ display:flex; flex-direction:column; align-items:flex-start; gap:26px; min-width:0; }
 .dhero-title{ font-family:var(--display); font-weight:700; text-transform:uppercase; font-size:78px; line-height:.92; margin:0; letter-spacing:-.015em; }
 .dhero-title .hl{ color:var(--primary); }
@@ -297,13 +429,36 @@
 .dtl-row{ display:flex; gap:15px; }
 .dtl-rail{ display:flex; flex-direction:column; align-items:center; padding-top:5px; }
 .dtl-dot{ width:13px; height:13px; border-radius:50%; background:var(--surface-2); border:2px solid var(--border); flex-shrink:0; }
-.dtl-row.active .dtl-dot{ background:var(--primary); border-color:var(--primary); box-shadow:0 0 0 5px rgba(196,30,42,.18); }
+/* Anillo del dot activo: antes era box-shadow, que es PAINT-BOUND y no sostiene
+   60fps si se anima durante el scrub. Ahora es un ::after escalable por transform
+   (hueco, así no tapa el dot). Visible estático en fallback/reduced-motion. */
+.dtl-row.active .dtl-dot{ background:var(--primary); border-color:var(--primary); position:relative; }
+.dtl-row.active .dtl-dot::after{ content:""; position:absolute; inset:-5px; border-radius:50%; border:5px solid rgba(196,30,42,.18); }
+/* Ping de LLEGADA (una sola vez): en vez de un tag "NUEVO", el dot late como una
+   notificación que entra. opacity:0 por defecto → invisible salvo cuando anima. */
+.dtl-row.active .dtl-dot::before{ content:""; position:absolute; inset:0; border-radius:50%; background:var(--primary); opacity:0; pointer-events:none; }
+@keyframes dotPing{ 0%{ transform:scale(1); opacity:.5; } 100%{ transform:scale(3); opacity:0; } }
 .dtl-line{ flex:1; width:2px; background:var(--border); margin:4px 0; }
-.dtl-card{ flex:1; padding-bottom:20px; display:flex; flex-direction:column; gap:11px; }
+.dtl-card{ flex:1; padding-bottom:20px; display:flex; flex-direction:column; gap:11px; position:relative; }
+/* Estado REGISTRÁNDOSE: el taller documentando la etapa. Absoluto SOBRE el
+   contenido (que ya ocupa su lugar con opacity:0) → el swap no mueve un pixel. */
+.dtl-reg{ position:absolute; inset:0; display:flex; flex-direction:column; gap:11px; opacity:0; pointer-events:none; }
+.dtl-reg-label{ font-family:var(--mono); font-size:12px; letter-spacing:.09em; text-transform:uppercase; color:var(--primary); line-height:1.15; }
+.dtl-reg-bar{ height:9px; width:72%; border-radius:5px; background:var(--surface-2); }
+.dtl-reg-thumbs{ display:flex; gap:9px; }
+.dtl-reg-thumbs i{ width:62px; height:62px; border-radius:10px; background:var(--surface-2); }
+/* el shimmer marca "esto se está generando ahora", no "esto está roto" */
+.dtl-reg-bar, .dtl-reg-thumbs i{ animation:regShimmer 1.2s ease-in-out infinite; }
+.dtl-reg-thumbs i:nth-child(2){ animation-delay:.12s; }
+.dtl-reg-thumbs i:nth-child(3){ animation-delay:.24s; }
+@keyframes regShimmer{ 0%,100%{ opacity:.5; } 50%{ opacity:1; } }
+/* aparece → sostiene → se va, justo antes de que aterrice el estado real */
+@keyframes regBeat{ 0%{ opacity:0; } 18%{ opacity:1; } 78%{ opacity:1; } 100%{ opacity:0; } }
+.dtl-row:last-child .dtl-card{ padding-bottom:0; }
 .dtl-top{ display:flex; align-items:center; justify-content:space-between; }
 .dtl-t{ font-family:var(--display); font-weight:500; font-size:16px; line-height:1.15; text-transform:uppercase; letter-spacing:.02em; }
 .dtl-row:not(.active) .dtl-t{ color:var(--muted); }
-.dtl-d{ font-size:12px; color:var(--muted-dim); }
+.dtl-d{ font-family:var(--mono); font-size:12px; color:var(--muted-dim); }
 .dtl-thumbs{ display:flex; gap:9px; }
 .dtl-thumb{ width:62px; height:62px; border-radius:10px; }
 
@@ -317,14 +472,21 @@
 
 /* ===================== SERVICES GRID ===================== */
 .dsvc-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:18px; }
-.dsvc-card{ position:relative; text-align:left; background:var(--surface); border:1px solid var(--border-soft); border-radius:var(--r); overflow:hidden; cursor:pointer; transition:border-color .2s, transform .2s; display:flex; flex-direction:column; }
-.dsvc-card:hover{ border-color:var(--border); transform:translateY(-4px); }
-.dsvc-img{ width:100%; aspect-ratio:1.4; border-radius:0; }
+/* OJO: el shorthand `transition` resetea TODOS los longhands. Si acá no va
+   `opacity`, se mata el fade de .drise en las cards (hacían pop en vez de fade). */
+/* Hover fluido (no rígido): el lift usa ease-out-SOFT (no el strong, que salta y
+   frena de golpe), con MÁS recorrido + una sombra que crece → se lee como que
+   flota, no como que se teletransporta. box-shadow en hover (no en scroll) es OK. */
+.dsvc-card{ position:relative; text-align:left; background:var(--surface); border:1px solid var(--border-soft); border-radius:var(--r); overflow:hidden; cursor:pointer; transition:border-color .3s ease, transform .34s var(--ease-out-soft), box-shadow .34s var(--ease-out-soft), opacity .7s var(--ease-out-strong); display:flex; flex-direction:column; }
+.dsvc-card:hover{ border-color:var(--border); transform:translateY(-7px); box-shadow:0 26px 50px -26px rgba(0,0,0,.9), 0 0 0 1px rgba(255,255,255,.05); }
+.dsvc-img{ width:100%; aspect-ratio:1.4; border-radius:0; transition:transform .5s var(--ease-out-soft); }
+/* zoom sutil de la foto al hover (compone con el parallax, que va en el <img>) */
+.dsvc-card:hover .dsvc-img{ transform:scale(1.04); }
 .dsvc-body{ padding:22px; display:flex; flex-direction:column; gap:11px; flex:1; }
 .dsvc-ic{ display:inline-flex; align-items:center; justify-content:center; width:48px; height:48px; border-radius:12px; background:rgba(196,30,42,.1); border:1px solid rgba(196,30,42,.26); color:#ff5d68; margin-bottom:2px; }
 .dsvc-name{ font-family:var(--display); font-weight:600; text-transform:uppercase; font-size:20px; line-height:1.1; color:var(--text); }
 .dsvc-desc{ font-size:14px; color:var(--muted); line-height:1.55; margin:0; }
-.dsvc-go{ position:absolute; top:18px; right:18px; width:34px; height:34px; border-radius:9px; background:rgba(0,0,0,.45); backdrop-filter:blur(4px); display:flex; align-items:center; justify-content:center; color:#fff; opacity:0; transform:translateY(-4px); transition:.2s; }
+.dsvc-go{ position:absolute; top:18px; right:18px; width:34px; height:34px; border-radius:9px; background:rgba(0,0,0,.45); backdrop-filter:blur(4px); display:flex; align-items:center; justify-content:center; color:#fff; opacity:0; transform:translateY(-4px); transition:opacity .3s var(--ease-out-soft), transform .3s var(--ease-out-soft); z-index:2; }
 .dsvc-card:hover .dsvc-go{ opacity:1; transform:none; }
 
 /* ===================== PROCESS ===================== */
@@ -340,7 +502,7 @@
 /* ===================== TRACKING FEATURE ===================== */
 .dtrack .wrap{ display:grid; grid-template-columns:1fr 1fr; gap:70px; align-items:center; }
 .dtrack-copy{ display:flex; flex-direction:column; align-items:flex-start; gap:20px; }
-.dtrack-title{ font-family:var(--display); font-weight:600; text-transform:uppercase; font-size:54px; line-height:1.0; margin:0; }
+.dtrack-title{ font-family:var(--display); font-weight:600; text-transform:uppercase; font-size:54px; line-height:1.0; letter-spacing:-.005em; margin:0; }
 .dtrack-feats{ display:flex; flex-direction:column; gap:14px; margin-top:6px; }
 .dtrack-feat{ display:flex; align-items:center; gap:13px; font-size:16px; color:var(--text); }
 .dtrack-feat span{ width:30px; height:30px; border-radius:8px; background:rgba(34,197,94,.13); border:1px solid rgba(34,197,94,.3); color:var(--success); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
@@ -364,7 +526,7 @@
 /* filters desktop */
 .dfilters{ display:flex; gap:10px; flex-wrap:wrap; }
 .dchip{ display:inline-flex; align-items:center; justify-content:center; line-height:1; font-family:var(--display); font-weight:500; text-transform:uppercase; letter-spacing:.08em; font-size:13px; height:42px; padding:0 20px; border-radius:999px;
-  background:var(--surface); border:1px solid var(--border); color:var(--muted); cursor:pointer; transition:all .16s; }
+  background:var(--surface); border:1px solid var(--border); color:var(--muted); cursor:pointer; transition:color .16s ease, border-color .16s ease, transform .16s var(--ease-out-strong); }
 .dchip:hover{ color:var(--text); border-color:#3a3a3a; }
 .dchip.active{ background:var(--primary); border-color:var(--primary); color:#fff; }
 
@@ -381,8 +543,8 @@
 .dcta{ position:relative; overflow:hidden; background:var(--primary); }
 .dcta-glow{ position:absolute; inset:0; background:radial-gradient(60% 120% at 85% 0%, rgba(255,255,255,.22), transparent 55%); }
 .dcta .wrap{ position:relative; padding-top:96px; padding-bottom:96px; display:flex; flex-direction:column; align-items:center; text-align:center; gap:22px; }
-.dcta-title{ font-family:var(--display); font-weight:700; text-transform:uppercase; font-size:72px; line-height:.95; color:#fff; margin:0; }
-.dcta-sub{ color:rgba(255,255,255,.88); font-size:19px; margin:0; max-width:560px; }
+.dcta-title{ font-family:var(--display); font-weight:700; text-transform:uppercase; font-size:72px; line-height:.95; letter-spacing:-.01em; color:#fff; margin:0; }
+.dcta-sub{ color:rgba(255,255,255,.88); font-size:19px; line-height:1.55; margin:0; max-width:560px; }
 .dcta-btn{ background:#fff; color:var(--primary); margin-top:8px; }
 .dcta-btn:hover{ background:#f0f0f0; }
 
@@ -417,11 +579,11 @@
 
 /* ===================== TUTORIALS ===================== */
 .dtuto-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:22px; }
-.dtuto-card{ background:var(--surface); border:1px solid var(--border-soft); border-radius:var(--r); overflow:hidden; cursor:pointer; transition:border-color .2s, transform .2s; }
+.dtuto-card{ background:var(--surface); border:1px solid var(--border-soft); border-radius:var(--r); overflow:hidden; cursor:pointer; transition:border-color .2s ease, transform .24s var(--ease-out-strong), opacity .7s var(--ease-out-strong); }
 .dtuto-card:hover{ border-color:var(--border); transform:translateY(-4px); }
 .dtuto-thumb-wrap{ position:relative; }
 .dtuto-thumb{ width:100%; aspect-ratio:1.7; border-radius:0; }
-.dtuto-play{ position:absolute; inset:0; margin:auto; width:62px; height:62px; border-radius:50%; background:rgba(196,30,42,.92); display:flex; align-items:center; justify-content:center; color:#fff; box-shadow:0 10px 30px rgba(0,0,0,.5); transition:transform .2s; }
+.dtuto-play{ position:absolute; inset:0; margin:auto; width:62px; height:62px; border-radius:50%; background:rgba(196,30,42,.92); display:flex; align-items:center; justify-content:center; color:#fff; box-shadow:0 10px 30px rgba(0,0,0,.5); transition:transform .24s var(--ease-out-strong); }
 .dtuto-card:hover .dtuto-play{ transform:scale(1.08); }
 .dtuto-dur{ position:absolute; bottom:12px; right:12px; font-family:var(--mono); font-size:12px; color:#fff; background:rgba(0,0,0,.6); padding:4px 10px; border-radius:999px; }
 .dtuto-body{ padding:20px 22px 24px; display:flex; flex-direction:column; gap:9px; }
@@ -447,15 +609,33 @@
 .dform-sent-ic{ width:72px; height:72px; border-radius:50%; background:rgba(34,197,94,.13); border:1px solid rgba(34,197,94,.4); color:var(--success); display:flex; align-items:center; justify-content:center; }
 .dform-sent h3{ font-family:var(--display); font-weight:600; text-transform:uppercase; font-size:32px; margin:0; }
 .dcontact-side{ display:flex; flex-direction:column; gap:20px; }
-.dmap{ position:relative; border-radius:var(--r); overflow:hidden; border:1px solid var(--border-soft); }
+/* Ver nota en .map-block: el crédito de OSM va afuera, así que el mapa entero es
+   un <a> simple y su superficie queda sin una sola letra encima. */
+.dmap-wrap{ display:flex; flex-direction:column; gap:7px; }
+.dmap{ position:relative; display:block; border-radius:var(--r); overflow:hidden; border:1px solid var(--border-soft); transition:border-color .16s; }
+.dmap:hover{ border-color:var(--primary); }
 .dmap-img{ width:100%; aspect-ratio:1.6; border-radius:0; }
-.dmap-pin{ position:absolute; inset:0; margin:auto; width:54px; height:54px; display:flex; align-items:flex-end; justify-content:center; color:var(--primary); filter:drop-shadow(0 6px 12px rgba(0,0,0,.6)); }
-.dcontact-cards{ display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+/* Ver nota en .map-pin: la punta del icono va sobre el centro real del mapa. */
+.dmap-pin{ position:absolute; inset:0; margin:auto; width:30px; height:30px; display:flex; color:var(--primary); filter:drop-shadow(0 6px 12px rgba(0,0,0,.6)); transform:translateY(-37.5%); }
+.dmap-credit{ align-self:flex-end; font-family:var(--mono); font-size:10px; letter-spacing:.02em; color:var(--muted-dim); text-decoration:none; transition:color .16s; }
+.dmap-credit:hover{ color:var(--muted); }
+/* minmax(0,1fr) y NO 1fr: `1fr` es `minmax(auto,1fr)`, y ese `auto` es min-content.
+   El email es un token largo sin puntos de corte, así que su min-content inflaba
+   la 2da columna a 288px y dejaba la 1ra en 133px — por eso el teléfono se partía
+   en 3 renglones. Con mínimo 0 las columnas sí quedan iguales. */
+.dcontact-cards{ display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:14px; }
 .dcontact-card{ display:flex; align-items:center; gap:14px; background:var(--surface); border:1px solid var(--border-soft); border-radius:var(--r); padding:18px; text-decoration:none; transition:border-color .16s; }
 .dcontact-card:hover{ border-color:var(--border); }
+/* Fila entera para los valores que NO entran en media columna (158px): dirección
+   250px y email 234px. WhatsApp la lleva por prioridad (es el canal real del
+   form). Instagram (55px) y Horarios (133px) sí entran y quedan de a dos. */
+.dcontact-card-wide{ grid-column:1 / -1; }
+/* Ver nota en .contact-card > div: sin min-width:0 el flex item no baja de su
+   min-content y el email empuja la card afuera. */
+.dcontact-card>div{ min-width:0; }
 .dcontact-card>span{ width:46px; height:46px; border-radius:11px; background:rgba(196,30,42,.1); border:1px solid rgba(196,30,42,.24); color:#ff5d68; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
 .dcc-h{ font-family:var(--display); font-weight:500; text-transform:uppercase; letter-spacing:.08em; font-size:11px; color:var(--muted); }
-.dcc-v{ font-family:var(--mono); font-size:13px; color:var(--text); margin-top:3px; }
+.dcc-v{ font-family:var(--mono); font-size:13px; color:var(--text); margin-top:3px; overflow-wrap:break-word; }
 
 /* ===================== ACCESO ===================== */
 .dacceso{ position:relative; min-height:100%; display:flex; align-items:center; justify-content:center; padding:80px 48px; }
@@ -508,15 +688,18 @@
   position:sticky; top:0; z-index:30;
   display:flex; align-items:center; justify-content:space-between;
   padding:58px 16px 12px;   /* top padding clears the status bar / island */
-  transition:background .25s ease, border-color .25s ease, padding .25s ease;
+  transition:background .25s ease, border-color .25s ease, transform .3s var(--ease-out-strong);
   border-bottom:1px solid transparent;
 }
+/* Hide-on-scroll-down / reveal-on-scroll-up. Foco de teclado siempre revela. */
+.navbar.nav-hidden{ transform:translateY(-100%); }
+.navbar:focus-within{ transform:none; }
 .navbar.is-scrolled{
   background:rgba(15,15,15,.72);
   backdrop-filter:blur(16px) saturate(160%);
   -webkit-backdrop-filter:blur(16px) saturate(160%);
   border-bottom:1px solid var(--border);
-  padding-top:52px; padding-bottom:11px;
+  /* idem .dnav: sin cambio de padding — achicarlo corría el contenido = CLS. */
 }
 .nav-logo-btn{ background:none; border:none; padding:0; cursor:pointer; }
 .nav-actions{ display:flex; align-items:center; gap:8px; }
@@ -531,17 +714,19 @@
   display:flex; align-items:center; justify-content:center;
   width:42px; height:42px; border-radius:11px;
   background:var(--surface); border:1px solid var(--border); color:var(--text); cursor:pointer;
+  transition:transform .16s var(--ease-out-strong), background .16s ease;
 }
-.nav-burger:active{ background:var(--surface-2); }
+.nav-burger:active{ background:var(--surface-2); transform:scale(.94); }
 
 /* ---------- menu overlay ---------- */
 .menu-overlay{
-  position:absolute; inset:0; z-index:60;
+  position:fixed; inset:0; z-index:60;
   background:#0c0c0c;
   display:flex; flex-direction:column;
   padding:60px 24px 30px;
+  overflow-y:auto; overscroll-behavior:contain;
   opacity:0; visibility:hidden; transform:translateY(-8px);
-  transition:opacity .3s ease, transform .3s ease, visibility .3s;
+  transition:opacity .3s var(--ease-out-strong), transform .3s var(--ease-out-strong), visibility .3s;
 }
 .menu-overlay.open{ opacity:1; visibility:visible; transform:none; }
 .menu-overlay::before{
@@ -552,7 +737,9 @@
 .menu-close{
   width:42px; height:42px; border-radius:11px; background:var(--surface); border:1px solid var(--border);
   color:var(--text); display:flex; align-items:center; justify-content:center; cursor:pointer;
+  transition:transform .16s var(--ease-out-strong), background .16s ease;
 }
+.menu-close:active{ background:var(--surface-2); transform:scale(.94); }
 .menu-links{ display:flex; flex-direction:column; margin-top:26px; flex:1; position:relative; }
 .menu-link{
   display:flex; align-items:center; gap:16px;
@@ -560,7 +747,7 @@
   font-size:36px; line-height:1.18; color:var(--text);
   background:none; border:none; border-bottom:1px solid var(--border-soft);
   padding:14px 0; cursor:pointer; text-align:left;
-  opacity:0; transform:translateX(-12px); transition:opacity .4s ease, transform .4s ease, color .16s;
+  opacity:0; transform:translateX(-12px); transition:opacity .4s var(--ease-out-strong), transform .4s var(--ease-out-strong), color .16s ease;
 }
 .menu-overlay.open .menu-link{ opacity:1; transform:none; }
 .menu-link.active{ color:var(--primary); }
@@ -575,12 +762,22 @@
 /* ---------- footer ---------- */
 .footer{ background:#0b0b0b; border-top:1px solid var(--border-soft); padding:46px var(--pad) 30px; }
 .footer-tag{ color:var(--muted); font-size:14px; line-height:1.6; margin:20px 0 30px; max-width:300px; }
-.footer-grid{ display:grid; grid-template-columns:1fr 1.25fr; gap:26px; }
-.footer-col{ display:flex; flex-direction:column; gap:11px; }
+/* minmax(0,...) y no `1fr 1.25fr` pelado: el email de la columna Contacto es un
+   token sin cortes, su min-content inflaba el track y la grilla entera se iba
+   afuera (medido: exigía 351px fijos, así que a 320px la página scrolleaba 31px). */
+.footer-grid{ display:grid; grid-template-columns:minmax(0, 1fr) minmax(0, 1.25fr); gap:26px; }
+.footer-col{ display:flex; flex-direction:column; gap:11px; min-width:0; }
+/* Abajo de 360px la columna Contacto queda en ~117px de texto útil: ahí no hay
+   corte que se lea bien (partía el teléfono en "+54 9 3416 15-" / "0712").
+   Apilar es la única salida honesta. */
+@media (max-width: 359px){
+  .footer-grid{ grid-template-columns:1fr; gap:30px; }
+}
 .footer-h{ font-family:var(--display); font-weight:600; text-transform:uppercase; letter-spacing:.14em; font-size:11px; color:var(--muted-dim); margin-bottom:3px; }
 .footer-col a, .footer-col button{
   display:flex; align-items:center; gap:9px; text-align:left;
   color:var(--muted); text-decoration:none; font-size:13.5px; background:none; border:none; padding:0; cursor:pointer; font-family:var(--body);
+  min-width:0; overflow-wrap:break-word;
 }
 .footer-col a svg{ color:var(--primary); flex-shrink:0; }
 /* Spans de contacto (Ubicación/Horarios) — paridad con el footer desktop;
@@ -603,9 +800,13 @@
   .dnav-links, .dnav-cta{ display:none !important; }
   .dnav-burger{ display:inline-flex; align-items:center; }
   .dhero .wrap{ display:flex !important; flex-direction:column; gap:32px; }
-  .dhero-track{ display:none; }
+  .dhero-track-plane{ display:none; }
   .dhero-title{ font-size:clamp(46px, 13vw, 84px) !important; }
   .dhead{ flex-direction:column; align-items:flex-start; gap:14px; }
+  /* Desktop angosto (860–920px): el árbol desktop colapsa a 1 col, así que el
+     portfolio deja de ser dos columnas y el título vuelve a ir arriba, sin sticky. */
+  .dwork-cols{ grid-template-columns:1fr; gap:0; }
+  .dwork-aside{ position:static; top:auto; margin-bottom:32px; }
   .dsvc-grid, .dproc-grid, .dwork-grid, .dsvc-full-grid, .dtuto-grid{ grid-template-columns:1fr !important; }
   .dwork-item.dwork-tall, .dwork-item.dwork-wide{ grid-column:auto !important; grid-row:auto !important; }
   .dtrack .wrap{ display:flex !important; flex-direction:column; gap:32px; }
@@ -662,6 +863,8 @@
 /* Hover con presencia, pero gateado: en touch el :hover no queda pegado */
 @media (hover: none){
   .dsvc-card:hover, .dtuto-card:hover, .dbtn:hover{ transform:none; }
+  .dsvc-card:hover{ box-shadow:none; }
+  .dsvc-card:hover .dsvc-img{ transform:none; }
 }
 
 /* Menú mobile — cascada de los links al abrir */
@@ -675,19 +878,42 @@
 /* Sin JavaScript: mostrar el contenido (las reveals dependen de JS) */
 @media (scripting: none){
   .rise, .drise{ opacity:1 !important; transform:none !important; }
+  /* Sin JS la cortina de Intro (SSR, z-index:200, opaca) NUNCA se levanta: ni el
+     script inline ni la hidratación corren. Sin esto, TODO el resto de fallbacks
+     destapa contenido que igual queda detrás de un panel opaco. */
+  .intro{ display:none !important; }
 }
 
 /* Accesibilidad — prefers-reduced-motion: cortar movimiento, conservar contenido.
-   Reduce (no elimina): todo aparece sin desplazamiento ni escala. */
+   Reduce (no elimina): todo aparece sin desplazamiento ni escala.
+
+   OJO — este reset NO alcanza por sí solo, por dos motivos:
+   1. `animation-duration` no tiene efecto sobre scroll-driven timelines. Por eso
+      re-enganchamos con `animation-timeline:auto`: al volver al timeline del
+      documento, el .01ms sí las corta. Aun así, toda regla scroll-driven nueva
+      debe llevar su kill explícito o vivir en `@media not (prefers-reduced-motion)`.
+   2. No quita `transform`: los desplazamientos hay que anularlos aparte. */
 @media (prefers-reduced-motion: reduce){
   .dweb *, .dweb *::before, .dweb *::after{
     animation-duration:.01ms !important;
     animation-iteration-count:1 !important;
+    animation-timeline:auto !important;
     transition-duration:.01ms !important;
     transition-delay:0ms !important;
     scroll-behavior:auto !important;
   }
   .rise, .drise{ opacity:1 !important; transform:none !important; }
+}
+
+/* Menú mobile: `.dweb` SÍ envuelve ambos árboles (layout.tsx), pero el reset de
+   arriba solo cero-ea duraciones/delays — no elimina `transform`. Acá anulamos el
+   desplazamiento y la cascada, conservando el fundido de opacidad. */
+@media (prefers-reduced-motion: reduce){
+  .menu-overlay{ transform:none !important; transition:opacity .2s ease, visibility .2s !important; }
+  .menu-link,
+  .menu-overlay.open .menu-link{ transform:none !important; transition-delay:0ms !important; }
+  /* Movimiento reducido: el header no se oculta (sin desplazamiento). */
+  .dnav.dnav-hidden, .navbar.nav-hidden{ transform:none !important; }
 }
 
 /* ============================================================
@@ -707,4 +933,266 @@ html.intro-skip .intro{ display:none !important; }
 @media (prefers-reduced-motion: reduce){
   .intro-inner, .intro-line{ animation:none !important; }
   .intro{ transition:none !important; }
+}
+
+/* ============================================================
+   MOMENTO 1 — La card se actualiza sola (como una conversación)
+   Los estados LLEGAN, del más viejo al más nuevo, y el último se pone "en vivo".
+   Se dispara UNA sola vez al entrar en viewport, reusando el IntersectionObserver
+   que ya existe (.drise/.rise → .in). Sin loop: no distrae.
+
+   Por qué esto y NO un pin scroll-driven: "en vivo" se lee mucho mejor si el card
+   se actualiza SOLO que si depende de que el usuario scrollee — es lo que el
+   cliente ve en el portal. Y al no atar la construcción al scroll desaparecen el
+   runway de 220vh, el sticky, el gate de la banda 860-920px y TODO el riesgo que
+   traía el pin.
+
+   Scopeado bajo .dtrack / .track-demo: TrackDemo se renderiza DOS veces (también
+   en el hero) y el card del hero debe quedar QUIETO — su quietud es lo que hace
+   que este momento se lea como escalación y no como repetición.
+   ============================================================ */
+@media (prefers-reduced-motion: no-preference){
+  /* Ritmo por fila: la fila entra VACÍA (solo el dot) → puntitos "escribiendo"
+     → aterriza el mensaje. Orden cronológico: el más viejo primero, el más nuevo
+     cierra poniéndose en vivo. */
+
+  /* --- desktop (.dtl-*) --- */
+  /* La fila entra RÁPIDO (.2s): si tarda, su propio fade multiplica la opacidad
+     del "registrando" y no se lee. Primero está la fila, después registra. */
+  .dtrack .dtl-row{ opacity:0; transform:translateY(8px); transition:opacity .2s var(--ease-out-strong), transform .25s var(--ease-out-strong); }
+  .dtrack .dtl-top, .dtrack .dtl-thumbs{ opacity:0; transition:opacity .35s var(--ease-out-strong); }
+  .dtrack .dtl-line{ transform-origin:top; transform:scaleY(0); transition:transform .5s var(--ease-out-strong); }
+  .dtrack .dtl-row.active .dtl-dot::after{ transform:scale(.2); opacity:0; transition:transform .45s var(--ease-out-strong), opacity .35s ease; }
+
+  .dtrack-demo.in .dtl-row{ opacity:1; transform:none; }
+  .dtrack-demo.in .dtl-top, .dtrack-demo.in .dtl-thumbs{ opacity:1; }
+  .dtrack-demo.in .dtl-line{ transform:scaleY(1); }
+
+  /* Ritmo por fila: entra (.2s) → REGISTRANDO visible .55s → aterriza el estado.
+     3ª fila = "Vehículo ingresado" (la MÁS VIEJA) → primera. */
+  .dtrack-demo.in .dtl-row:nth-child(3){ transition-delay:.05s; }
+  .dtrack-demo.in .dtl-row:nth-child(3) .dtl-reg{ animation:regBeat .6s ease both .25s; }
+  .dtrack-demo.in .dtl-row:nth-child(3) .dtl-top,
+  .dtrack-demo.in .dtl-row:nth-child(3) .dtl-thumbs{ transition-delay:.78s; }
+
+  /* 2ª fila = "Masillado y lijado" */
+  .dtrack-demo.in .dtl-row:nth-child(2){ transition-delay:.9s; }
+  .dtrack-demo.in .dtl-row:nth-child(2) .dtl-reg{ animation:regBeat .6s ease both 1.1s; }
+  .dtrack-demo.in .dtl-row:nth-child(2) .dtl-top,
+  .dtrack-demo.in .dtl-row:nth-child(2) .dtl-thumbs{ transition-delay:1.63s; }
+  .dtrack-demo.in .dtl-row:nth-child(2) .dtl-line{ transition-delay:1s; }
+
+  /* 1ª fila = "Pintura aplicada" (la MÁS NUEVA) → cierra y se pone en vivo */
+  .dtrack-demo.in .dtl-row:nth-child(1){ transition-delay:1.75s; }
+  .dtrack-demo.in .dtl-row:nth-child(1) .dtl-reg{ animation:regBeat .6s ease both 1.95s; }
+  .dtrack-demo.in .dtl-row:nth-child(1) .dtl-top,
+  .dtrack-demo.in .dtl-row:nth-child(1) .dtl-thumbs{ transition-delay:2.48s; }
+  .dtrack-demo.in .dtl-row:nth-child(1) .dtl-line{ transition-delay:1.85s; }
+  .dtrack-demo.in .dtl-row.active .dtl-dot::after{ transform:scale(1); opacity:1; transition-delay:2.72s; }
+  /* ping de llegada del estado más nuevo, justo cuando aterriza */
+  .dtrack-demo.in .dtl-row.active .dtl-dot::before{ animation:dotPing .75s ease-out forwards 2.5s; }
+
+  /* --- HERO: versión LIGERA (solo desktop; en mobile el card no existe) ---
+     Solo la etapa ACTIVA se registra, una vez, para que el badge "EN VIVO" no
+     mienta: un card congelado que dice "en vivo" es, en chiquito, el mismo
+     "parece que funciona, no funciona" que evitamos en todo el sitio.
+     El resto del card queda QUIETO a propósito: esa calma es lo que hace que el
+     momento completo de .dtrack se lea como escalación y no como repetición.
+     Arranca a .8s, DESPUÉS del .drise del card (.7s): si arranca antes, el fade
+     del card multiplica la opacidad del registrando y no se lee. */
+  .dhero-track .dtl-row.active .dtl-top,
+  .dhero-track .dtl-row.active .dtl-thumbs{ opacity:0; transition:opacity .35s var(--ease-out-strong); }
+  .dhero-track .dtl-row.active .dtl-dot::after{ transform:scale(.2); opacity:0; transition:transform .45s var(--ease-out-strong), opacity .35s ease; }
+  /* la línea de la etapa activa se DIBUJA hacia lo anterior (antes aparecía de golpe) */
+  .dhero-track .dtl-row.active .dtl-line{ transform-origin:top; transform:scaleY(0); transition:transform .55s var(--ease-out-strong); }
+  .dhero-track.in .dtl-row.active .dtl-reg{ animation:regBeat .6s ease both .8s; }
+  .dhero-track.in .dtl-row.active .dtl-top,
+  .dhero-track.in .dtl-row.active .dtl-thumbs{ opacity:1; transition-delay:1.35s; }
+  .dhero-track.in .dtl-row.active .dtl-line{ transform:scaleY(1); transition-delay:1.4s; }
+  .dhero-track.in .dtl-row.active .dtl-dot::after{ transform:scale(1); opacity:1; transition-delay:1.6s; }
+  .dhero-track.in .dtl-row.active .dtl-dot::before{ animation:dotPing .75s ease-out forwards 1.45s; }
+
+  /* --- mismo ritmo, árbol mobile (clases propias .track-tl-*) --- */
+  .track-demo .track-tl-row{ opacity:0; transform:translateY(8px); transition:opacity .2s var(--ease-out-strong), transform .25s var(--ease-out-strong); }
+  .track-demo .track-tl-top, .track-demo .track-tl-thumbs{ opacity:0; transition:opacity .35s var(--ease-out-strong); }
+  .track-demo .track-tl-line{ transform-origin:top; transform:scaleY(0); transition:transform .5s var(--ease-out-strong); }
+  .track-demo .track-tl-row.active .track-tl-dot::after{ transform:scale(.2); opacity:0; transition:transform .45s var(--ease-out-strong), opacity .35s ease; }
+
+  .track-demo.in .track-tl-row{ opacity:1; transform:none; }
+  .track-demo.in .track-tl-top, .track-demo.in .track-tl-thumbs{ opacity:1; }
+  .track-demo.in .track-tl-line{ transform:scaleY(1); }
+
+  .track-demo.in .track-tl-row:nth-child(3){ transition-delay:.05s; }
+  .track-demo.in .track-tl-row:nth-child(3) .track-tl-reg{ animation:regBeat .6s ease both .25s; }
+  .track-demo.in .track-tl-row:nth-child(3) .track-tl-top,
+  .track-demo.in .track-tl-row:nth-child(3) .track-tl-thumbs{ transition-delay:.78s; }
+
+  .track-demo.in .track-tl-row:nth-child(2){ transition-delay:.9s; }
+  .track-demo.in .track-tl-row:nth-child(2) .track-tl-reg{ animation:regBeat .6s ease both 1.1s; }
+  .track-demo.in .track-tl-row:nth-child(2) .track-tl-top,
+  .track-demo.in .track-tl-row:nth-child(2) .track-tl-thumbs{ transition-delay:1.63s; }
+  .track-demo.in .track-tl-row:nth-child(2) .track-tl-line{ transition-delay:1s; }
+
+  .track-demo.in .track-tl-row:nth-child(1){ transition-delay:1.75s; }
+  .track-demo.in .track-tl-row:nth-child(1) .track-tl-reg{ animation:regBeat .6s ease both 1.95s; }
+  .track-demo.in .track-tl-row:nth-child(1) .track-tl-top,
+  .track-demo.in .track-tl-row:nth-child(1) .track-tl-thumbs{ transition-delay:2.48s; }
+  .track-demo.in .track-tl-row:nth-child(1) .track-tl-line{ transition-delay:1.85s; }
+  .track-demo.in .track-tl-row.active .track-tl-dot::after{ transform:scale(1); opacity:1; transition-delay:2.72s; }
+  .track-demo.in .track-tl-row.active .track-tl-dot::before{ animation:dotPing .75s ease-out forwards 2.5s; }
+}
+/* Sin JS los reveals no corren: los estados tienen que estar igual. */
+@media (scripting: none){
+  .dtrack .dtl-row, .track-demo .track-tl-row{ opacity:1 !important; transform:none !important; }
+  .dtrack .dtl-top, .dtrack .dtl-thumbs,
+  .track-demo .track-tl-top, .track-demo .track-tl-thumbs{ opacity:1 !important; }
+  .dtrack .dtl-line, .track-demo .track-tl-line,
+  .dhero-track .dtl-row.active .dtl-line{ transform:none !important; }
+  .dhero-track .dtl-row.active .dtl-top,
+  .dhero-track .dtl-row.active .dtl-thumbs{ opacity:1 !important; }
+  /* el ping es one-shot: sin JS no debe quedar un disco rojo pegado sobre el dot */
+  .dtl-row.active .dtl-dot::before,
+  .track-tl-row.active .track-tl-dot::before{ display:none !important; }
+  .dtrack .dtl-row.active .dtl-dot::after,
+  .dhero-track .dtl-row.active .dtl-dot::after,
+  .track-demo .track-tl-row.active .track-tl-dot::after{ transform:none !important; opacity:1 !important; }
+  /* sin JS nadie registra nada: el skeleton no debe quedar flotando sobre el texto */
+  .dtl-reg, .track-tl-reg{ display:none !important; }
+}
+
+/* ============================================================
+   MOMENTO 2 — Profundidad diferencial en el portfolio
+   Los vecinos viajan a distinta velocidad → la masonry deja de leerse como una
+   grilla plana y pasa a ser una PARED DE FOTOS A DISTINTAS PROFUNDIDADES.
+   Los marcos NUNCA se mueven (.dwork-item ya tiene overflow:hidden) → 0 CLS intacto.
+   ============================================================ */
+@supports (animation-timeline: view()){
+  /* ≥921px SOLAMENTE: en la banda 860-920 el árbol desktop colapsa a 1 columna
+     (todas las celdas iguales), así que la premisa "amplitud según tamaño de
+     celda" deja de tener sentido ahí. */
+  @media (min-width: 921px) and (prefers-reduced-motion: no-preference){
+    .dwork-photo img{
+      top:-12%; bottom:auto; height:124%;
+      animation:workDepth 1ms linear both; animation-timeline:view(); animation-range:cover;
+    }
+    @keyframes workDepth{ from{ transform:translate3d(0,-5%,0); } to{ transform:translate3d(0,5%,0); } }
+    /* Amplitud según el tamaño de celda: eso es lo que crea la profundidad */
+    .dwork-tall .dwork-photo img{ animation-name:workDepthTall; }
+    /* ±8 (no ±9): con img height:124% (overhang 12%/lado), ±9=11.16% dejaba sólo
+       0.84% de margen; ±8=9.92% → ~2% de colchón. El diferencial vs las otras celdas
+       (5/3.5%) es lo que crea la profundidad, no el valor absoluto. */
+    @keyframes workDepthTall{ from{ transform:translate3d(0,-8%,0); } to{ transform:translate3d(0,8%,0); } }
+    .dwork-wide .dwork-photo img{ animation-name:workDepthWide; }
+    @keyframes workDepthWide{ from{ transform:translate3d(0,-3.5%,0); } to{ transform:translate3d(0,3.5%,0); } }
+  }
+}
+
+/* ============================================================
+   MOMENTO 3 — El proceso se dibuja solo
+   El riel ya existía como pseudo de 2px con los extremos difuminados. Al escalarlo,
+   el degradé escala CON él: el borde de avance queda suave y se lee DIBUJÁNDOSE,
+   no barriendo. El texto nunca se mueve.
+   Mobile: NO se scrubea. Cuatro timelines view() en un Android de gama baja es
+   riesgo real de 60fps por una ganancia imperceptible; allá ya hay reveals.
+   ============================================================ */
+@media (min-width: 921px) and (prefers-reduced-motion: no-preference){
+  @supports (animation-timeline: view()){
+    .dproc-grid{ view-timeline-name:--dproc; }
+    .dproc-grid::before{
+      transform-origin:left;
+      /* --ease-out-soft (NO -strong, que quedaría front-loaded y el riel casi salta):
+         el scaleX arranca con presencia y desacelera al completar → se siente
+         "dibujado a mano", no una barra a velocidad de motor. */
+      animation:dprocRail 1ms var(--ease-out-soft) both; animation-timeline:--dproc; animation-range:entry 28% entry 95%;
+    }
+    @keyframes dprocRail{ from{ transform:scaleX(0); } to{ transform:scaleX(1); } }
+    /* Cada dot aparece cuando el riel lo alcanza */
+    .dproc-step .dproc-dot{ animation:dprocDot 1ms linear both; animation-timeline:--dproc; }
+    .dproc-step:nth-child(1) .dproc-dot{ animation-range:entry 32% entry 46%; }
+    .dproc-step:nth-child(2) .dproc-dot{ animation-range:entry 46% entry 60%; }
+    .dproc-step:nth-child(3) .dproc-dot{ animation-range:entry 60% entry 74%; }
+    .dproc-step:nth-child(4) .dproc-dot{ animation-range:entry 74% entry 88%; }
+    @keyframes dprocDot{ from{ transform:scale(.8); } to{ transform:scale(1); } }
+  }
+}
+
+/* ============================================================
+   GALERÍA "PILA DE ARCHIVO" (scroll stacking) — portfolio del home.
+   Apilado = position:sticky (CSS puro). Revelado = view() (compositor).
+   Profundidad por cobertura = rAF mínimo (WorkStack.tsx) que escribe
+   transform/opacity directo. Ambos árboles; sizing por breakpoint.
+   ============================================================ */
+.wstack{ position:relative; --stack-top:108px; --card-h:400px; }
+.wstack-card{
+  display:block; position:sticky; top:calc(var(--stack-top) + var(--i) * 26px);
+  height:var(--card-h); text-decoration:none; color:var(--text);
+  /* reset de <button>: la card es un botón que abre el lightbox */
+  width:100%; padding:0; border:none; background:none; text-align:left; font:inherit; cursor:pointer;
+  /* will-change lo gestiona el rAF en JS (solo mientras la pila está in-view),
+     no acá estático — si no, 5 capas de compositor toda la vida de la página. */
+}
+.wstack-inner{
+  display:block; position:relative; height:100%; border-radius:18px; overflow:hidden;
+  background:var(--surface);
+  /* sombra superior para separar cada hoja + inset highlight que dibuja el borde */
+  box-shadow:0 -1px 0 rgba(255,255,255,.06) inset, 0 -14px 40px -18px rgba(0,0,0,.9), 0 20px 50px -30px rgba(0,0,0,.9);
+  opacity:1;
+}
+.wstack-photo{ position:absolute; inset:0; border-radius:0; }
+.wstack-photo img{ transition:transform .5s var(--ease-out-strong); }
+/* hover-zoom gateado: en touch el tap disparaba el zoom Y abría el modal → quedaba
+   pegado en la card de atrás. */
+@media (hover:hover){ .wstack-card:hover .wstack-photo img{ transform:scale(1.04); } }
+/* gradiente inferior fijo para que el texto lea siempre */
+.wstack-grad{ position:absolute; inset:0; pointer-events:none; background:linear-gradient(180deg, rgba(15,15,15,.15) 0%, transparent 32%, rgba(15,15,15,.5) 72%, rgba(15,15,15,.92) 100%); }
+/* capa de PROFUNDIDAD: la oscurece el JS según cuánto la tapa la siguiente.
+   z-index ARRIBA del contenido: si no, oscurece la foto pero no el título, y los
+   títulos de las cards tapadas se filtran como fantasmas. */
+.wstack-shade{ position:absolute; inset:0; pointer-events:none; background:#000; opacity:0; z-index:5; }
+.wstack-count{ position:absolute; top:18px; right:20px; font-size:12px; letter-spacing:.14em; color:rgba(255,255,255,.6); z-index:2; }
+.wstack-meta{ position:absolute; left:24px; right:24px; bottom:22px; display:flex; flex-direction:column; align-items:flex-start; gap:10px; z-index:2; }
+.wstack-cat{ font-family:var(--display); font-weight:500; text-transform:uppercase; letter-spacing:.08em; font-size:12px; color:#fff; background:rgba(196,30,42,.9); padding:5px 12px; border-radius:999px; }
+.wstack-title{ font-family:var(--display); font-weight:600; text-transform:uppercase; letter-spacing:-.005em; font-size:34px; line-height:1.02; color:#fff; max-width:80%; }
+.wstack-go{ position:absolute; top:16px; left:20px; width:38px; height:38px; border-radius:11px; background:rgba(0,0,0,.4); backdrop-filter:blur(4px); display:flex; align-items:center; justify-content:center; color:#fff; opacity:0; transform:translateY(-4px); transition:opacity .25s ease, transform .25s var(--ease-out-strong); z-index:2; }
+@media (hover:hover){ .wstack-card:hover .wstack-go{ opacity:1; transform:none; } }
+/* En touch no hay hover: el badge queda visible como señal de que la card abre algo. */
+@media (hover:none){ .wstack-go{ opacity:.9; transform:none; } }
+
+/* Revelado de entrada: fade + zoom-in (0.965 → 1) a medida que la card entra.
+   view() = compositor, 0 JS. Va en .wstack-inner para NO chocar con el scale de
+   cobertura que el JS aplica en .wstack-card (padre × hijo componen). */
+@supports (animation-timeline: view()){
+  @media (prefers-reduced-motion: no-preference){
+    /* El revelado DEBE completar antes de que la card se clave arriba (si no, su
+       progreso view() se congela incompleto y la card queda semi-transparente →
+       se ve la de atrás). `entry 18% → entry 100%` = arranca con la card cerca
+       del fondo (~92vh) y termina cuando su borde sube a ~55vh, bastante antes
+       del pin. Coincide con el spec ("empieza al 92%, completo al 55%"). */
+    .wstack-inner{ animation:wstackReveal linear both; animation-timeline:view(); animation-range:entry 18% entry 100%; }
+    @keyframes wstackReveal{ from{ opacity:0; transform:scale(.965); } to{ opacity:1; transform:scale(1); } }
+  }
+}
+
+/* Mobile: pestañas y card un poco más chicas. La pila clava JUSTO debajo de la
+   banda del título (abajo), no del navbar: el título sticky es ahora el tope.
+   env(safe-area-inset-top) respeta el notch en teléfono real (en browser = 0). */
+@media (max-width:859px){
+  .wstack{ --stack-top:calc(env(safe-area-inset-top, 0px) + 132px); --card-h:330px; }
+  .wstack-card{ top:calc(var(--stack-top) + var(--i) * 22px); }
+  .wstack-inner{ border-radius:16px; }
+  .wstack-title{ font-size:26px; }
+
+  /* Título del portfolio ARRIBA y sticky: se queda visible mientras la pila sube
+     por debajo (equivalente mobile del título lateral del desktop). Opaco con el
+     color de la página → tapa las cards al pasar sin dibujar una caja visible.
+     z-index ENTRE las cards (máx 5) y el navbar (30): las hojas se meten por
+     debajo del título, y el navbar (que se esconde al bajar) lo cubre solo un
+     instante al volver a subir, que es el orden correcto. */
+  .peek-head{
+    position:sticky; top:0; z-index:12;
+    margin-bottom:0;
+    padding-top:calc(env(safe-area-inset-top, 0px) + 16px);
+    padding-bottom:16px;
+    background:var(--bg);
+  }
 }

@@ -24,6 +24,28 @@ export function RevealRoot({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
 
   useEffect(() => {
+    // ────────────────────────────────────────────────────────────────────────
+    // NOTA: esto genera un hydration mismatch conocido, y es DELIBERADO dejarlo.
+    //
+    // /contacto, /servicios, /trabajos y /tutoriales son server components async
+    // que se streamean dentro de un <Suspense>, así que hidratan tarde y por
+    // separado. Este efecto vive en el LAYOUT (que hidrata antes) y le escribe
+    // `.in` a nodos que React todavía no hidrató. Cuando React llega, encuentra
+    // `rise in` donde iba a renderizar `rise` y lo reporta en consola.
+    // El home NO falla, pero no está sano: el intro de marca demora el sweep
+    // (ver __elgIntro más abajo) y esa demora tapa la carrera por casualidad.
+    //
+    // Medido: React NO descarta el HTML del servidor (es un warning de atributos,
+    // no un bailout), el MutationObserver de acá abajo auto-cura cualquier `.in`
+    // perdido, y quedan 0 elementos sin revelar. Impacto en el usuario: ninguno.
+    //
+    // Ya se probó marcar con `data-in` en vez de una clase, apostando a que React
+    // no compara lo que no rendereó: NO SIRVE. React 19 también valida los
+    // atributos extra que aparecen en el DOM. Las salidas reales son
+    // `suppressHydrationWarning` en los ~54 nodos .rise/.drise, o pasar el reveal
+    // a Web Animations API (el.animate() no toca clases ni atributos, así que
+    // React no ve nada que comparar). Ambas cuestan más que el bug — por ahora.
+    // ────────────────────────────────────────────────────────────────────────
     const reveal = (el: Element) => el.classList.add("in");
     const collect = () =>
       Array.from(

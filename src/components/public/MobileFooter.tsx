@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { Logo } from "@/components/shared/Logo";
+import { HomeLogoLink } from "./HomeLogoLink";
 import { Icon } from "@/components/shared/Icon";
+import { EmailText } from "@/components/shared/EmailText";
 import { CONTACT } from "@/lib/contact";
 
 const NAV_LINKS = [
@@ -16,7 +18,7 @@ export function MobileFooter() {
   return (
     <footer className="footer">
       <div className="footer-brand">
-        <Logo size={30} tagline location />
+        <HomeLogoLink><Logo size={30} tagline location /></HomeLogoLink>
       </div>
       <p className="footer-tag">
         La historia clínica de tu auto y el seguimiento del trabajo, en un solo lugar.
@@ -30,9 +32,9 @@ export function MobileFooter() {
         </div>
         <div className="footer-col">
           <span className="footer-h">Contacto</span>
-          <span><Icon name="pin" size={15} /> Rosario, Santa Fe</span>
+          <a href={CONTACT.directionsUrl} target="_blank" rel="noopener noreferrer"><Icon name="pin" size={15} /> {CONTACT.addressStreet}</a>
           <a href={`tel:+${CONTACT.whatsappNumber}`}><Icon name="phone" size={15} /> {CONTACT.whatsappDisplay}</a>
-          <a href={`mailto:${CONTACT.email}`}><Icon name="mail" size={15} /> {CONTACT.email}</a>
+          <a href={`mailto:${CONTACT.email}`}><Icon name="mail" size={15} /> <EmailText /></a>
           <span><Icon name="clock" size={15} /> Lun a Vie · 8:30–18:00</span>
         </div>
       </div>

@@ -197,7 +197,7 @@
 .vis-toggle.on .vis-label { color: var(--success); }
 
 /* ---------- Botones base (portados de styles.css) ---------- */
-.btn { font-family: var(--display); font-weight: 500; text-transform: uppercase; letter-spacing: .06em; font-size: 15px; white-space: nowrap; display: inline-flex; align-items: center; justify-content: center; gap: 9px; padding: 0 22px; height: 52px; border-radius: var(--r-sm); border: none; cursor: pointer; text-decoration: none; transition: background .18s ease, transform .12s ease, border-color .18s ease, color .18s ease; user-select: none; }
+.btn { font-family: var(--display); font-weight: 500; text-transform: uppercase; letter-spacing: .06em; font-size: 15px; white-space: nowrap; display: inline-flex; align-items: center; justify-content: center; gap: 9px; padding: 0 22px; height: 52px; border-radius: var(--r-sm); border: none; cursor: pointer; text-decoration: none; transition: background .18s ease, transform .16s var(--ease-out-strong), border-color .18s ease, color .18s ease; user-select: none; }
 .btn:active { transform: scale(.975); }
 .btn-primary { background: var(--primary); color: #fff; box-shadow: 0 6px 22px -8px var(--primary-glow); }
 .btn-primary:hover { background: var(--primary-hover); }
@@ -216,7 +216,7 @@
 .section { padding: 54px var(--pad); }
 .section-tight { padding: 38px var(--pad); }
 .section-head { display: flex; flex-direction: column; align-items: flex-start; gap: 11px; margin-bottom: 26px; }
-.section-head h2 { font-family: var(--display); font-weight: 600; font-size: 32px; line-height: 1.05; text-transform: uppercase; margin: 0; }
+.section-head h2 { font-family: var(--display); font-weight: 600; font-size: 32px; line-height: 1.05; letter-spacing: -.005em; text-transform: uppercase; margin: 0; }
 .divider { height: 1px; background: var(--border-soft); }
 .chip { display: inline-flex; align-items: center; gap: 6px; font-family: var(--display); font-weight: 500; text-transform: uppercase; letter-spacing: .08em; font-size: 11px; height: 30px; padding: 0 13px; border-radius: 999px; background: var(--surface); border: 1px solid var(--border); color: var(--muted); cursor: pointer; white-space: nowrap; transition: all .16s ease; }
 .chip.active { background: var(--primary); border-color: var(--primary); color: #fff; }

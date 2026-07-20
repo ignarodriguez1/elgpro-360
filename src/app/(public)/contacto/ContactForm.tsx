@@ -4,9 +4,27 @@ import { useState } from "react";
 import { PageHead } from "@/components/public/PageHead";
 import { Photo } from "@/components/shared/Photo";
 import { Icon } from "@/components/shared/Icon";
+import { EmailText } from "@/components/shared/EmailText";
 import { CONTACT, whatsappUrl } from "@/lib/contact";
 
 const EMPTY = { nombre: "", email: "", tel: "", servicio: "", msg: "" };
+
+// Mapa estático propio, derivado de OpenStreetMap y servido desde /public: sin
+// API key, sin request a terceros en runtime. La imagen está centrada EXACTO en
+// CONTACT.lat/lon, así que el pin que el CSS ancla al centro (.dmap-pin) cae en
+// la puerta del taller sin cálculo extra.
+const MAP_SRC = "/mapa-taller.webp";
+// ATRIBUCIÓN ODbL — OBLIGATORIA, NO SE BORRA.
+// Es la contraprestación por poder auto-hospedar el mapa: Google prohíbe guardar
+// sus imágenes, OSM lo permite a cambio de este crédito. Sin él, el sitio publica
+// una obra derivada sin licencia.
+// Las guías de la OSM Foundation piden el texto "© OpenStreetMap contributors",
+// que sea legible (fuente/tamaño/color/contraste/posición) y que enlace a la
+// licencia. Está DEBAJO del mapa y no encima a pedido del dueño: la guía sugiere
+// la esquina para mapas navegables; este es una imagen estática y el crédito
+// adyacente cumple igual. Se puede mover, NO se puede sacar.
+const OSM_COPYRIGHT = "https://www.openstreetmap.org/copyright";
+const OSM_CREDIT = "Mapa © OpenStreetMap contributors";
 
 function Field({
   base,
@@ -87,10 +105,17 @@ export function ContactForm({ services }: { services: string[] }) {
                   </form>
                 </div>
                 <div className="dcontact-side">
-                  <div className="dmap"><Photo className="dmap-img" tint="rgba(196,30,42,.12)" label="Mapa · Rosario, Santa Fe" /><span className="dmap-pin"><Icon name="pin" size={30} /></span></div>
+                  <div className="dmap-wrap">
+                    <a className="dmap" href={CONTACT.mapUrl} target="_blank" rel="noopener noreferrer" aria-label={`Ver ${CONTACT.addressFull} en Google Maps`}>
+                      <Photo className="dmap-img" src={MAP_SRC} alt={`Mapa de ${CONTACT.addressFull}`} tint="rgba(196,30,42,.12)" label={`Mapa · ${CONTACT.addressStreet}`} />
+                      <span className="dmap-pin"><Icon name="pin" size={30} /></span>
+                    </a>
+                    <a className="dmap-credit" href={OSM_COPYRIGHT} target="_blank" rel="noopener noreferrer">{OSM_CREDIT}</a>
+                  </div>
                   <div className="dcontact-cards">
-                    <a className="dcontact-card" href={CONTACT.whatsappUrl} target="_blank" rel="noopener noreferrer"><span><Icon name="whatsapp" size={20} /></span><div><div className="dcc-h">WhatsApp</div><div className="dcc-v">{CONTACT.whatsappDisplay}</div></div></a>
-                    <a className="dcontact-card" href={`mailto:${CONTACT.email}`}><span><Icon name="mail" size={20} /></span><div><div className="dcc-h">Email</div><div className="dcc-v">{CONTACT.email}</div></div></a>
+                    <a className="dcontact-card dcontact-card-wide" href={CONTACT.directionsUrl} target="_blank" rel="noopener noreferrer"><span><Icon name="pin" size={20} /></span><div><div className="dcc-h">Dirección</div><div className="dcc-v">{CONTACT.addressStreet} · {CONTACT.addressCity}</div></div></a>
+                    <a className="dcontact-card dcontact-card-wide" href={CONTACT.whatsappUrl} target="_blank" rel="noopener noreferrer"><span><Icon name="whatsapp" size={20} /></span><div><div className="dcc-h">WhatsApp</div><div className="dcc-v">{CONTACT.whatsappDisplay}</div></div></a>
+                    <a className="dcontact-card dcontact-card-wide" href={`mailto:${CONTACT.email}`}><span><Icon name="mail" size={20} /></span><div><div className="dcc-h">Email</div><div className="dcc-v"><EmailText /></div></div></a>
                     <a className="dcontact-card" href={CONTACT.instagramUrl} target="_blank" rel="noopener noreferrer"><span><Icon name="instagram" size={20} /></span><div><div className="dcc-h">Instagram</div><div className="dcc-v">{CONTACT.instagramDisplay}</div></div></a>
                     <div className="dcontact-card"><span><Icon name="clock" size={20} /></span><div><div className="dcc-h">Horarios</div><div className="dcc-v">Lun–Vie · 8:30–18</div></div></div>
                   </div>
@@ -124,10 +149,17 @@ export function ContactForm({ services }: { services: string[] }) {
               <Field base="field" label="Mensaje"><textarea rows={4} value={form.msg} onChange={set("msg")} placeholder="Contanos sobre tu vehículo y lo que necesitás" /></Field>
               <button className="btn btn-primary btn-block" type="submit">Enviar por WhatsApp <Icon name="whatsapp" size={18} /></button>
             </form>
-            <div className="map-wrap"><Photo className="map-img" tint="rgba(196,30,42,.12)" label="Mapa · Rosario, Santa Fe" /><span className="map-pin"><Icon name="pin" size={26} /></span></div>
+            <div className="map-block">
+              <a className="map-wrap" href={CONTACT.mapUrl} target="_blank" rel="noopener noreferrer" aria-label={`Ver ${CONTACT.addressFull} en Google Maps`}>
+                <Photo className="map-img" src={MAP_SRC} alt={`Mapa de ${CONTACT.addressFull}`} tint="rgba(196,30,42,.12)" label={`Mapa · ${CONTACT.addressStreet}`} />
+                <span className="map-pin"><Icon name="pin" size={26} /></span>
+              </a>
+              <a className="map-credit" href={OSM_COPYRIGHT} target="_blank" rel="noopener noreferrer">{OSM_CREDIT}</a>
+            </div>
             <div className="contact-cards">
+              <a className="contact-card" href={CONTACT.directionsUrl} target="_blank" rel="noopener noreferrer"><span><Icon name="pin" size={20} /></span><div><div className="cc-h">Dirección</div><div className="cc-v mono">{CONTACT.addressStreet} · {CONTACT.addressCity}</div></div></a>
               <a className="contact-card" href={CONTACT.whatsappUrl} target="_blank" rel="noopener noreferrer"><span><Icon name="whatsapp" size={20} /></span><div><div className="cc-h">WhatsApp</div><div className="cc-v mono">{CONTACT.whatsappDisplay}</div></div></a>
-              <a className="contact-card" href={`mailto:${CONTACT.email}`}><span><Icon name="mail" size={20} /></span><div><div className="cc-h">Email</div><div className="cc-v mono">{CONTACT.email}</div></div></a>
+              <a className="contact-card" href={`mailto:${CONTACT.email}`}><span><Icon name="mail" size={20} /></span><div><div className="cc-h">Email</div><div className="cc-v mono"><EmailText /></div></div></a>
               <a className="contact-card" href={CONTACT.instagramUrl} target="_blank" rel="noopener noreferrer"><span><Icon name="instagram" size={20} /></span><div><div className="cc-h">Instagram</div><div className="cc-v mono">{CONTACT.instagramDisplay}</div></div></a>
               <div className="contact-card"><span><Icon name="clock" size={20} /></span><div><div className="cc-h">Horarios</div><div className="cc-v mono">Lun–Vie · 8:30–18</div></div></div>
             </div>

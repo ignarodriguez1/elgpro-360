@@ -1,11 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Logo } from "@/components/shared/Logo";
 import { Icon } from "@/components/shared/Icon";
 import { UserMenu } from "@/components/shared/UserMenu";
+import { useHeaderScroll } from "./useHeaderScroll";
+import { scrollToTop } from "./scrollToTop";
 
 type ChromeUser = { name: string | null; email: string | null; role: string } | null;
 
@@ -19,19 +20,25 @@ const NAV_LINKS = [
 
 /** Navbar DESKTOP (.dnav): links inline + sesión global. Solo se muestra ≥1024px. */
 export function PublicChrome({ user }: { user: ChromeUser }) {
-  const [scrolled, setScrolled] = useState(false);
   const pathname = usePathname();
-
-  useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 12);
-    window.addEventListener("scroll", onScroll);
-    onScroll();
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
+  const { scrolled, hidden } = useHeaderScroll({ scrolledAt: 12 });
 
   return (
-    <header className={"dnav" + (scrolled ? " scrolled" : "")}>
-      <Link href="/" className="dnav-logo" aria-label="Inicio">
+    <header
+      className={"dnav" + (scrolled ? " scrolled" : "") + (hidden ? " dnav-hidden" : "")}
+    >
+      <Link
+        href="/"
+        className="dnav-logo"
+        aria-label="Inicio"
+        onClick={(e) => {
+          // Estando ya en la home: no recargar, solo ir arriba de todo (SPA).
+          if (pathname === "/") {
+            e.preventDefault();
+            scrollToTop();
+          }
+        }}
+      >
         <Logo size={20} />
       </Link>
       <nav className="dnav-links">

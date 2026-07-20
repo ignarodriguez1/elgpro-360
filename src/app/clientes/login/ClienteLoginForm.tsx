@@ -30,6 +30,60 @@ function messageForCode(code: string | undefined): string {
   return "Código incorrecto. Revisá los dígitos.";
 }
 
+/**
+ * Campos del paso actual, compartidos por el árbol mobile y el desktop.
+ * DEFINIDO A NIVEL DE MÓDULO a propósito: si viviera dentro de ClienteLoginForm,
+ * cada tecla recrearía la función, React lo trataría como un componente nuevo y
+ * remontaría el <input> en cada pulsación — perdiendo el foco. La `key` por campo
+ * hace que solo se remonte al cambiar de paso (email → código), preservando el
+ * autoFocus del código sin volver a romper el foco al tipear.
+ */
+type StepFieldsProps = {
+  step: "email" | "code";
+  fieldClass: "p-field" | "pw-field";
+  email: string;
+  code: string;
+  onEmail: (value: string) => void;
+  onCode: (value: string) => void;
+};
+
+function StepFields({ step, fieldClass, email, code, onEmail, onCode }: StepFieldsProps) {
+  if (step === "email") {
+    return (
+      <div className={fieldClass}>
+        <label>Email</label>
+        <input
+          key="email"
+          name="email"
+          type="email"
+          required
+          autoComplete="email"
+          placeholder="tu@email.com"
+          value={email}
+          onChange={(e) => onEmail(e.target.value)}
+        />
+      </div>
+    );
+  }
+  return (
+    <div className={fieldClass}>
+      <label>Código de 6 dígitos</label>
+      <input
+        key="code"
+        name="code"
+        inputMode="numeric"
+        autoComplete="one-time-code"
+        maxLength={6}
+        required
+        placeholder="••••••"
+        value={code}
+        onChange={(e) => onCode(e.target.value.replace(/\D/g, ""))}
+        autoFocus
+      />
+    </div>
+  );
+}
+
 export function ClienteLoginForm() {
   const [step, setStep] = useState<"email" | "code">("email");
   const [email, setEmail] = useState("");
@@ -87,43 +141,6 @@ export function ClienteLoginForm() {
     setInfo("");
   }
 
-  // Campos del paso actual, compartidos por ambos árboles. `fieldClass` cambia
-  // entre mobile (p-field) y desktop (pw-field).
-  function StepFields({ fieldClass }: { fieldClass: "p-field" | "pw-field" }) {
-    if (step === "email") {
-      return (
-        <div className={fieldClass}>
-          <label>Email</label>
-          <input
-            name="email"
-            type="email"
-            required
-            autoComplete="email"
-            placeholder="tu@email.com"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-          />
-        </div>
-      );
-    }
-    return (
-      <div className={fieldClass}>
-        <label>Código de 6 dígitos</label>
-        <input
-          name="code"
-          inputMode="numeric"
-          autoComplete="one-time-code"
-          maxLength={6}
-          required
-          placeholder="••••••"
-          value={code}
-          onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
-          autoFocus
-        />
-      </div>
-    );
-  }
-
   return (
     <>
       {/* MOBILE */}
@@ -140,7 +157,7 @@ export function ClienteLoginForm() {
                 : "Ingresá el código que te enviamos por email."}
             </p>
             <form onSubmit={step === "email" ? handleRequest : handleVerify}>
-              <StepFields fieldClass="p-field" />
+              <StepFields step={step} fieldClass="p-field" email={email} code={code} onEmail={setEmail} onCode={setCode} />
               {info && <div className="p-login-sub" style={{ marginTop: 4 }}>{info}</div>}
               {error && <div className="p-login-error">{error}</div>}
               <button className="btn btn-primary btn-block" type="submit" disabled={loading} style={{ marginTop: 6 }}>
@@ -173,7 +190,7 @@ export function ClienteLoginForm() {
               : "Ingresá el código que te enviamos por email."}
           </p>
           <form onSubmit={step === "email" ? handleRequest : handleVerify} style={{ width: "100%" }}>
-            <StepFields fieldClass="pw-field" />
+            <StepFields step={step} fieldClass="pw-field" email={email} code={code} onEmail={setEmail} onCode={setCode} />
             {info && <p className="pw-login-sub" style={{ marginTop: 4 }}>{info}</p>}
             {error && <p style={{ color: "#ff5d68", fontSize: 13, margin: "0 0 10px" }}>{error}</p>}
             <button className="pw-btn pw-btn-primary" type="submit" style={{ width: "100%" }} disabled={loading}>

@@ -4,14 +4,16 @@ import { Icon } from "@/components/shared/Icon";
 import { Logo } from "@/components/shared/Logo";
 import { Reveal } from "./Reveal";
 import { SectionHead } from "./SectionHead";
-import { HERO_IMG, PROCESS, WORKS, TESTIMONIAL, type ServiceItem } from "@/lib/public-data";
+import { WorkStack } from "./WorkStack";
+import { HERO_IMG, PROCESS, TESTIMONIAL, type ServiceItem } from "@/lib/public-data";
+import type { GalleryWork } from "@/lib/portfolio";
 
-export function HomeMobile({ featured }: { featured: ServiceItem[] }) {
+export function HomeMobile({ featured, works }: { featured: ServiceItem[]; works: GalleryWork[] }) {
   return (
     <div className="page page-home">
       {/* HERO */}
       <section className="hero">
-        <Photo src={HERO_IMG} className="hero-bg" tint="rgba(196,30,42,.30)" />
+        <Photo src={HERO_IMG} className="hero-bg" tint="rgba(196,30,42,.30)" priority />
         <div className="hero-veil" />
         <div className="hero-inner">
           <div className="eyebrow rise">ELG Pro · Rosario</div>
@@ -29,16 +31,6 @@ export function HomeMobile({ featured }: { featured: ServiceItem[] }) {
               Ver trabajos <Icon name="arrowUR" size={17} />
             </Link>
           </div>
-        </div>
-        <div className="hero-track rise" style={{ margin: "0 var(--pad) 26px", transitionDelay: "300ms" }}>
-          <div className="hero-track-top">
-            <span className="badge">En proceso</span>
-            <span className="mono hero-track-plate">AB 123 CD</span>
-          </div>
-          <div className="hero-track-car">Toyota Hilux SRX</div>
-          <div className="hero-track-stage"><Icon name="spray" size={14} /> Pintura · cabina presurizada</div>
-          <div className="hero-track-bar"><span style={{ width: "70%" }} /></div>
-          <div className="hero-track-foot"><span>Etapa 3 de 4</span><span className="hero-track-eta">Entrega · Vie 30</span></div>
         </div>
         <div className="hero-scroll mono">scroll ↓</div>
       </section>
@@ -120,14 +112,22 @@ export function HomeMobile({ featured }: { featured: ServiceItem[] }) {
               { t: "Masillado y lijado", d: "Ayer · 17:05", active: false, ph: "rgba(245,158,11,.16)" },
               { t: "Vehículo ingresado", d: "Lun · 09:30", active: false, ph: "rgba(255,255,255,.08)" },
             ].map((e, i) => (
-              <div className={"track-tl-row" + (e.active ? " active" : "")} key={i}>
+              <div className={"track-tl-row" + (e.active ? " active" : "")} key={i} aria-current={e.active ? "step" : undefined}>
                 <div className="track-tl-rail">
                   <span className="track-tl-dot" />
                   {i < 2 && <span className="track-tl-line" />}
                 </div>
                 <div className="track-tl-card">
+                  <span className="track-tl-reg" aria-hidden="true">
+                    <span className="track-tl-reg-label">Registrando estado…</span>
+                    <span className="track-tl-reg-bar" />
+                    <span className="track-tl-reg-thumbs"><i /><i /></span>
+                  </span>
                   <div className="track-tl-top">
-                    <span className="track-tl-t">{e.t}</span>
+                    <span className="track-tl-t">
+                      {e.t}
+                      {e.active && <span className="sr-only"> — etapa actual, en vivo</span>}
+                    </span>
                     <span className="track-tl-d mono">{e.d}</span>
                   </div>
                   <div className="track-tl-thumbs">
@@ -145,23 +145,15 @@ export function HomeMobile({ featured }: { featured: ServiceItem[] }) {
       </section>
 
       {/* PORTFOLIO */}
-      <section className="section-tight">
-        <div className="peek-head">
-          <SectionHead eyebrow="Portfolio" title="Trabajos realizados" />
-          <Link href="/trabajos" className="peek-all">Ver todos <Icon name="arrow" size={15} /></Link>
-        </div>
-        <div className="peek-grid">
-          {WORKS.slice(0, 4).map((w, i) => (
-            <Reveal key={w.title} delay={i * 60} className={"peek-item" + (i === 0 ? " peek-wide" : "")}>
-              <Link href="/trabajos" className="peek-btn" style={{ display: "block" }}>
-                <Photo src={w.img} className="peek-photo" tint={w.tint} grad />
-                <span className="peek-cat">{w.cat}</span>
-                <span className="peek-title display">{w.title}</span>
-              </Link>
-            </Reveal>
-          ))}
-        </div>
-      </section>
+      {works.length > 0 && (
+        <section className="section-tight">
+          <div className="peek-head">
+            <SectionHead eyebrow="Portfolio" title="Trabajos realizados" />
+            <Link href="/trabajos" className="peek-all">Ver todos <Icon name="arrow" size={15} /></Link>
+          </div>
+          <WorkStack variant="mobile" works={works} />
+        </section>
+      )}
 
       {/* TESTIMONIAL */}
       <Reveal className="testi">

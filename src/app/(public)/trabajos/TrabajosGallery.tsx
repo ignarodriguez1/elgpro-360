@@ -4,17 +4,9 @@ import { useRef, useState } from "react";
 import { PageHead } from "@/components/public/PageHead";
 import { Photo } from "@/components/shared/Photo";
 import { Icon } from "@/components/shared/Icon";
+import type { GalleryWork } from "@/lib/portfolio";
 
-export interface GalleryWork {
-  id: string;
-  title: string;
-  category: string;
-  tint: string | null;
-  tall: boolean;
-  afterImageUrl: string | null;
-  beforeImageUrl: string | null;
-  description: string | null;
-}
+export type { GalleryWork };
 
 const dlayout = (i: number) => { const m = i % 6; return m === 0 ? "dwork-tall" : m === 4 ? "dwork-wide" : ""; };
 const FALLBACK_DESC = "Trabajo realizado íntegramente en taller, documentado paso a paso.";
@@ -58,6 +50,11 @@ export function TrabajosGallery({ works, cats }: { works: GalleryWork[]; cats: s
                 {list.map((wk, i) => (
                   <div key={wk.id} className={"dwork-item drise " + dlayout(i)}>
                     <button className="dwork-btn" onClick={() => open(wk._i)}>
+                      {/* Sin priority: los DOS árboles se renderizan siempre (el
+                          corte es CSS), así que en un teléfono este eager+high del
+                          árbol desktop OCULTO competía con el LCP real. Las 2
+                          primeras ya vienen priority desde el árbol mobile — misma
+                          `list`, mismas URLs — así que desktop igual las tiene. */}
                       <Photo src={wk.afterImageUrl ?? undefined} className="dwork-photo" tint={wk.tint ?? undefined} />
                       <span className="dwork-swap"><Icon name="swap" size={16} /></span>
                       <span className="dwork-ov"><span className="dwork-cat">{wk.category}</span><span className="dwork-title">{wk.title}</span></span>
@@ -90,10 +87,10 @@ export function TrabajosGallery({ works, cats }: { works: GalleryWork[]; cats: s
               <p style={{ color: "var(--muted)", textAlign: "center", padding: "32px 0" }}>Todavía no hay trabajos publicados.</p>
             ) : (
             <div className="work-grid">
-              {list.map((wk) => (
+              {list.map((wk, i) => (
                 <div key={wk.id} className={"work-item" + (wk.tall ? " work-tall" : "")}>
                   <button className="work-btn" onClick={() => open(wk._i)}>
-                    <Photo src={wk.afterImageUrl ?? undefined} className="work-photo" tint={wk.tint ?? undefined} grad />
+                    <Photo src={wk.afterImageUrl ?? undefined} className="work-photo" tint={wk.tint ?? undefined} grad priority={i < 2} />
                     <span className="work-meta"><span className="work-cat">{wk.category}</span><span className="work-title display">{wk.title}</span></span>
                     <span className="work-swap"><Icon name="swap" size={15} /></span>
                   </button>

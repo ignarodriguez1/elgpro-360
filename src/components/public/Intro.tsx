@@ -2,17 +2,14 @@
 
 import { useEffect, useState } from "react";
 import { Logo } from "@/components/shared/Logo";
+import { INTRO_SEEN_KEY } from "./intro-preload";
 
-const KEY = "elg-intro-seen";
 const MIN_VISIBLE = 1400; // piso para que el reveal de marca SE VEA, no un flash
 const OUT_MS = 650; // duración del lift de salida (coincide con la transición CSS)
 
-// Script inline: corre ANTES del paint. Si la intro ya se vio esta sesión, o hay
-// prefers-reduced-motion, marca <html> para que el CSS oculte el overlay sin flash.
-// Si se va a saltar → marca .intro-skip (CSS lo oculta sin flash). Si va a correr
-// → setea window.__elgIntro (flag JS robusto que React no resetea al hidratar,
-// a diferencia de una clase en <html>). RevealRoot lo lee para retener el hero.
-const PRE = `try{var d=document.documentElement;if(sessionStorage.getItem('${KEY}')||matchMedia('(prefers-reduced-motion: reduce)').matches){d.classList.add('intro-skip')}else{window.__elgIntro=1}}catch(e){}`;
+// El pre-script bloqueante que decide si saltear la intro (antes del paint) vive
+// en el layout público como <script> inline de un Server Component — ver
+// intro-preload.ts. Acá solo va la lógica de React del overlay.
 
 /**
  * Intro de marca: solo en el home, una vez por sesión.
@@ -37,7 +34,7 @@ export function Intro() {
 
     let seen = false;
     try {
-      seen = !!sessionStorage.getItem(KEY);
+      seen = !!sessionStorage.getItem(INTRO_SEEN_KEY);
     } catch {}
 
     if (reduce || seen) {
@@ -53,7 +50,7 @@ export function Intro() {
 
     const finish = () => {
       try {
-        sessionStorage.setItem(KEY, "1");
+        sessionStorage.setItem(INTRO_SEEN_KEY, "1");
       } catch {}
       // El telón empieza a levantar → avisar al hero que entre coreografiado.
       (window as { __elgIntro?: number }).__elgIntro = 0;
@@ -88,14 +85,11 @@ export function Intro() {
   if (phase === "done") return null;
 
   return (
-    <>
-      <script dangerouslySetInnerHTML={{ __html: PRE }} />
-      <div className={"intro" + (phase === "out" ? " intro-out" : "")} aria-hidden="true">
-        <div className="intro-inner">
-          <Logo size={46} tagline center />
-          <span className="intro-line" />
-        </div>
+    <div className={"intro" + (phase === "out" ? " intro-out" : "")} aria-hidden="true">
+      <div className="intro-inner">
+        <Logo size={46} tagline center />
+        <span className="intro-line" />
       </div>
-    </>
+    </div>
   );
 }

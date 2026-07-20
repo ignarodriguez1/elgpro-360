@@ -2,9 +2,10 @@ import Link from "next/link";
 import { Photo } from "@/components/shared/Photo";
 import { Icon } from "@/components/shared/Icon";
 import { Logo } from "@/components/shared/Logo";
-import { HERO_IMG, PROCESS, WORKS, TESTIMONIAL, type ServiceItem } from "@/lib/public-data";
-
-const WORK_LAYOUT = ["dwork-tall", "", "", "", "dwork-wide", ""];
+import { HeroBg } from "./HeroBg";
+import { WorkStack } from "./WorkStack";
+import { HERO_IMG, PROCESS, TESTIMONIAL, type ServiceItem } from "@/lib/public-data";
+import type { GalleryWork } from "@/lib/portfolio";
 
 function TrackDemo() {
   const rows = [
@@ -15,14 +16,29 @@ function TrackDemo() {
   return (
     <>
       {rows.map((e, i) => (
-        <div className={"dtl-row" + (e.active ? " active" : "")} key={i}>
+        <div className={"dtl-row" + (e.active ? " active" : "")} key={i} aria-current={e.active ? "step" : undefined}>
           <div className="dtl-rail">
             <span className="dtl-dot" />
             {i < rows.length - 1 && <span className="dtl-line" />}
           </div>
           <div className="dtl-card">
+            {/* Estado REGISTRÁNDOSE: no es "alguien escribiendo", es el taller
+                documentando la etapa (el lenguaje del producto). Va ABSOLUTO sobre
+                el contenido —que ya reserva su lugar con opacity:0—, así el swap no
+                mueve un pixel = 0 CLS. Decorativo: fuera del árbol de a11y. */}
+            <span className="dtl-reg" aria-hidden="true">
+              <span className="dtl-reg-label">Registrando estado…</span>
+              <span className="dtl-reg-bar" />
+              <span className="dtl-reg-thumbs"><i /><i /><i /></span>
+            </span>
             <div className="dtl-top">
-              <span className="dtl-t">{e.t}</span>
+              <span className="dtl-t">
+                {e.t}
+                {/* El estado "en vivo" se transmitía SOLO por color y por el bloom
+                    del anillo. Sin esto, para un lector de pantalla esta fila es
+                    idéntica a las demás. */}
+                {e.active && <span className="sr-only"> — etapa actual, en vivo</span>}
+              </span>
               <span className="dtl-d">{e.d}</span>
             </div>
             <div className="dtl-thumbs">
@@ -37,11 +53,11 @@ function TrackDemo() {
   );
 }
 
-export function HomeDesktop({ featured }: { featured: ServiceItem[] }) {
+export function HomeDesktop({ featured, works }: { featured: ServiceItem[]; works: GalleryWork[] }) {
   return (
     <div className="dpage">
       <section className="dhero">
-        <Photo src={HERO_IMG} className="dhero-bg" tint="rgba(196,30,42,.3)" />
+        <HeroBg src={HERO_IMG} tint="rgba(196,30,42,.3)" />
         <div className="dhero-veil" />
         <div className="dhero-veil2" />
         <div className="wrap">
@@ -66,12 +82,18 @@ export function HomeDesktop({ featured }: { featured: ServiceItem[] }) {
               <div><div className="dhero-stat-n">100%</div><div className="dhero-stat-l">trabajo documentado</div></div>
             </div>
           </div>
-          <div className="dhero-track drise">
-            <div className="dhero-track-head">
-              <Logo size={16} />
-              <span className="badge" style={{ background: "rgba(34,197,94,.14)", color: "#4ade80", borderColor: "rgba(34,197,94,.3)" }}>● En vivo</span>
+          {/* Plano de scroll propio para la card: viaja más lento que el titular
+              (~-3% neto vs -7% del .wrap) → se despega en profundidad. Va en un
+              wrapper para no pisar el transform del reveal .drise ni la coreografía
+              .in de la card. */}
+          <div className="dhero-track-plane">
+            <div className="dhero-track drise">
+              <div className="dhero-track-head">
+                <Logo size={16} />
+                <span className="badge" style={{ background: "rgba(34,197,94,.14)", color: "#4ade80", borderColor: "rgba(34,197,94,.3)" }}>● En vivo</span>
+              </div>
+              <div className="dtl"><TrackDemo /></div>
             </div>
-            <div className="dtl"><TrackDemo /></div>
           </div>
         </div>
       </section>
@@ -163,32 +185,21 @@ export function HomeDesktop({ featured }: { featured: ServiceItem[] }) {
         </div>
       </section>
 
-      <section className="dsection">
-        <div className="wrap">
-          <div className="dhead">
-            <div className="dhead-l">
+      {works.length > 0 && (
+        <section className="dsection dwork-sec">
+          <div className="wrap dwork-cols">
+            {/* Título STICKY a la izquierda: se queda visible durante todo el scroll
+                de la pila (que va en la columna derecha). */}
+            <div className="dhead dwork-aside">
               <div className="deyebrow">Portfolio</div>
               <h2>Trabajos realizados</h2>
               <p>Una muestra de proyectos. Entrá a la galería para ver el antes y después.</p>
+              <Link href="/trabajos" className="dlink">Ver galería completa <Icon name="arrow" size={16} /></Link>
             </div>
-            <Link href="/trabajos" className="dlink">Ver galería completa <Icon name="arrow" size={16} /></Link>
+            <WorkStack variant="desktop" works={works} />
           </div>
-          <div className="dwork-grid">
-            {WORKS.slice(0, 6).map((w, i) => (
-              <Link key={w.title} href="/trabajos" className={"dwork-item drise " + WORK_LAYOUT[i]}>
-                <span className="dwork-btn" style={{ display: "block" }}>
-                  <Photo src={w.img} className="dwork-photo" tint={w.tint} />
-                  <span className="dwork-swap"><Icon name="swap" size={16} /></span>
-                  <span className="dwork-ov">
-                    <span className="dwork-cat">{w.cat}</span>
-                    <span className="dwork-title">{w.title}</span>
-                  </span>
-                </span>
-              </Link>
-            ))}
-          </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       <section className="dsection dsection-sm">
         <div className="wrap drise">

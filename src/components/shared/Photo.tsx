@@ -11,6 +11,8 @@ interface PhotoProps {
   className?: string;
   style?: CSSProperties;
   grad?: boolean;
+  /** Above-the-fold / LCP: carga inmediata con prioridad alta (no lazy). */
+  priority?: boolean;
   onClick?: () => void;
 }
 
@@ -27,6 +29,7 @@ export function Photo({
   className = "",
   style = {},
   grad,
+  priority = false,
   onClick,
 }: PhotoProps) {
   const [ok, setOk] = useState(false);
@@ -58,7 +61,8 @@ export function Photo({
           ref={imgRef}
           src={src}
           alt={alt}
-          loading="lazy"
+          loading={priority ? "eager" : "lazy"}
+          fetchPriority={priority ? "high" : "auto"}
           className={ok ? "loaded" : ""}
           onLoad={() => setOk(true)}
           onError={() => setOk(false)}

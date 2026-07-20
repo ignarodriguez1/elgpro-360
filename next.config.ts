@@ -25,8 +25,13 @@ const nextConfig: NextConfig = {
   // Permite acceder al dev server desde otros dispositivos de la red local
   // (teléfono, otra compu) sin que Next bloquee los recursos /_next/* por
   // cross-origin. SOLO afecta a `next dev`; en producción no aplica.
-  // Si tu IP de red cambia (DHCP), actualizá este valor.
-  allowedDevOrigins: ["192.168.100.39"],
+  //
+  // "*.*.*.*" = cualquier IPv4, así el DHCP no vuelve a romper esto.
+  // OJO: un "*" pelado NO funciona. Next rechaza a propósito los patrones de un
+  // solo segmento (matchWildcardDomain, en next/dist/server/app-render/
+  // csrf-protection.js). El match es por segmentos separados por "."; una IP
+  // tiene cuatro, de ahí los cuatro comodines.
+  allowedDevOrigins: ["*.*.*.*"],
 
   async headers() {
     return [{ source: "/:path*", headers: securityHeaders }];

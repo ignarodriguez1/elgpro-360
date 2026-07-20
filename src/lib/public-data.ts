@@ -63,18 +63,8 @@ export const PROCESS: ProcessStep[] = [
   { n: "04", icon: "clock", title: "Seguimiento", desc: "Seguís el avance en tiempo real desde tu celular, cuando quieras." },
 ];
 
-export const WORK_CATS = ["Todos", "Pintura", "Detail", "Restauración", "Personalizado"] as const;
-export interface WorkItem { cat: string; title: string; tint: string; img: string; tall?: boolean; }
-export const WORKS: WorkItem[] = [
-  { cat: "Pintura", title: "Audi A3 — Repintado integral", tint: "rgba(196,30,42,.22)", img: U("1486006920555-c77dcf18193c"), tall: true },
-  { cat: "Detail", title: "BMW Serie 3 — Ceramic + corrección", tint: "rgba(34,197,94,.16)", img: U("1552519507-da3b142c6e3d") },
-  { cat: "Restauración", title: "Ford Mustang 68 — Restauración", tint: "rgba(245,158,11,.18)", img: U("1494976388531-d1058494cdd8") },
-  { cat: "Personalizado", title: "VW Golf GTI — Wrap mate", tint: "rgba(80,140,255,.16)", img: U("1503376780353-7e6692767b70"), tall: true },
-  { cat: "Detail", title: "Mercedes C200 — Detail full", tint: "rgba(196,30,42,.14)", img: U("1542362567-b07e54358753") },
-  { cat: "Pintura", title: "Toyota Hilux — Pintura parcial", tint: "rgba(196,30,42,.20)", img: U("1487754180451-c456f719a1fc") },
-  { cat: "Restauración", title: "Fiat 600 — Recuperación clásica", tint: "rgba(245,158,11,.16)", img: U("1492144534655-ae79c964c9d7"), tall: true },
-  { cat: "Personalizado", title: "Llantas — Negro satinado", tint: "rgba(255,255,255,.10)", img: U("1619642751034-765dfdf7c58e") },
-];
+// Los trabajos del portfolio son DB-driven (modelo PortfolioWork). Ver
+// src/lib/portfolio.ts (listPortfolioWorks) — lo consumen /trabajos y la pila del home.
 
 export const TESTIMONIAL = {
   quote: "Dejé la camioneta para repintado y por primera vez pude seguir cada paso desde el celular. Llegué a buscarla y ya sabía exactamente cómo había quedado.",
