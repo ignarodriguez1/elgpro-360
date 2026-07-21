@@ -4,7 +4,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Icon } from "@/components/shared/Icon";
 import { Photo } from "@/components/shared/Photo";
-import { UploadZone } from "@/components/shared/UploadZone";
+import { ImageSlot } from "@/components/shared/ImageSlot";
 import {
   createWorkAction,
   updateWorkAction,
@@ -159,20 +159,19 @@ export function TrabajosEditor({ works }: { works: WorkRow[] }) {
             </div>
 
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
-              <div className="afield">
-                <label className="afield-label">Foto «Después» (resultado)</label>
-                {form.afterImageUrl && (
-                  <Photo src={form.afterImageUrl} className="upload-prev" style={{ height: 120, borderRadius: 8, marginBottom: 8 }} />
-                )}
-                <UploadZone maxFiles={1} onUpload={(files) => files[0] && setForm((f) => ({ ...f, afterImageUrl: files[0].url }))} />
-              </div>
-              <div className="afield">
-                <label className="afield-label">Foto «Antes» (ingreso, opcional)</label>
-                {form.beforeImageUrl && (
-                  <Photo src={form.beforeImageUrl} className="upload-prev" style={{ height: 120, borderRadius: 8, marginBottom: 8 }} />
-                )}
-                <UploadZone maxFiles={1} onUpload={(files) => files[0] && setForm((f) => ({ ...f, beforeImageUrl: files[0].url }))} />
-              </div>
+              <ImageSlot
+                label="Antes"
+                hint="ingreso, opcional"
+                value={form.beforeImageUrl || null}
+                onChange={(url) => setForm((f) => ({ ...f, beforeImageUrl: url ?? "" }))}
+              />
+              <ImageSlot
+                label="Después"
+                hint="resultado"
+                primary
+                value={form.afterImageUrl || null}
+                onChange={(url) => setForm((f) => ({ ...f, afterImageUrl: url ?? "" }))}
+              />
             </div>
 
             <div className="afield">

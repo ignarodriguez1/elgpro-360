@@ -839,3 +839,51 @@
      scroll horizontal contenido en vez de romper el layout de la página */
   .apanel{ overflow-x:auto; }
 }
+
+/* ============================================================
+   ImageSlot — slot de UNA imagen (Antes/Después del portfolio).
+   Reemplaza el UploadZone batch para los casos de foto única:
+   elegís → sube solo → llena el tile → hover/tap: Reemplazar / Quitar.
+   ============================================================ */
+.imgslot{ position:relative; aspect-ratio:4/3; border-radius:11px; overflow:hidden; background:#0d0d0d; }
+.imgslot.has-image{ border:1px solid var(--border); }
+
+/* estado vacío: un solo tile punteado, con botón de cámara al pie */
+.imgslot-empty-main{ position:absolute; inset:0; display:flex; flex-direction:column; align-items:center;
+  justify-content:center; gap:8px; background:none; border:1.5px dashed var(--border); border-radius:11px;
+  color:var(--muted-dim); cursor:pointer; font-family:var(--display); font-weight:500; text-transform:uppercase;
+  letter-spacing:.06em; font-size:12px; transition:border-color .16s, color .16s, background .16s; }
+.imgslot-empty-main:hover{ border-color:var(--primary); color:var(--muted); background:rgba(255,255,255,.02); }
+.imgslot-primary .imgslot-empty-main{ border-color:var(--border-soft); }
+.imgslot-primary .imgslot-empty-main:hover{ border-color:var(--primary); }
+
+.imgslot-cam{ position:absolute; left:50%; bottom:10px; transform:translateX(-50%); z-index:2;
+  display:inline-flex; align-items:center; gap:6px; height:28px; padding:0 11px; border-radius:7px;
+  background:#161616; border:1px solid var(--border); color:var(--muted); font-family:var(--display);
+  font-weight:500; text-transform:uppercase; letter-spacing:.04em; font-size:10.5px; cursor:pointer;
+  transition:border-color .16s, color .16s; }
+.imgslot-cam:hover{ border-color:var(--primary); color:var(--text); }
+
+/* foto cargada: llena el tile; barra de acciones SIEMPRE visible (touch-friendly) */
+.imgslot-photo{ position:absolute; inset:0; }
+.imgslot-bar{ position:absolute; left:0; right:0; bottom:0; z-index:2; display:flex; justify-content:flex-end;
+  gap:7px; padding:9px; background:linear-gradient(180deg, transparent, rgba(0,0,0,.62)); }
+.imgslot-icon{ width:33px; height:33px; border-radius:8px; display:flex; align-items:center; justify-content:center;
+  background:rgba(0,0,0,.55); border:1px solid rgba(255,255,255,.16); color:#fff; cursor:pointer;
+  transition:background .16s, border-color .16s; }
+.imgslot-icon:hover{ background:rgba(255,255,255,.14); }
+.imgslot-icon.danger:hover{ background:var(--primary); border-color:var(--primary); }
+
+/* subiendo: overlay con spinner CSS (sin icono de loader en el set) */
+.imgslot-loading{ position:absolute; inset:0; z-index:3; display:flex; align-items:center; justify-content:center;
+  background:rgba(0,0,0,.5); }
+.imgslot-spin{ width:26px; height:26px; border-radius:50%; border:3px solid rgba(255,255,255,.25);
+  border-top-color:#fff; animation:imgslot-rot .7s linear infinite; }
+@keyframes imgslot-rot{ to{ transform:rotate(360deg); } }
+
+/* label (dot rojo = principal) + hint minúscula + error */
+.imgslot-req{ color:var(--primary); font-size:9px; vertical-align:middle; }
+.imgslot-hint{ color:var(--muted-dim); font-weight:400; text-transform:none; letter-spacing:0; }
+.imgslot-error{ display:flex; align-items:center; gap:8px; margin-top:8px; font-size:12.5px; color:#ff8a93; }
+.imgslot-error button{ background:none; border:none; color:var(--text); text-decoration:underline; cursor:pointer;
+  font-size:12.5px; padding:0; font-family:var(--body); }
