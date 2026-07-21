@@ -3,6 +3,7 @@
 import { useState, useCallback } from "react";
 import { Upload, Camera, X, Loader2, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { compressImage } from "@/lib/image-compression";
 
 interface UploadedFile {
   url: string;
@@ -88,8 +89,12 @@ export function UploadZone({
       setStatus(item.id, "uploading");
 
       try {
+        // Comprimir en el cliente: baja la foto a ~1-2MB antes de viajar. Sin esto,
+        // una foto de celular (4-12MB) revienta el límite de 4.5MB de las Vercel
+        // Functions (413). compressImage nunca lanza: si falla, devuelve el original.
+        const fileToUpload = await compressImage(item.file);
         const formData = new FormData();
-        formData.append("file", item.file);
+        formData.append("file", fileToUpload);
         const res = await fetch("/api/upload", { method: "POST", body: formData });
 
         if (res.ok) {
