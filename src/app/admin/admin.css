@@ -915,5 +915,10 @@
 .svc-row-thumb .photo{ position:absolute; inset:0; }
 
 @media (max-width:859px){
+  /* En mobile el título del paso ocupa SU PROPIA línea (si no, el select+toggle
+     lo aplastan a tres letras); los controles wrappean a la segunda línea. */
   .flow-main-row{ flex-wrap:wrap; }
+  .flow-main-row .flow-title-in{ flex:1 1 100%; }
+  /* Lista de servicios: thumb más chico y fila más respirable en 390px. */
+  .svc-row-thumb{ width:44px; height:36px; }
 }
