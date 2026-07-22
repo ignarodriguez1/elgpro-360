@@ -25,7 +25,9 @@ export default async function HomePage() {
       desc: s.description ?? "",
       icon: v.icon,
       tint: v.tint,
-      img: s.imageUrl || v.img || "",
+      // Portada real de la galería > imageUrl legado > fallback hardcodeado —
+      // misma convivencia que las cards de /servicios (sin huecos si no hay fotos).
+      img: s.images[0]?.url || s.imageUrl || v.img || "",
     };
   });
 
