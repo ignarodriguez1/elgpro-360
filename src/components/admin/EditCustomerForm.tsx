@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Icon } from "@/components/shared/Icon";
 import { updateCustomerAction } from "@/app/admin/clientes/actions";
+import { useAdminFeedback } from "@/components/admin/AdminFeedback";
 
 export function EditCustomerForm({
   customerId,
@@ -13,6 +14,7 @@ export function EditCustomerForm({
   initial: { name: string; phone: string; notes: string };
 }) {
   const router = useRouter();
+  const { toast } = useAdminFeedback();
   const [pending, start] = useTransition();
   const [open, setOpen] = useState(false);
   const [name, setName] = useState(initial.name);
@@ -29,6 +31,7 @@ export function EditCustomerForm({
         setError(res.error);
         return;
       }
+      toast("success", "Cliente guardado.");
       setOpen(false);
       router.refresh();
     });

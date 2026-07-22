@@ -11,6 +11,7 @@ import {
   deleteTutorialAction,
   toggleTutorialAction,
 } from "@/app/admin/tutoriales/actions";
+import { useAdminFeedback } from "@/components/admin/AdminFeedback";
 
 export interface TutorialRow {
   id: string;
@@ -27,6 +28,7 @@ type FormState = typeof EMPTY;
 
 export function TutorialEditor({ tutorials }: { tutorials: TutorialRow[] }) {
   const router = useRouter();
+  const { toast, confirm } = useAdminFeedback();
   const [pending, start] = useTransition();
   const [editing, setEditing] = useState<TutorialRow | null>(null);
   const [creating, setCreating] = useState(false);
@@ -82,8 +84,13 @@ export function TutorialEditor({ tutorials }: { tutorials: TutorialRow[] }) {
     };
     start(async () => {
       try {
-        if (editing) await updateTutorialAction(editing.id, payload);
-        else await createTutorialAction(payload);
+        if (editing) {
+          await updateTutorialAction(editing.id, payload);
+          toast("success", "Tutorial guardado.");
+        } else {
+          await createTutorialAction(payload);
+          toast("success", `Tutorial "${payload.title}" creado.`);
+        }
         close();
         router.refresh();
       } catch (e) {
@@ -92,15 +99,22 @@ export function TutorialEditor({ tutorials }: { tutorials: TutorialRow[] }) {
     });
   }
 
-  function remove(t: TutorialRow) {
+  async function remove(t: TutorialRow) {
     if (pending) return;
-    if (!window.confirm(`¿Eliminar el tutorial "${t.title}"? Esta acción no se puede deshacer.`)) return;
+    const ok = await confirm({
+      title: "Eliminar tutorial",
+      message: `"${t.title}" deja de estar disponible en la web. Esta acción no se puede deshacer.`,
+      confirmLabel: "Eliminar",
+      destructive: true,
+    });
+    if (!ok) return;
     start(async () => {
       try {
         await deleteTutorialAction(t.id);
+        toast("success", `Tutorial "${t.title}" eliminado.`);
         router.refresh();
       } catch (e) {
-        setError(e instanceof Error ? e.message : "No se pudo eliminar.");
+        toast("error", e instanceof Error ? e.message : "No se pudo eliminar.");
       }
     });
   }
@@ -190,7 +204,7 @@ export function TutorialEditor({ tutorials }: { tutorials: TutorialRow[] }) {
                 type="button"
                 className={"atoggle" + (t.visible ? " on" : "")}
                 disabled={pending}
-                onClick={() => start(async () => { await toggleTutorialAction(t.id, !t.visible); router.refresh(); })}
+                onClick={() => start(async () => { try { await toggleTutorialAction(t.id, !t.visible); router.refresh(); } catch { toast("error", "No se pudo cambiar la visibilidad."); } })}
                 aria-pressed={t.visible}
                 title={t.visible ? "Visible" : "Oculto"}
               >

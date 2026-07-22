@@ -4,9 +4,11 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Icon } from "@/components/shared/Icon";
 import { createVehicleAction } from "@/app/admin/vehiculos/actions";
+import { useAdminFeedback } from "@/components/admin/AdminFeedback";
 
 export function NewVehicleForm({ customerProfileId }: { customerProfileId: string }) {
   const router = useRouter();
+  const { toast } = useAdminFeedback();
   const [pending, start] = useTransition();
   const [open, setOpen] = useState(false);
   const [licensePlate, setPlate] = useState("");
@@ -37,6 +39,7 @@ export function NewVehicleForm({ customerProfileId }: { customerProfileId: strin
         return;
       }
       setPlate(""); setBrand(""); setModel(""); setYear(""); setColor(""); setVin(""); setNotes("");
+      toast("success", "Vehículo creado.");
       setOpen(false);
       router.refresh();
     });

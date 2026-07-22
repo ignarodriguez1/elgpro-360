@@ -6,6 +6,7 @@ import { Icon } from "@/components/shared/Icon";
 import { Photo } from "@/components/shared/Photo";
 import { UploadZone } from "@/components/shared/UploadZone";
 import { usePointerReorder } from "@/components/admin/usePointerReorder";
+import { useAdminFeedback } from "@/components/admin/AdminFeedback";
 import {
   addServiceImagesAction,
   reorderServiceImagesAction,
@@ -41,6 +42,7 @@ export function ServiceGalleryEditor({
   maxImages: number;
 }) {
   const router = useRouter();
+  const { toast, confirm } = useAdminFeedback();
   const [pending, start] = useTransition();
   const [images, setImages] = useState<ServiceImageRow[]>(initial);
   const [error, setError] = useState<string | null>(null);
@@ -54,20 +56,25 @@ export function ServiceGalleryEditor({
     (ids) => start(async () => {
       try {
         await reorderServiceImagesAction(serviceId, ids);
+        toast("success", "Orden de la galería guardado.");
       } catch (e) {
-        setError(e instanceof Error ? e.message : "No se pudo reordenar.");
+        toast("error", e instanceof Error ? e.message : "No se pudo reordenar.");
       }
     })
   );
 
-  function run(fn: () => Promise<void>, fallback: string) {
+  /** Ejecuta la acción; éxito → toast (si hay mensaje), fallo → toast + inline. */
+  function run(fn: () => Promise<void>, fallback: string, successMsg?: string) {
     setError(null);
     start(async () => {
       try {
         await fn();
+        if (successMsg) toast("success", successMsg);
         router.refresh();
       } catch (e) {
-        setError(e instanceof Error ? e.message : fallback);
+        const msg = e instanceof Error ? e.message : fallback;
+        setError(msg);
+        toast("error", msg);
       }
     });
   }
@@ -136,7 +143,11 @@ export function ServiceGalleryEditor({
                     className="abtn abtn-ghost abtn-sm"
                     disabled={pending}
                     onClick={() =>
-                      run(() => setServiceCoverAction(serviceId, img.id), "No se pudo cambiar la portada.")
+                      run(
+                        () => setServiceCoverAction(serviceId, img.id),
+                        "No se pudo cambiar la portada.",
+                        "Portada actualizada. La card pública ya la usa."
+                      )
                     }
                   >
                     <Icon name="star2" size={13} /> Hacer portada
@@ -150,9 +161,19 @@ export function ServiceGalleryEditor({
               disabled={pending}
               title="Eliminar imagen"
               aria-label="Eliminar imagen"
-              onClick={() => {
-                if (!window.confirm("¿Eliminar esta imagen de la galería? También se borra del almacenamiento. Esta acción no se puede deshacer.")) return;
-                run(() => deleteServiceImageAction(serviceId, img.id), "No se pudo eliminar la imagen.");
+              onClick={async () => {
+                const ok = await confirm({
+                  title: "Eliminar imagen",
+                  message: "Se quita de la galería y se borra del almacenamiento. Esta acción no se puede deshacer.",
+                  confirmLabel: "Eliminar",
+                  destructive: true,
+                });
+                if (!ok) return;
+                run(
+                  () => deleteServiceImageAction(serviceId, img.id),
+                  "No se pudo eliminar la imagen.",
+                  "Imagen eliminada."
+                );
               }}
             >
               <Icon name="trash" size={15} />
@@ -178,7 +199,8 @@ export function ServiceGalleryEditor({
                     serviceId,
                     files.map((f) => ({ url: f.url, ref: f.publicId }))
                   ),
-                "No se pudieron agregar las imágenes."
+                "No se pudieron agregar las imágenes.",
+                files.length === 1 ? "Foto agregada a la galería." : `${files.length} fotos agregadas a la galería.`
               )
             }
           />

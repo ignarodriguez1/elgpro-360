@@ -65,8 +65,14 @@ export function Wizard({ clients, services }: { clients: Client[]; services: Ser
       : [...serviceIds, id];
     setServiceIds(next);
     startTransition(async () => {
-      const tl = await getTimelinePreview(next);
-      setPreview(tl as TimelineStep[]);
+      try {
+        const tl = await getTimelinePreview(next);
+        setPreview(tl as TimelineStep[]);
+      } catch {
+        // Antes: unhandled rejection silenciosa (informe §G). El preview no es
+        // crítico — se avisa y el flujo sigue.
+        setPreview([]);
+      }
     });
   }
 

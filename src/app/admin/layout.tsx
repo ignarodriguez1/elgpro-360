@@ -1,5 +1,6 @@
 import { auth } from "@/lib/auth";
 import { AdminShell } from "@/components/admin/AdminShell";
+import { AdminFeedbackProvider } from "@/components/admin/AdminFeedback";
 import { SessionNotice } from "@/components/shared/SessionNotice";
 import "./admin.css";
 
@@ -32,14 +33,16 @@ export default async function AdminLayout({
   }
 
   return (
-    <AdminShell
-      user={{
-        name: name ?? null,
-        email: email ?? null,
-        role,
-      }}
-    >
-      {children}
-    </AdminShell>
+    <AdminFeedbackProvider>
+      <AdminShell
+        user={{
+          name: name ?? null,
+          email: email ?? null,
+          role,
+        }}
+      >
+        {children}
+      </AdminShell>
+    </AdminFeedbackProvider>
   );
 }

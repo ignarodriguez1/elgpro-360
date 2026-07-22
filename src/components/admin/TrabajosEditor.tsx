@@ -11,6 +11,7 @@ import {
   deleteWorkAction,
   toggleWorkAction,
 } from "@/app/admin/trabajos/actions";
+import { useAdminFeedback } from "@/components/admin/AdminFeedback";
 
 export interface WorkRow {
   id: string;
@@ -44,6 +45,7 @@ type FormState = typeof EMPTY;
 
 export function TrabajosEditor({ works }: { works: WorkRow[] }) {
   const router = useRouter();
+  const { toast, confirm } = useAdminFeedback();
   const [pending, start] = useTransition();
   const [editing, setEditing] = useState<WorkRow | null>(null);
   const [creating, setCreating] = useState(false);
@@ -109,8 +111,13 @@ export function TrabajosEditor({ works }: { works: WorkRow[] }) {
     };
     start(async () => {
       try {
-        if (editing) await updateWorkAction(editing.id, payload);
-        else await createWorkAction(payload);
+        if (editing) {
+          await updateWorkAction(editing.id, payload);
+          toast("success", "Trabajo guardado.");
+        } else {
+          await createWorkAction(payload);
+          toast("success", `Trabajo "${payload.title}" creado.`);
+        }
         close();
         router.refresh();
       } catch (e) {
@@ -119,15 +126,23 @@ export function TrabajosEditor({ works }: { works: WorkRow[] }) {
     });
   }
 
-  function remove(w: WorkRow) {
+  async function remove(w: WorkRow) {
     if (pending) return;
-    if (!window.confirm(`¿Eliminar el trabajo "${w.title}"? Esta acción no se puede deshacer.`)) return;
+    const ok = await confirm({
+      title: "Eliminar trabajo",
+      message: `"${w.title}" se quita del portfolio y sus fotos se borran del almacenamiento. Esta acción no se puede deshacer.`,
+      confirmLabel: "Eliminar",
+      destructive: true,
+    });
+    if (!ok) return;
     start(async () => {
       try {
         await deleteWorkAction(w.id);
+        toast("success", `Trabajo "${w.title}" eliminado.`);
         router.refresh();
       } catch (e) {
-        setError(e instanceof Error ? e.message : "No se pudo eliminar.");
+        // Toast, no solo setError: el form puede estar cerrado y el inline no se ve (informe §G).
+        toast("error", e instanceof Error ? e.message : "No se pudo eliminar.");
       }
     });
   }
@@ -239,7 +254,16 @@ export function TrabajosEditor({ works }: { works: WorkRow[] }) {
                 type="button"
                 className={"atoggle" + (w.visible ? " on" : "")}
                 disabled={pending}
-                onClick={() => start(async () => { await toggleWorkAction(w.id, !w.visible); router.refresh(); })}
+                onClick={() =>
+                  start(async () => {
+                    try {
+                      await toggleWorkAction(w.id, !w.visible);
+                      router.refresh();
+                    } catch {
+                      toast("error", "No se pudo cambiar la visibilidad.");
+                    }
+                  })
+                }
                 aria-pressed={w.visible}
                 title={w.visible ? "Visible" : "Oculto"}
               >

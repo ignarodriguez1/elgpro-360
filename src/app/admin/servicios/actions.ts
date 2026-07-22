@@ -170,7 +170,7 @@ export async function addFlowStepAction(
     .pick({ title: true, description: true, stage: true, visible: true })
     .safeParse(data);
   if (!parsed.success) invalid(parsed.error.issues[0]?.message);
-  await addFlowStep(serviceId, { ...parsed.data, custom: true });
+  const step = await addFlowStep(serviceId, { ...parsed.data, custom: true });
   await logAudit({
     actor,
     action: "FLOW_STEP_ADDED",
@@ -180,6 +180,9 @@ export async function addFlowStepAction(
   });
   revalidatePath(`/admin/servicios/${serviceId}`);
   revalidatePublicServices();
+  // Devuelve el paso creado para que el editor lo agregue a su lista local
+  // (patrón optimista, igual que editar/borrar/reordenar).
+  return { id: step.id };
 }
 
 export async function updateFlowStepAction(

@@ -7,6 +7,7 @@ import {
   updateVehicleAction,
   deleteVehicleAction,
 } from "@/app/admin/vehiculos/actions";
+import { useAdminFeedback } from "@/components/admin/AdminFeedback";
 
 interface VehicleInitial {
   licensePlate: string;
@@ -26,6 +27,7 @@ export function EditVehicleForm({
   initial: VehicleInitial;
 }) {
   const router = useRouter();
+  const { toast, confirm } = useAdminFeedback();
   const [pending, start] = useTransition();
   const [open, setOpen] = useState(false);
   const [licensePlate, setPlate] = useState(initial.licensePlate);
@@ -55,21 +57,30 @@ export function EditVehicleForm({
         setError(res.error);
         return;
       }
+      toast("success", "Vehículo guardado.");
       setOpen(false);
       router.refresh();
     });
   }
 
-  function remove() {
+  async function remove() {
     if (pending) return;
-    if (!window.confirm("¿Eliminar este vehículo? Esta acción no se puede deshacer.")) return;
+    const ok = await confirm({
+      title: "Eliminar vehículo",
+      message: "Se elimina el vehículo y su historial deja de estar accesible. Esta acción no se puede deshacer.",
+      confirmLabel: "Eliminar",
+      destructive: true,
+    });
+    if (!ok) return;
     setError(null);
     start(async () => {
       const res = await deleteVehicleAction(vehicleId);
       if (!res.ok) {
         setError(res.error);
+        toast("error", res.error);
         return;
       }
+      toast("success", "Vehículo eliminado.");
       router.push("/admin/vehiculos");
     });
   }

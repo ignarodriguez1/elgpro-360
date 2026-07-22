@@ -3,6 +3,7 @@
 import { useState, useTransition, type CSSProperties } from "react";
 import { Icon } from "@/components/shared/Icon";
 import { UploadZone } from "@/components/shared/UploadZone";
+import { useAdminFeedback } from "@/components/admin/AdminFeedback";
 import {
   advanceStepAction,
   markReadyAction,
@@ -51,6 +52,7 @@ export function OrderActions({
   pendingStepTitles?: string[];
   variant?: "desktop" | "mobile";
 }) {
+  const { toast } = useAdminFeedback();
   const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
 
@@ -64,12 +66,13 @@ export function OrderActions({
   const pendingCount = pendingStepTitles.length;
   const hasNextStep = pendingCount > 0;
 
-  function run(fn: () => Promise<ActionResult>) {
+  function run(fn: () => Promise<ActionResult>, successMsg?: string) {
     if (pending) return;
     setError(null);
     start(async () => {
       const res = await fn();
       if (!res.ok) setError(res.error);
+      else if (successMsg) toast("success", successMsg);
     });
   }
 
@@ -89,14 +92,15 @@ export function OrderActions({
         setError(res.error);
         return;
       }
+      toast("success", gate.photo ? "Etapa avanzada con foto." : "Etapa avanzada (sin foto).");
       setGateOpen(false);
       setPhoto(null);
       setReason("");
     });
   }
 
-  const ready = () => run(() => markReadyAction(orderId));
-  const deliver = () => run(() => markDeliveredAction(orderId));
+  const ready = () => run(() => markReadyAction(orderId), "Orden marcada como LISTA. Se notificó al cliente.");
+  const deliver = () => run(() => markDeliveredAction(orderId), "Vehículo entregado. Orden cerrada.");
 
   // Click en "Marcar listo": si quedan etapas sin completar, confirma primero
   // (se registrarán como completadas); si no, cierra directo.
@@ -118,6 +122,7 @@ export function OrderActions({
         setError(res.error);
         return;
       }
+      toast("success", "Orden marcada como LISTA. Se notificó al cliente.");
       setReadyConfirmOpen(false);
     });
   }

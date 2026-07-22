@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { setUserActiveAction } from "@/app/admin/usuarios/actions";
+import { useAdminFeedback } from "@/components/admin/AdminFeedback";
 
 /**
  * Toggle de activar/desactivar una cuenta. Cualquier rol (equipo o cliente).
@@ -18,6 +19,7 @@ export function UserActiveToggle({
   disabled?: boolean;
 }) {
   const router = useRouter();
+  const { toast } = useAdminFeedback();
   const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
 
@@ -28,8 +30,10 @@ export function UserActiveToggle({
       const res = await setUserActiveAction(userId, !active);
       if (!res.ok) {
         setError(res.error);
+        toast("error", res.error);
         return;
       }
+      toast("success", active ? "Cuenta desactivada." : "Cuenta activada.");
       router.refresh();
     });
   }

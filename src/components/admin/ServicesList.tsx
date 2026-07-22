@@ -7,6 +7,7 @@ import { Icon } from "@/components/shared/Icon";
 import { Photo } from "@/components/shared/Photo";
 import { reorderServicesAction, createServiceAction, toggleServiceVisibleAction } from "@/app/admin/servicios/actions";
 import { usePointerReorder } from "@/components/admin/usePointerReorder";
+import { useAdminFeedback } from "@/components/admin/AdminFeedback";
 
 interface Svc {
   id: string;
@@ -21,6 +22,7 @@ interface Svc {
 
 export function ServicesList({ services }: { services: Svc[] }) {
   const router = useRouter();
+  const { toast, promptText } = useAdminFeedback();
   const [items, setItems] = useState(services);
   const [, start] = useTransition();
 
@@ -28,15 +30,32 @@ export function ServicesList({ services }: { services: Svc[] }) {
   const { dragId, registerRow, handleProps } = usePointerReorder(
     items,
     setItems,
-    (ids) => start(() => reorderServicesAction(ids))
+    (ids) =>
+      start(async () => {
+        try {
+          await reorderServicesAction(ids);
+        } catch {
+          toast("error", "No se pudo guardar el orden. Recargá e intentá de nuevo.");
+        }
+      })
   );
 
-  function nuevo() {
-    const name = window.prompt("Nombre del nuevo servicio:");
+  async function nuevo() {
+    const name = await promptText({
+      title: "Nuevo servicio",
+      message: "Después vas a poder cargarle descripción, fotos y el flujo de trabajo.",
+      placeholder: "Ej: Polarizado de vidrios",
+      confirmLabel: "Crear servicio",
+    });
     if (!name) return;
     start(async () => {
-      const id = await createServiceAction(name);
-      router.push(`/admin/servicios/${id}`);
+      try {
+        const id = await createServiceAction(name);
+        toast("success", `Servicio "${name}" creado.`);
+        router.push(`/admin/servicios/${id}`);
+      } catch (e) {
+        toast("error", e instanceof Error ? e.message : "No se pudo crear el servicio.");
+      }
     });
   }
 
@@ -70,9 +89,19 @@ export function ServicesList({ services }: { services: Svc[] }) {
             </div>
             <button
               className={"atoggle" + (s.visible ? " on" : "")}
+              title={s.visible ? "Visible en la web" : "Oculto"}
               onClick={() => {
-                setItems((prev) => prev.map((x) => x.id === s.id ? { ...x, visible: !x.visible } : x));
-                start(() => toggleServiceVisibleAction(s.id, !s.visible));
+                const next = !s.visible;
+                setItems((prev) => prev.map((x) => x.id === s.id ? { ...x, visible: next } : x));
+                start(async () => {
+                  try {
+                    await toggleServiceVisibleAction(s.id, next);
+                  } catch {
+                    // Revertir el optimista y avisar: un toggle fallido en silencio es mentirle al dueño.
+                    setItems((prev) => prev.map((x) => x.id === s.id ? { ...x, visible: !next } : x));
+                    toast("error", "No se pudo cambiar la visibilidad.");
+                  }
+                });
               }}
             ><span /></button>
             <Link href={`/admin/servicios/${s.id}`} className="abtn abtn-ghost abtn-sm"><Icon name="pencil" size={15} /> Editar</Link>

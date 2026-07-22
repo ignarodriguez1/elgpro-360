@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import Link from "next/link";
 import { Icon } from "@/components/shared/Icon";
 import { STAGE_ORDER, STAGE_LABELS } from "@/lib/stages";
@@ -13,6 +13,7 @@ import {
   deleteFlowStepAction,
   renameServiceAction,
 } from "@/app/admin/servicios/actions";
+import { useAdminFeedback } from "@/components/admin/AdminFeedback";
 
 interface Step {
   id: string;
@@ -34,39 +35,84 @@ export function FlowEditor({
   /** Secciones extra al pie (ej. galería + descripción), dentro del mismo .apage. */
   children?: React.ReactNode;
 }) {
+  const { toast, confirm } = useAdminFeedback();
   const [name, setName] = useState(serviceName);
   const [steps, setSteps] = useState(initial);
   const [newTitle, setNewTitle] = useState("");
   const [newStage, setNewStage] = useState<OrderStage>("PREPARACION");
-  const [, start] = useTransition();
+  const [pending, start] = useTransition();
+
+  // Bug latente pre-existente: el estado local nunca se resincronizaba tras la
+  // revalidación del server (un paso agregado no aparecía hasta recargar).
+  useEffect(() => setSteps(initial), [initial]);
 
   // Reorden por Pointer Events (mouse + touch).
   const { dragId, registerRow, handleProps } = usePointerReorder(
     steps,
     setSteps,
-    (ids) => start(() => reorderFlowStepsAction(serviceId, ids))
+    (ids) =>
+      start(async () => {
+        try {
+          await reorderFlowStepsAction(serviceId, ids);
+        } catch {
+          toast("error", "No se pudo guardar el orden de los pasos.");
+        }
+      })
   );
 
   function patch(stepId: string, data: Partial<Step>) {
     setSteps((prev) => prev.map((s) => s.id === stepId ? { ...s, ...data } : s));
     const { description, ...rest } = data;
-    start(() =>
-      updateFlowStepAction(serviceId, stepId, {
-        ...rest,
-        ...(description != null ? { description } : {}),
-      })
-    );
+    start(async () => {
+      try {
+        await updateFlowStepAction(serviceId, stepId, {
+          ...rest,
+          ...(description != null ? { description } : {}),
+        });
+      } catch {
+        // Blur-save: sin toast de éxito (sería spam), pero el fallo NUNCA en silencio.
+        toast("error", "No se pudo guardar el paso.");
+      }
+    });
   }
 
   function add() {
-    if (!newTitle.trim()) return;
-    start(() => addFlowStepAction(serviceId, { title: newTitle, stage: newStage, visible: true }));
+    if (pending || !newTitle.trim()) return; // anti doble-click
+    const title = newTitle.trim();
+    const stage = newStage;
+    start(async () => {
+      try {
+        const created = await addFlowStepAction(serviceId, { title, stage, visible: true });
+        // Optimista con ID real: el paso aparece al instante, sin esperar refresh.
+        setSteps((prev) => [...prev, { id: created.id, title, description: null, stage, visible: true }]);
+        toast("success", `Paso "${title}" agregado.`);
+      } catch (e) {
+        toast("error", e instanceof Error ? e.message : "No se pudo agregar el paso.");
+      }
+    });
     setNewTitle("");
   }
 
-  function remove(stepId: string) {
+  async function remove(stepId: string) {
+    const step = steps.find((s) => s.id === stepId);
+    // Antes borraba directo, sin confirmación (peor que el confirm nativo).
+    const ok = await confirm({
+      title: "Eliminar paso",
+      message: `"${step?.title ?? "Este paso"}" se quita del flujo. Las órdenes ya creadas no cambian.`,
+      confirmLabel: "Eliminar",
+      destructive: true,
+    });
+    if (!ok) return;
     setSteps((prev) => prev.filter((s) => s.id !== stepId));
-    start(() => deleteFlowStepAction(serviceId, stepId));
+    start(async () => {
+      try {
+        await deleteFlowStepAction(serviceId, stepId);
+        toast("success", "Paso eliminado.");
+      } catch {
+        if (step) setSteps((prev) => [...prev, step]); // revertir el optimista
+        toast("error", "No se pudo eliminar el paso.");
+      }
+    });
   }
 
   return (

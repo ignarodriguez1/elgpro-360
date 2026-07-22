@@ -5,6 +5,7 @@ import { ToggleRow } from "@/components/admin/ToggleRow";
 import { UploadZone } from "@/components/shared/UploadZone";
 import { Icon } from "@/components/shared/Icon";
 import { addStatusAction } from "@/app/admin/ordenes/[id]/actions";
+import { useAdminFeedback } from "@/components/admin/AdminFeedback";
 import { STAGE_ORDER, STAGE_LABELS } from "@/lib/stages";
 
 type Mode = "next" | "custom";
@@ -28,6 +29,7 @@ interface NewStateFormProps {
 }
 
 export function NewStateForm({ orderId, currentStageIndex = 0 }: NewStateFormProps) {
+  const { toast } = useAdminFeedback();
   const [pending, start] = useTransition();
   const [open, setOpen] = useState(false);
   const [mode, setMode] = useState<Mode>("next");
@@ -78,6 +80,7 @@ export function NewStateForm({ orderId, currentStageIndex = 0 }: NewStateFormPro
         setError(res.error);
         return;
       }
+      toast("success", notify ? "Estado publicado y cliente notificado." : "Estado publicado.");
       reset();
       setOpen(false);
     });
