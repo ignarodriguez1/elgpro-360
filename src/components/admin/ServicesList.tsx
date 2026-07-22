@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Icon } from "@/components/shared/Icon";
+import { Photo } from "@/components/shared/Photo";
 import { reorderServicesAction, createServiceAction, toggleServiceVisibleAction } from "@/app/admin/servicios/actions";
 import { usePointerReorder } from "@/components/admin/usePointerReorder";
 
@@ -13,6 +14,9 @@ interface Svc {
   visible: boolean;
   steps: number;
   visibleSteps: number;
+  cover: string | null;
+  photos: number;
+  hasDescription: boolean;
 }
 
 export function ServicesList({ services }: { services: Svc[] }) {
@@ -54,10 +58,14 @@ export function ServicesList({ services }: { services: Svc[] }) {
             className={"flow-step" + (dragId === s.id ? " dragging" : "")}
           >
             <span className="flow-grip" {...handleProps(s.id)}><Icon name="grip" size={18} /></span>
-            <div style={{ flex: 1 }}>
+            <span className="svc-row-thumb">
+              {s.cover ? <Photo src={s.cover} /> : <Icon name="spray" size={16} />}
+            </span>
+            <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontFamily: "var(--display)", textTransform: "uppercase" }}>{s.name}</div>
               <div className="mono" style={{ fontSize: 12, color: "var(--muted-dim)" }}>
-                {s.steps} estados · {s.visibleSteps} visibles al cliente
+                {s.steps} estados · {s.photos} {s.photos === 1 ? "foto" : "fotos"}
+                {!s.hasDescription && " · sin descripción"}
               </div>
             </div>
             <button

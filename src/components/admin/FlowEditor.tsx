@@ -70,10 +70,10 @@ export function FlowEditor({
   }
 
   return (
-    <div className="apage">
+    <div className="apage svc-editor">
       <div className="ahead" data-section="header">
         <div className="ahead-l">
-          <Link href="/admin/servicios" className="alink" style={{ marginBottom: 6, display: "inline-flex", gap: 6, alignItems: "center" }}>
+          <Link href="/admin/servicios" className="alink" style={{ display: "inline-flex", gap: 6, alignItems: "center" }}>
             <Icon name="chevR" size={14} style={{ transform: "rotate(180deg)" }} /> Servicios
           </Link>
           <input
@@ -85,71 +85,76 @@ export function FlowEditor({
         </div>
       </div>
 
-      <div className="flow-intro">
-        <Icon name="layers" size={18} />
-        <p>Arrastrá los estados para reordenarlos. Cada paso se precarga en las órdenes que usen este servicio.</p>
-      </div>
-
-      <div className="flow-list" data-section="steps-list">
-        {steps.map((s) => (
-          <div
-            key={s.id}
-            ref={registerRow(s.id)}
-            className={"flow-step" + (dragId === s.id ? " dragging" : "")}
-          >
-            <span className="flow-grip" {...handleProps(s.id)}><Icon name="grip" size={18} /></span>
-            <div className="flow-body">
-              <input
-                className="flow-title-in"
-                value={s.title}
-                onChange={(e) => setSteps((p) => p.map((x) => x.id === s.id ? { ...x, title: e.target.value } : x))}
-                onBlur={() => patch(s.id, { title: s.title })}
-                placeholder="Título del paso"
-              />
-              <textarea
-                className="flow-desc-in"
-                defaultValue={s.description ?? ""}
-                onBlur={(e) => patch(s.id, { description: e.target.value })}
-                placeholder="Descripción (opcional)…"
-                rows={2}
-              />
-              <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-                <select
-                  value={s.stage}
-                  onChange={(e) => patch(s.id, { stage: e.target.value as OrderStage })}
-                  style={{ background: "var(--surface-2)", border: "1px solid var(--border)", borderRadius: 6, color: "var(--muted)", fontSize: 12, padding: "3px 8px" }}
-                >
-                  {STAGE_ORDER.map((st) => <option key={st} value={st}>{STAGE_LABELS[st]}</option>)}
-                </select>
-                <button
-                  className={"atoggle" + (s.visible ? " on" : "")}
-                  onClick={() => patch(s.id, { visible: !s.visible })}
-                  title="Visible al cliente"
-                ><span /></button>
-                <span style={{ fontSize: 11, color: "var(--muted-dim)" }}>{s.visible ? "Visible" : "Interno"}</span>
-              </div>
-            </div>
-            <button className="abtn abtn-ghost abtn-sm" onClick={() => remove(s.id)}><Icon name="trash" size={15} /></button>
-          </div>
-        ))}
-      </div>
-
-      <div className="flow-step" style={{ marginTop: 12 }} data-section="add-step-form">
-        <input
-          className="flow-svc-name"
-          value={newTitle}
-          onChange={(e) => setNewTitle(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && add()}
-          placeholder="Nuevo estado..."
-          style={{ flex: 1 }}
-        />
-        <select value={newStage} onChange={(e) => setNewStage(e.target.value as OrderStage)} style={{ background: "var(--surface-2)", border: "1px solid var(--border)", borderRadius: 6, color: "var(--muted)", padding: "3px 8px" }}>
-          {STAGE_ORDER.map((st) => <option key={st} value={st}>{STAGE_LABELS[st]}</option>)}
-        </select>
-        <button className="abtn abtn-primary abtn-sm" onClick={add}><Icon name="plus" size={15} /> Agregar</button>
-      </div>
-
+      {/* Contenido web PRIMERO: es lo que el dueño carga más seguido. */}
       {children}
+
+      <div className="apanel" style={{ marginTop: 24 }} data-section="steps-panel">
+        <div className="apanel-head">
+          <h3>Flujo de trabajo</h3>
+          <span className="apanel-hint">Se precarga en cada orden nueva · arrastrá para ordenar</span>
+        </div>
+        <div className="apanel-body">
+          <div className="flow-list" data-section="steps-list">
+            {steps.map((s) => (
+              <div
+                key={s.id}
+                ref={registerRow(s.id)}
+                className={"flow-step compact" + (dragId === s.id ? " dragging" : "")}
+              >
+                <span className="flow-grip" {...handleProps(s.id)}><Icon name="grip" size={18} /></span>
+                <div className="flow-body">
+                  <div className="flow-main-row">
+                    <input
+                      className="flow-title-in"
+                      value={s.title}
+                      onChange={(e) => setSteps((p) => p.map((x) => x.id === s.id ? { ...x, title: e.target.value } : x))}
+                      onBlur={() => patch(s.id, { title: s.title })}
+                      placeholder="Título del paso"
+                    />
+                    <select
+                      value={s.stage}
+                      onChange={(e) => patch(s.id, { stage: e.target.value as OrderStage })}
+                      style={{ background: "var(--surface-2)", border: "1px solid var(--border)", borderRadius: 6, color: "var(--muted)", fontSize: 12, padding: "3px 8px" }}
+                    >
+                      {STAGE_ORDER.map((st) => <option key={st} value={st}>{STAGE_LABELS[st]}</option>)}
+                    </select>
+                    <button
+                      className={"atoggle" + (s.visible ? " on" : "")}
+                      onClick={() => patch(s.id, { visible: !s.visible })}
+                      title={s.visible ? "Visible al cliente" : "Interno (el cliente no lo ve)"}
+                    ><span /></button>
+                    <button className="abtn abtn-ghost abtn-sm" onClick={() => remove(s.id)} title="Eliminar paso" aria-label="Eliminar paso">
+                      <Icon name="trash" size={15} />
+                    </button>
+                  </div>
+                  <textarea
+                    className="flow-desc-in compact"
+                    defaultValue={s.description ?? ""}
+                    onBlur={(e) => patch(s.id, { description: e.target.value })}
+                    placeholder="Agregar descripción…"
+                    rows={1}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="flow-step compact" style={{ marginTop: 12 }} data-section="add-step-form">
+            <input
+              className="flow-title-in"
+              value={newTitle}
+              onChange={(e) => setNewTitle(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && add()}
+              placeholder="Nuevo estado…"
+              style={{ flex: 1 }}
+            />
+            <select value={newStage} onChange={(e) => setNewStage(e.target.value as OrderStage)} style={{ background: "var(--surface-2)", border: "1px solid var(--border)", borderRadius: 6, color: "var(--muted)", padding: "3px 8px" }}>
+              {STAGE_ORDER.map((st) => <option key={st} value={st}>{STAGE_LABELS[st]}</option>)}
+            </select>
+            <button className="abtn abtn-primary abtn-sm" onClick={add}><Icon name="plus" size={15} /> Agregar</button>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

@@ -22,6 +22,7 @@ export async function listServices(includeHidden = false) {
       flow: { orderBy: { sortOrder: "asc" } },
       // Solo la portada: es lo único que necesitan las cards (pública y admin).
       images: { where: { isCover: true }, take: 1 },
+      _count: { select: { images: true } },
     },
     orderBy: { sortOrder: "asc" },
   });

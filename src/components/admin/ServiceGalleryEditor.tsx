@@ -73,13 +73,14 @@ export function ServiceGalleryEditor({
   }
 
   return (
-    <section style={{ marginTop: 28 }} data-section="service-web-content">
-      <div className="flow-intro">
-        <Icon name="eye" size={18} />
-        <p>Lo que se ve en la web pública: descripción y galería de fotos del servicio.</p>
-      </div>
-
-      <div className="afield" style={{ marginTop: 14 }}>
+    <section data-section="service-web-content">
+      <div className="apanel">
+        <div className="apanel-head">
+          <h3><Icon name="eye" size={15} style={{ verticalAlign: "-2px", marginRight: 7 }} />Contenido web</h3>
+          <span className="apanel-hint">Descripción y fotos de la página pública</span>
+        </div>
+        <div className="apanel-body">
+      <div className="afield">
         <label className="afield-label">Descripción pública</label>
         <textarea
           defaultValue={description ?? ""}
@@ -109,8 +110,8 @@ export function ServiceGalleryEditor({
             className={"flow-step" + (dragId === img.id ? " dragging" : "")}
           >
             <span className="flow-grip" {...handleProps(img.id)}><Icon name="grip" size={18} /></span>
-            <span style={{ width: 74, height: 56, borderRadius: 8, overflow: "hidden", flexShrink: 0, position: "relative" }}>
-              <Photo src={img.url} alt={img.alt ?? ""} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+            <span className="svc-gal-thumb">
+              <Photo src={img.url} alt={img.alt ?? ""} />
             </span>
             <div className="flow-body" style={{ minWidth: 0 }}>
               <input
@@ -189,6 +190,8 @@ export function ServiceGalleryEditor({
       )}
 
       {error && <p className="form-error-text" style={{ marginTop: 10 }}>{error}</p>}
+        </div>
+      </div>
     </section>
   );
 }

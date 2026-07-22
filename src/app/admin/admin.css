@@ -887,3 +887,33 @@
 .imgslot-error{ display:flex; align-items:center; gap:8px; margin-top:8px; font-size:12.5px; color:#ff8a93; }
 .imgslot-error button{ background:none; border:none; color:var(--text); text-decoration:underline; cursor:pointer;
   font-size:12.5px; padding:0; font-family:var(--body); }
+
+/* ===== Editor de servicio — layout CRM ===== */
+/* Formulario contenido (no de borde a borde), contenido web primero, pasos
+   compactos de una línea. Pedido del dueño: "más amigable, estilo CRM". */
+.svc-editor{ max-width:980px; }
+.svc-editor .ahead-l{ display:flex; flex-direction:column; align-items:flex-start; gap:8px; width:100%; }
+.svc-editor .flow-svc-name{ width:100%; }
+.apanel-body{ padding:18px 20px; }
+.apanel-hint{ font-family:var(--body); font-weight:400; font-size:12px; letter-spacing:0; text-transform:none; color:var(--muted); }
+
+/* Pasos del flujo, compactos: título+etapa+visible+borrar en una línea;
+   la descripción es una línea fina abajo (sin caja punteada gigante). */
+.flow-step.compact{ padding:10px 12px 10px 9px; align-items:center; }
+.flow-step.compact .flow-body{ flex:1; min-width:0; display:flex; flex-direction:column; gap:1px; }
+.flow-main-row{ display:flex; gap:10px; align-items:center; min-width:0; }
+.flow-main-row .flow-title-in{ flex:1; min-width:0; }
+.flow-desc-in.compact{ border:none; border-radius:0; padding:0; min-height:20px; font-size:12.5px; }
+.flow-desc-in.compact:focus{ border:none; }
+
+/* Galería del servicio (admin) */
+.svc-gal-thumb{ width:74px; height:56px; border-radius:8px; overflow:hidden; flex-shrink:0; position:relative; border:1px solid var(--border); }
+.svc-gal-thumb .photo{ position:absolute; inset:0; }
+
+/* Lista de servicios: miniatura de portada + completitud */
+.svc-row-thumb{ width:52px; height:40px; border-radius:8px; overflow:hidden; flex-shrink:0; position:relative; border:1px solid var(--border); background:var(--surface-2); display:flex; align-items:center; justify-content:center; color:var(--muted-dim); }
+.svc-row-thumb .photo{ position:absolute; inset:0; }
+
+@media (max-width:859px){
+  .flow-main-row{ flex-wrap:wrap; }
+}

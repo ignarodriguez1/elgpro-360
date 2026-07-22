@@ -12,6 +12,9 @@ export default async function AdminServiciosPage() {
     visible: s.visible,
     steps: s.flow.length,
     visibleSteps: s.flow.filter((f) => f.visible).length,
+    cover: s.images[0]?.url ?? null,
+    photos: s._count.images,
+    hasDescription: !!s.description?.trim(),
   }));
 
   return (
