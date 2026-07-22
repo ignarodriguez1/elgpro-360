@@ -199,14 +199,43 @@ model ProductRecommendation {
 model Service {
   id          String   @id @default(cuid())
   name        String
+  /// Slug URL-safe para /servicios/[slug]. Se genera AL CREAR (patrón Tutorial) y
+  /// NO cambia al renombrar: renombrar no puede romper URLs indexadas/compartidas.
+  /// Nullable a propósito: los servicios pre-existentes se backfillean por script
+  /// (Fase 2); el endurecimiento a NOT NULL es una migración posterior de limpieza.
+  slug        String?  @unique
   description String?  @db.Text
-  imageUrl    String?
+  imageUrl    String? // legado, muerto en escritura; lo leen 2 páginas públicas — se elimina en el prompt de limpieza, después de que el público consuma la galería
   visible     Boolean  @default(true)
   sortOrder   Int      @default(0)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  flow FlowStep[] // hoja de ruta de estados del servicio (editor de flujo)
+  flow   FlowStep[] // hoja de ruta de estados del servicio (editor de flujo)
+  images ServiceImage[] // galería de marketing (multi-imagen, orden + portada)
+}
+
+/// Imagen de la galería de un servicio. `ref` = object name en el provider de
+/// storage (misma semántica que WorkOrderPhoto.publicId / PortfolioWork.*ImageRef):
+/// habilita el borrado real del asset vía asset-cleanup.
+/// Invariante "a lo sumo UNA portada por servicio": la garantiza el action en una
+/// transacción (unset-all + set-one) — no la UI, y no un partial unique index
+/// porque Prisma no puede expresarlo en el datamodel (un `migrate dev` futuro lo
+/// detectaría como drift y lo dropearía).
+model ServiceImage {
+  id        String   @id @default(cuid())
+  serviceId String
+  url       String
+  ref       String? // object name en el bucket; el action SIEMPRE lo setea (nullable solo por tolerancia a datos importados)
+  alt       String? // accesibilidad + SEO; editable inline en el admin
+  sortOrder Int // posición en la galería (reordenable)
+  isCover   Boolean  @default(false) // portada = imagen de la card pública
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  service Service @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+
+  @@index([serviceId, sortOrder])
 }
 
 /// Registro de auditoría interno, total e inmutable (append-only).

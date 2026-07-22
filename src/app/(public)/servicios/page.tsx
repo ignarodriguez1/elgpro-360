@@ -9,6 +9,8 @@ export const dynamic = "force-dynamic";
 
 export default async function ServiciosPage() {
   // DB-driven: solo servicios visibles. El toggle del admin se refleja acá.
+  // Imagen de card: portada real de la galería > imageUrl legado > fallback
+  // hardcodeado (convivencia: un servicio sin fotos nunca muestra un hueco).
   const services = (await listServices(false)).map((s, i) => {
     const v = serviceVisual(s.name, i);
     return {
@@ -16,7 +18,10 @@ export default async function ServiciosPage() {
       desc: s.description ?? "",
       icon: v.icon,
       tint: v.tint,
-      img: s.imageUrl || v.img,
+      img: s.images[0]?.url || s.imageUrl || v.img,
+      imgAlt: s.images[0]?.alt || "",
+      // Sin slug (pre-backfill) la card cae al comportamiento anterior (/contacto).
+      href: s.slug ? `/servicios/${s.slug}` : "/contacto",
     };
   });
 
@@ -40,8 +45,8 @@ export default async function ServiciosPage() {
               ) : (
                 <div className="dsvc-full-grid">
                   {services.map((s) => (
-                    <Link key={s.name} href="/contacto" className="dsvc-card drise" style={{ display: "flex" }}>
-                      <Photo src={s.img} className="dsvc-img" tint={s.tint} grad />
+                    <Link key={s.name} href={s.href} className="dsvc-card drise" style={{ display: "flex" }}>
+                      <Photo src={s.img} alt={s.imgAlt} className="dsvc-img" tint={s.tint} grad />
                       <span className="dsvc-go"><Icon name="arrowUR" size={17} /></span>
                       <span className="dsvc-body">
                         <span className="dsvc-ic"><Icon name={s.icon} size={22} /></span>
@@ -86,8 +91,8 @@ export default async function ServiciosPage() {
               </div>
             ) : (
               services.map((s) => (
-                <Link key={s.name} href="/contacto" className="svc-full" style={{ display: "block" }}>
-                  <Photo src={s.img} className="svc-full-img" tint={s.tint} grad />
+                <Link key={s.name} href={s.href} className="svc-full" style={{ display: "block" }}>
+                  <Photo src={s.img} alt={s.imgAlt} className="svc-full-img" tint={s.tint} grad />
                   <div className="svc-full-body">
                     <span className="svc-ic"><Icon name={s.icon} size={20} /></span>
                     <h3 className="svc-full-name display">{s.name}</h3>

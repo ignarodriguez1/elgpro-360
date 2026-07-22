@@ -1,7 +1,8 @@
 import { notFound } from "next/navigation";
 import { requireOwner } from "@/lib/session";
-import { getServiceWithFlow } from "@/services/service.service";
+import { getServiceWithFlow, MAX_SERVICE_IMAGES } from "@/services/service.service";
 import { FlowEditor } from "@/components/admin/FlowEditor";
+import { ServiceGalleryEditor } from "@/components/admin/ServiceGalleryEditor";
 
 export default async function AdminServicioEditorPage({
   params,
@@ -26,5 +27,21 @@ export default async function AdminServicioEditorPage({
     visible: f.visible,
   }));
 
-  return <FlowEditor serviceId={service.id} serviceName={service.name} steps={steps} />;
+  const images = service.images.map((img) => ({
+    id: img.id,
+    url: img.url,
+    alt: img.alt,
+    isCover: img.isCover,
+  }));
+
+  return (
+    <FlowEditor serviceId={service.id} serviceName={service.name} steps={steps}>
+      <ServiceGalleryEditor
+        serviceId={service.id}
+        description={service.description}
+        images={images}
+        maxImages={MAX_SERVICE_IMAGES}
+      />
+    </FlowEditor>
+  );
 }

@@ -26,10 +26,13 @@ export function FlowEditor({
   serviceId,
   serviceName,
   steps: initial,
+  children,
 }: {
   serviceId: string;
   serviceName: string;
   steps: Step[];
+  /** Secciones extra al pie (ej. galería + descripción), dentro del mismo .apage. */
+  children?: React.ReactNode;
 }) {
   const [name, setName] = useState(serviceName);
   const [steps, setSteps] = useState(initial);
@@ -145,6 +148,8 @@ export function FlowEditor({
         </select>
         <button className="abtn abtn-primary abtn-sm" onClick={add}><Icon name="plus" size={15} /> Agregar</button>
       </div>
+
+      {children}
     </div>
   );
 }
