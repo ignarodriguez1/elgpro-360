@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/session";
 import { getStorageProvider } from "@/services/storage";
+import { isHeicFile, HEIC_REJECTION_MESSAGE } from "@/lib/media-format";
 
 const MAX_BYTES = 10 * 1024 * 1024; // 10MB
 
@@ -33,6 +34,12 @@ export async function POST(request: Request) {
   // Validación server-side honesta (antes solo había hints de cliente).
   if (!file.type.startsWith("image/")) {
     return NextResponse.json({ error: "Solo se permiten imágenes" }, { status: 415 });
+  }
+  // HEIC pasa el filtro image/* pero ningún navegador lo muestra: defensa en
+  // profundidad por si el cliente está desactualizado o lo puentean (curl).
+  // Detección por MIME y extensión — el type del File puede venir vacío o mentir.
+  if (isHeicFile(file.name, file.type)) {
+    return NextResponse.json({ error: HEIC_REJECTION_MESSAGE }, { status: 415 });
   }
   if (file.size > MAX_BYTES) {
     return NextResponse.json({ error: "La imagen supera los 10MB" }, { status: 413 });

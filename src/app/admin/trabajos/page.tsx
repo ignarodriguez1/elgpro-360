@@ -13,6 +13,8 @@ export default async function AdminTrabajosPage() {
     description: w.description,
     beforeImageUrl: w.beforeImageUrl,
     afterImageUrl: w.afterImageUrl,
+    beforeImageRef: w.beforeImageRef,
+    afterImageRef: w.afterImageRef,
     tint: w.tint,
     tall: w.tall,
     visible: w.visible,

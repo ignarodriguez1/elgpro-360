@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { logAudit, type AuditActor } from "@/services/audit.service";
+import { deleteAssetsBestEffort } from "@/services/storage/asset-cleanup";
 
 // Contenido web (portfolio) es solo del dueño (ADMIN), no del operario (STAFF).
 async function assertOwner(): Promise<AuditActor> {
@@ -21,6 +22,10 @@ const WorkInput = z.object({
   description: z.string().trim().optional(),
   beforeImageUrl: z.string().trim().url("URL inválida").optional().or(z.literal("")),
   afterImageUrl: z.string().trim().url("URL inválida").optional().or(z.literal("")),
+  // Refs de storage (object name en el bucket): viajan junto a las URLs para
+  // habilitar el borrado real del asset. Vacío = sin imagen o dato histórico.
+  beforeImageRef: z.string().trim().optional().or(z.literal("")),
+  afterImageRef: z.string().trim().optional().or(z.literal("")),
   tint: z.string().trim().optional(),
   tall: z.boolean().optional(),
   visible: z.boolean().optional(),
@@ -50,6 +55,8 @@ export async function createWorkAction(raw: WorkInput) {
       description: data.description || null,
       beforeImageUrl: data.beforeImageUrl || null,
       afterImageUrl: data.afterImageUrl || null,
+      beforeImageRef: data.beforeImageRef || null,
+      afterImageRef: data.afterImageRef || null,
       tint: data.tint || null,
       tall: data.tall ?? false,
       visible: data.visible ?? true,
@@ -73,6 +80,14 @@ export async function updateWorkAction(id: string, raw: WorkInput) {
   const actor = await assertOwner();
   const data = WorkInput.parse(raw);
 
+  // Refs actuales ANTES de pisar la fila: lo que quede reemplazado o quitado
+  // se borra del bucket después de que la DB commitee (ver asset-cleanup.ts
+  // por el razonamiento del orden: huérfano recuperable > imagen rota).
+  const existing = await prisma.portfolioWork.findUnique({
+    where: { id },
+    select: { beforeImageRef: true, afterImageRef: true },
+  });
+
   const updated = await prisma.portfolioWork.update({
     where: { id },
     data: {
@@ -81,6 +96,8 @@ export async function updateWorkAction(id: string, raw: WorkInput) {
       description: data.description || null,
       beforeImageUrl: data.beforeImageUrl || null,
       afterImageUrl: data.afterImageUrl || null,
+      beforeImageRef: data.beforeImageRef || null,
+      afterImageRef: data.afterImageRef || null,
       tint: data.tint || null,
       tall: data.tall ?? false,
       ...(data.visible != null ? { visible: data.visible } : {}),
@@ -95,6 +112,19 @@ export async function updateWorkAction(id: string, raw: WorkInput) {
     summary: `Trabajo editado: ${updated.title}`,
     diff: { after: { title: updated.title, category: updated.category } },
   });
+
+  // Negocio completo (update + audit) commiteado → recién ahora el bucket.
+  // Reemplazo o quitado: toda ref vieja que ya no esté en la fila nueva es
+  // basura. Best-effort: jamás hace fallar el guardado.
+  const staleRefs = [
+    existing?.beforeImageRef && existing.beforeImageRef !== (data.beforeImageRef || null)
+      ? existing.beforeImageRef
+      : null,
+    existing?.afterImageRef && existing.afterImageRef !== (data.afterImageRef || null)
+      ? existing.afterImageRef
+      : null,
+  ];
+  await deleteAssetsBestEffort(staleRefs, `updateWorkAction:${id}`);
   revalidate();
 }
 
@@ -110,6 +140,13 @@ export async function deleteWorkAction(id: string) {
     entityId: id,
     summary: `Trabajo eliminado: ${existing?.title ?? id}`,
   });
+
+  // Negocio completo (fila + audit) commiteado → recién ahora los assets.
+  // Refs NULL (obras históricas pre-migración) se saltean sin error en el helper.
+  await deleteAssetsBestEffort(
+    [existing?.beforeImageRef, existing?.afterImageRef],
+    `deleteWorkAction:${id}`
+  );
   revalidate();
 }
 

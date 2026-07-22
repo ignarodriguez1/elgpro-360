@@ -5,11 +5,18 @@ import { Icon } from "@/components/shared/Icon";
 import { Photo } from "@/components/shared/Photo";
 import { uploadImageFile } from "@/lib/upload-client";
 
+/** Imagen subida: URL para mostrar + ref de storage para poder borrar el objeto después. */
+export interface ImageSlotAsset {
+  url: string;
+  /** Object name en el provider (misma semántica que WorkOrderPhoto.publicId). null solo en datos históricos pre-ref. */
+  ref: string | null;
+}
+
 interface ImageSlotProps {
   /** URL de la imagen ya cargada, o null/"" si el slot está vacío. */
   value: string | null;
-  /** Set con la URL nueva, o null al quitar. */
-  onChange: (url: string | null) => void;
+  /** Set con el asset nuevo ({url, ref}), o null al quitar. La ref VIAJA — no repetir el error de descartarla (informe, brecha #1). */
+  onChange: (asset: ImageSlotAsset | null) => void;
   label: string;
   /** Aclaración chica al lado del label (ej. "resultado", "opcional"). */
   hint?: string;
@@ -36,7 +43,7 @@ export function ImageSlot({ value, onChange, label, hint, primary = false }: Ima
     setError(null);
     try {
       const asset = await uploadImageFile(file);
-      onChange(asset.url);
+      onChange({ url: asset.url, ref: asset.ref ?? null });
       setStatus("idle");
     } catch (e) {
       setStatus("error");

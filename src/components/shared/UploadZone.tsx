@@ -4,6 +4,7 @@ import { useState, useCallback } from "react";
 import { Upload, Camera, X, Loader2, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { compressImage } from "@/lib/image-compression";
+import { isHeicFile, HEIC_REJECTION_MESSAGE } from "@/lib/media-format";
 
 interface UploadedFile {
   url: string;
@@ -43,12 +44,18 @@ export function UploadZone({
 
       const newFiles: PreviewItem[] = Array.from(files)
         .slice(0, maxFiles - previews.length)
-        .map((file) => ({
-          id: crypto.randomUUID(),
-          file,
-          preview: URL.createObjectURL(file),
-          status: "idle",
-        }));
+        .map((file) => {
+          // HEIC se marca en error AL ELEGIR, antes de gastar datos: la web no
+          // puede mostrarlo y la compresión lo mandaría crudo (2MB inservibles).
+          const heic = isHeicFile(file.name, file.type);
+          return {
+            id: crypto.randomUUID(),
+            file,
+            preview: URL.createObjectURL(file),
+            status: heic ? ("error" as const) : ("idle" as const),
+            error: heic ? HEIC_REJECTION_MESSAGE : undefined,
+          };
+        });
 
       setPreviews((prev) => [...prev, ...newFiles]);
     },
@@ -86,6 +93,12 @@ export function UploadZone({
     const doneIds: string[] = [];
 
     for (const item of pending) {
+      // "Reintentar" re-procesa los que están en error — un HEIC jamás debe
+      // colarse por esa vía: se re-marca y se saltea, sin tocar la red.
+      if (isHeicFile(item.file.name, item.file.type)) {
+        setStatus(item.id, "error", HEIC_REJECTION_MESSAGE);
+        continue;
+      }
       setStatus(item.id, "uploading");
 
       try {

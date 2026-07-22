@@ -258,6 +258,8 @@ model PortfolioWork {
   description    String?  @db.Text // texto del lightbox
   afterImageUrl  String? // "después" (resultado) — también la card de la grilla
   beforeImageUrl String? // "antes" (estado de ingreso)
+  afterImageRef  String? // ref del objeto en el provider de storage (GCS object name); habilita el borrado real — misma semántica que WorkOrderPhoto.publicId
+  beforeImageRef String? // ídem, para la imagen "antes". NULL en filas históricas (pre-migración): sus assets son huérfanos conocidos, se limpian aparte
   tint           String? // overlay de color (presentación)
   tall           Boolean  @default(false) // hint de layout: item grande en la grilla
   visible        Boolean  @default(true)

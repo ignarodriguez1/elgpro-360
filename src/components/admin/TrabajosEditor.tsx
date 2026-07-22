@@ -19,6 +19,8 @@ export interface WorkRow {
   description: string | null;
   beforeImageUrl: string | null;
   afterImageUrl: string | null;
+  beforeImageRef: string | null;
+  afterImageRef: string | null;
   tint: string | null;
   tall: boolean;
   visible: boolean;
@@ -32,6 +34,8 @@ const EMPTY = {
   description: "",
   beforeImageUrl: "",
   afterImageUrl: "",
+  beforeImageRef: "",
+  afterImageRef: "",
   tint: "",
   tall: false,
   visible: true,
@@ -65,6 +69,8 @@ export function TrabajosEditor({ works }: { works: WorkRow[] }) {
       description: w.description ?? "",
       beforeImageUrl: w.beforeImageUrl ?? "",
       afterImageUrl: w.afterImageUrl ?? "",
+      beforeImageRef: w.beforeImageRef ?? "",
+      afterImageRef: w.afterImageRef ?? "",
       tint: w.tint ?? "",
       tall: w.tall,
       visible: w.visible,
@@ -95,6 +101,8 @@ export function TrabajosEditor({ works }: { works: WorkRow[] }) {
       description: form.description || undefined,
       beforeImageUrl: form.beforeImageUrl || undefined,
       afterImageUrl: form.afterImageUrl || undefined,
+      beforeImageRef: form.beforeImageRef || undefined,
+      afterImageRef: form.afterImageRef || undefined,
       tint: form.tint || undefined,
       tall: form.tall,
       visible: form.visible,
@@ -163,14 +171,18 @@ export function TrabajosEditor({ works }: { works: WorkRow[] }) {
                 label="Antes"
                 hint="ingreso, opcional"
                 value={form.beforeImageUrl || null}
-                onChange={(url) => setForm((f) => ({ ...f, beforeImageUrl: url ?? "" }))}
+                onChange={(asset) =>
+                  setForm((f) => ({ ...f, beforeImageUrl: asset?.url ?? "", beforeImageRef: asset?.ref ?? "" }))
+                }
               />
               <ImageSlot
                 label="Después"
                 hint="resultado"
                 primary
                 value={form.afterImageUrl || null}
-                onChange={(url) => setForm((f) => ({ ...f, afterImageUrl: url ?? "" }))}
+                onChange={(asset) =>
+                  setForm((f) => ({ ...f, afterImageUrl: asset?.url ?? "", afterImageRef: asset?.ref ?? "" }))
+                }
               />
             </div>
 

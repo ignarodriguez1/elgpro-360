@@ -1,4 +1,5 @@
 import { compressImage } from "./image-compression";
+import { isHeicFile, HEIC_REJECTION_MESSAGE } from "./media-format";
 
 /**
  * Sube UN archivo de imagen desde el cliente: comprime primero (esquiva el límite
@@ -15,6 +16,12 @@ export interface UploadedAsset {
 }
 
 export async function uploadImageFile(file: File): Promise<UploadedAsset> {
+  // HEIC se rechaza ANTES de subir: la compresión no puede decodificarlo (lo
+  // mandaría crudo) y el navegador después no puede mostrarlo. Mejor cortar acá
+  // con mensaje accionable que gastar 2MB de 4G en un asset inservible.
+  if (isHeicFile(file.name, file.type)) {
+    throw new Error(HEIC_REJECTION_MESSAGE);
+  }
   const compressed = await compressImage(file);
   const formData = new FormData();
   formData.append("file", compressed);
