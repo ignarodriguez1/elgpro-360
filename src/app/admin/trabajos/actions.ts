@@ -150,6 +150,25 @@ export async function deleteWorkAction(id: string) {
   revalidate();
 }
 
+export async function reorderWorksAction(orderedIds: string[]) {
+  const actor = await assertOwner();
+  const parsed = z.array(z.string().min(1)).min(1).safeParse(orderedIds);
+  if (!parsed.success) throw new Error("Orden inválido");
+  await prisma.$transaction(
+    parsed.data.map((id, index) =>
+      prisma.portfolioWork.update({ where: { id }, data: { sortOrder: index } })
+    )
+  );
+  await logAudit({
+    actor,
+    action: "WORKS_REORDERED",
+    entity: "PortfolioWork",
+    entityId: "*",
+    summary: `Portfolio reordenado (${parsed.data.length} trabajos)`,
+  });
+  revalidate();
+}
+
 export async function toggleWorkAction(id: string, visible: boolean) {
   const actor = await assertOwner();
   await prisma.portfolioWork.update({ where: { id }, data: { visible } });

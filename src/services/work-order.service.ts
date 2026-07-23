@@ -215,6 +215,12 @@ export async function getWorkOrderById(
     order.statusUpdates = order.statusUpdates.filter(
       (u: { visibleToCustomer: boolean }) => u.visibleToCustomer
     );
+    // Brecha #3 (informe): el flag POR FOTO no se filtraba — una foto marcada
+    // oculta colgada de un update visible llegaba igual al portal.
+    for (const u of order.statusUpdates) {
+      u.photos = u.photos.filter((p) => p.visibleToCustomer);
+    }
+    order.photos = order.photos.filter((p) => p.visibleToCustomer);
     order.internalNotes = null;
   }
 

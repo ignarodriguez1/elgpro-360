@@ -145,7 +145,10 @@ export function WorkStack({ variant, works }: { variant: "desktop" | "mobile"; w
   const close = () => setLb(null);
   const go = (d: number) => { if (lb === null || works.length === 0) return; setSide("despues"); setLb((lb + d + works.length) % works.length); };
   const w = lb !== null ? works[lb] : null;
-  const sideImg = (wk: GalleryWork) => (side === "antes" ? wk.beforeImageUrl ?? wk.afterImageUrl : wk.afterImageUrl) ?? undefined;
+  // SIN fallback al "después" cuando falta el "antes": mostrar el resultado
+  // etiquetado "Antes" es mentirle al visitante (principio de honestidad).
+  // Igual que /trabajos: placeholder con la etiqueta "Estado de ingreso".
+  const sideImg = (wk: GalleryWork) => (side === "antes" ? wk.beforeImageUrl : wk.afterImageUrl) ?? undefined;
   const lbTint = w ? (side === "antes" ? "rgba(120,120,120,.18)" : (w.tint ?? undefined)) : undefined;
   const lbLabel = side === "antes" ? "Estado de ingreso" : "Resultado final";
 

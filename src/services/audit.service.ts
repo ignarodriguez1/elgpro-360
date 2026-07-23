@@ -33,6 +33,7 @@ export type AuditAction =
   | "WORK_UPDATED"
   | "WORK_DELETED"
   | "WORK_TOGGLED"
+  | "WORKS_REORDERED"
   | "CUSTOMER_CREATED"
   | "CUSTOMER_UPDATED"
   | "USER_CREATED"

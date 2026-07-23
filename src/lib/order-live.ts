@@ -90,6 +90,8 @@ interface RawUpdate {
     imageUrl: string;
     thumbnailUrl?: string | null;
     caption?: string | null;
+    /** Flag por-foto. Ausente en payloads viejos → se trata como visible. */
+    visibleToCustomer?: boolean;
     createdAt: Date | string;
   }[];
   // createdBy / internalDescription existen en el crudo pero NO se proyectan.
@@ -106,13 +108,18 @@ export function projectUpdateForCustomer(u: RawUpdate): CustomerTimelineUpdate {
     isCurrent: u.isCurrent,
     confirmed: u.confirmed,
     createdAt: new Date(u.createdAt).toISOString(),
-    photos: u.photos?.map((p) => ({
-      id: p.id,
-      imageUrl: p.imageUrl,
-      thumbnailUrl: p.thumbnailUrl ?? null,
-      caption: p.caption ?? null,
-      createdAt: new Date(p.createdAt).toISOString(),
-    })),
+    // Brecha #3 del informe: el flag por-foto no se filtraba en NINGÚN camino
+    // al cliente. La proyección es "para el cliente" por definición → filtra acá
+    // (cubre seed SSR, snapshot API y realtime de una vez).
+    photos: u.photos
+      ?.filter((p) => p.visibleToCustomer !== false)
+      .map((p) => ({
+        id: p.id,
+        imageUrl: p.imageUrl,
+        thumbnailUrl: p.thumbnailUrl ?? null,
+        caption: p.caption ?? null,
+        createdAt: new Date(p.createdAt).toISOString(),
+      })),
   };
 }
 

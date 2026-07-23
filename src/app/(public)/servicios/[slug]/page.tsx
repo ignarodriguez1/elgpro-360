@@ -21,7 +21,13 @@ export async function generateMetadata({
   const { slug } = await params;
   const service = await getServiceBySlug(slug);
   if (!service || !service.visible) {
-    return { title: "Servicio — ELG Pro 360" };
+    // Slug inexistente u oculto → UI de 404 + <meta noindex> (Next lo inyecta).
+    // OJO: el STATUS es 200 por diseño de Next cuando el segmento streamea
+    // (servicios/loading.tsx): los headers ya salieron y no se pueden cambiar
+    // (docs: file-conventions/loading#status-codes — "does not lead to
+    // indexation"). Un 404 de status estricto exigiría chequear el slug en
+    // proxy.ts, que es edge-safe SIN Prisma → no viable acá.
+    notFound();
   }
   const description = (
     service.description ??

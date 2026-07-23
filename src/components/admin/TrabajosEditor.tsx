@@ -1,15 +1,17 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Icon } from "@/components/shared/Icon";
 import { Photo } from "@/components/shared/Photo";
 import { ImageSlot } from "@/components/shared/ImageSlot";
+import { usePointerReorder } from "@/components/admin/usePointerReorder";
 import {
   createWorkAction,
   updateWorkAction,
   deleteWorkAction,
   toggleWorkAction,
+  reorderWorksAction,
 } from "@/app/admin/trabajos/actions";
 import { useAdminFeedback } from "@/components/admin/AdminFeedback";
 
@@ -51,6 +53,24 @@ export function TrabajosEditor({ works }: { works: WorkRow[] }) {
   const [creating, setCreating] = useState(false);
   const [form, setForm] = useState<FormState>(EMPTY);
   const [error, setError] = useState<string | null>(null);
+  const [items, setItems] = useState<WorkRow[]>(works);
+
+  // El server manda tras cada refresh; el estado local es para el drag.
+  useEffect(() => setItems(works), [works]);
+
+  const { dragId, registerRow, handleProps } = usePointerReorder(
+    items,
+    setItems,
+    (ids) =>
+      start(async () => {
+        try {
+          await reorderWorksAction(ids);
+          toast("success", "Orden del portfolio guardado.");
+        } catch {
+          toast("error", "No se pudo guardar el orden.");
+        }
+      })
+  );
 
   const open = creating || editing != null;
 
@@ -152,7 +172,7 @@ export function TrabajosEditor({ works }: { works: WorkRow[] }) {
       <div className="ahead" data-section="header">
         <div className="ahead-l">
           <h2>Trabajos</h2>
-          <div className="ahead-sub">{works.length} en el portfolio</div>
+          <div className="ahead-sub">{works.length} en el portfolio · arrastrá para ordenar cómo se ven en la web</div>
         </div>
         {!open && (
           <button className="abtn abtn-primary" type="button" onClick={startCreate}>
@@ -237,8 +257,13 @@ export function TrabajosEditor({ works }: { works: WorkRow[] }) {
 
       <div className="apanel" data-section="crud-list">
         <div className="crud-list">
-          {works.map((w) => (
-            <div className="crud-row" key={w.id}>
+          {items.map((w) => (
+            <div
+              className={"crud-row" + (dragId === w.id ? " dragging" : "")}
+              key={w.id}
+              ref={registerRow(w.id)}
+            >
+              <span className="flow-grip" {...handleProps(w.id)}><Icon name="grip" size={18} /></span>
               <span className="t-avatar" style={{ overflow: "hidden", padding: 0 }}>
                 {w.afterImageUrl ? (
                   <Photo src={w.afterImageUrl} className="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
@@ -277,7 +302,7 @@ export function TrabajosEditor({ works }: { works: WorkRow[] }) {
               </button>
             </div>
           ))}
-          {works.length === 0 && (
+          {items.length === 0 && (
             <div style={{ textAlign: "center", color: "var(--muted)", padding: 24 }}>Sin trabajos.</div>
           )}
         </div>

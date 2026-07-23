@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { PageHead } from "@/components/public/PageHead";
 import { Photo } from "@/components/shared/Photo";
 import { Icon } from "@/components/shared/Icon";
@@ -17,9 +17,10 @@ export function TrabajosGallery({ works, cats }: { works: GalleryWork[]; cats: s
   const [side, setSide] = useState<"antes" | "despues">("despues");
   const [closing, setClosing] = useState(false);
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const triggerRef = useRef<HTMLElement | null>(null); // la card que abrió, para restaurar el foco
 
   const list = works.map((w, i) => ({ ...w, _i: i })).filter((w) => cat === "Todos" || w.category === cat);
-  const open = (i: number) => { if (closeTimer.current) clearTimeout(closeTimer.current); setClosing(false); setSide("despues"); setLb(i); };
+  const open = (i: number, el?: HTMLElement) => { if (closeTimer.current) clearTimeout(closeTimer.current); if (el) triggerRef.current = el; setClosing(false); setSide("despues"); setLb(i); };
   const go = (d: number) => { if (lb == null || works.length === 0) return; setSide("despues"); setLb((lb + d + works.length) % works.length); };
   // Cierre coreografiado: marca .closing, espera la animación de salida y recién ahí desmonta.
   const requestClose = () => {
@@ -29,6 +30,62 @@ export function TrabajosGallery({ works, cats }: { works: GalleryWork[]; cats: s
   };
   const w = lb != null ? works[lb] : null;
   const sideImg = (wk: GalleryWork) => (side === "antes" ? wk.beforeImageUrl : wk.afterImageUrl) ?? undefined;
+  const sideLabel = side === "antes" ? "Estado de ingreso" : "Resultado final";
+
+  // Diálogo modal de verdad (portado de WorkStack, que ya lo hacía bien): foco
+  // inicial, trap de Tab, Escape, ← → entre obras, scroll-lock con restauración
+  // de posición y foco al cerrar. Antes: Escape era INERTE y el foco quedaba
+  // atrapado atrás (informe §4.10). Dual-DOM: el root visible se resuelve en vivo.
+  const isOpen = lb !== null;
+  useEffect(() => {
+    if (!isOpen) return;
+    const visibleRoot = () =>
+      Array.from(document.querySelectorAll<HTMLElement>(".dlb-inner, .lb-inner")).find(
+        (el) => el.offsetParent !== null
+      ) ?? null;
+    const focusables = () => {
+      const root = visibleRoot();
+      return root
+        ? Array.from(root.querySelectorAll<HTMLElement>('a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])')).filter((el) => el.offsetParent !== null)
+        : [];
+    };
+    const raf = requestAnimationFrame(() => (focusables()[0] ?? visibleRoot())?.focus({ preventScroll: true }));
+
+    const scrollY = window.scrollY;
+    const body = document.body;
+    const prev = { position: body.style.position, top: body.style.top, left: body.style.left, right: body.style.right, width: body.style.width };
+    body.style.position = "fixed";
+    body.style.top = `-${scrollY}px`;
+    body.style.left = "0";
+    body.style.right = "0";
+    body.style.width = "100%";
+
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") { e.preventDefault(); requestClose(); return; }
+      if (e.key === "ArrowRight" || e.key === "ArrowLeft") { e.preventDefault(); go(e.key === "ArrowRight" ? 1 : -1); return; }
+      if (e.key !== "Tab") return;
+      const items = focusables();
+      if (!items.length) return;
+      const i = items.indexOf(document.activeElement as HTMLElement);
+      if (i === -1) { e.preventDefault(); (e.shiftKey ? items[items.length - 1] : items[0]).focus(); return; }
+      if (e.shiftKey && i === 0) { e.preventDefault(); items[items.length - 1].focus(); }
+      else if (!e.shiftKey && i === items.length - 1) { e.preventDefault(); items[0].focus(); }
+    };
+    document.addEventListener("keydown", onKey);
+
+    return () => {
+      cancelAnimationFrame(raf);
+      document.removeEventListener("keydown", onKey);
+      body.style.position = prev.position;
+      body.style.top = prev.top;
+      body.style.left = prev.left;
+      body.style.right = prev.right;
+      body.style.width = prev.width;
+      window.scrollTo(0, scrollY);
+      triggerRef.current?.focus({ preventScroll: true });
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen]);
 
   return (
     <>
@@ -49,7 +106,7 @@ export function TrabajosGallery({ works, cats }: { works: GalleryWork[]; cats: s
               <div className="dwork-grid">
                 {list.map((wk, i) => (
                   <div key={wk.id} className={"dwork-item drise " + dlayout(i)}>
-                    <button className="dwork-btn" onClick={() => open(wk._i)}>
+                    <button className="dwork-btn" onClick={(e) => open(wk._i, e.currentTarget)} aria-label={`${wk.title} — ver antes y después`}>
                       {/* Sin priority: los DOS árboles se renderizan siempre (el
                           corte es CSS), así que en un teléfono este eager+high del
                           árbol desktop OCULTO competía con el LCP real. Las 2
@@ -89,7 +146,7 @@ export function TrabajosGallery({ works, cats }: { works: GalleryWork[]; cats: s
             <div className="work-grid">
               {list.map((wk, i) => (
                 <div key={wk.id} className={"work-item" + (wk.tall ? " work-tall" : "")}>
-                  <button className="work-btn" onClick={() => open(wk._i)}>
+                  <button className="work-btn" onClick={(e) => open(wk._i, e.currentTarget)} aria-label={`${wk.title} — ver antes y después`}>
                     <Photo src={wk.afterImageUrl ?? undefined} className="work-photo" tint={wk.tint ?? undefined} grad priority={i < 2} />
                     <span className="work-meta"><span className="work-cat">{wk.category}</span><span className="work-title display">{wk.title}</span></span>
                     <span className="work-swap"><Icon name="swap" size={15} /></span>
@@ -106,14 +163,14 @@ export function TrabajosGallery({ works, cats }: { works: GalleryWork[]; cats: s
       {w && (
         <>
           <div className="only-desktop">
-            <div className={"dlightbox" + (closing ? " closing" : "")} onClick={requestClose}>
+            <div className={"dlightbox" + (closing ? " closing" : "")} onClick={requestClose} role="dialog" aria-modal="true" aria-label={w.title}>
               <div className="dlb-inner" onClick={(e) => e.stopPropagation()}>
                 <button className="dlb-close" onClick={requestClose} aria-label="Cerrar"><Icon name="close" size={22} /></button>
                 <div className="dlb-stage">
-                  <Photo key={side} src={sideImg(w)} className="dlb-photo" tint={side === "antes" ? "rgba(120,120,120,.18)" : (w.tint ?? undefined)} label={side === "antes" ? "Estado de ingreso" : "Resultado final"} />
+                  <Photo key={side} src={sideImg(w)} className="dlb-photo" tint={side === "antes" ? "rgba(120,120,120,.18)" : (w.tint ?? undefined)} label={sideLabel} alt={`${w.title} — ${sideLabel}`} />
                   <span className={"dlb-tag " + side}>{side === "antes" ? "Antes" : "Después"}</span>
-                  <button className="dlb-nav dlb-prev" onClick={() => go(-1)}><Icon name="chevR" size={22} style={{ transform: "rotate(180deg)" }} /></button>
-                  <button className="dlb-nav dlb-next" onClick={() => go(1)}><Icon name="chevR" size={22} /></button>
+                  <button className="dlb-nav dlb-prev" onClick={() => go(-1)} aria-label="Anterior"><Icon name="chevR" size={22} style={{ transform: "rotate(180deg)" }} /></button>
+                  <button className="dlb-nav dlb-next" onClick={() => go(1)} aria-label="Siguiente"><Icon name="chevR" size={22} /></button>
                 </div>
                 <div className="dlb-side">
                   <span className="dlb-cat">{w.category}</span>
@@ -128,14 +185,14 @@ export function TrabajosGallery({ works, cats }: { works: GalleryWork[]; cats: s
             </div>
           </div>
           <div className="only-mobile">
-            <div className={"lightbox open" + (closing ? " closing" : "")} onClick={requestClose}>
+            <div className={"lightbox open" + (closing ? " closing" : "")} onClick={requestClose} role="dialog" aria-modal="true" aria-label={w.title}>
               <div className="lb-inner" onClick={(e) => e.stopPropagation()}>
                 <button className="lb-close" onClick={requestClose} aria-label="Cerrar"><Icon name="close" size={22} /></button>
                 <div className="lb-stage">
-                  <Photo key={side} src={sideImg(w)} className="lb-photo" tint={side === "antes" ? "rgba(120,120,120,.18)" : (w.tint ?? undefined)} label={side === "antes" ? "Estado de ingreso" : "Resultado final"} />
+                  <Photo key={side} src={sideImg(w)} className="lb-photo" tint={side === "antes" ? "rgba(120,120,120,.18)" : (w.tint ?? undefined)} label={sideLabel} alt={`${w.title} — ${sideLabel}`} />
                   <span className={"lb-tag " + side}>{side === "antes" ? "Antes" : "Después"}</span>
-                  <button className="lb-nav lb-prev" onClick={() => go(-1)}><Icon name="chevR" size={22} style={{ transform: "rotate(180deg)" }} /></button>
-                  <button className="lb-nav lb-next" onClick={() => go(1)}><Icon name="chevR" size={22} /></button>
+                  <button className="lb-nav lb-prev" onClick={() => go(-1)} aria-label="Anterior"><Icon name="chevR" size={22} style={{ transform: "rotate(180deg)" }} /></button>
+                  <button className="lb-nav lb-next" onClick={() => go(1)} aria-label="Siguiente"><Icon name="chevR" size={22} /></button>
                 </div>
                 <div className="lb-swap">
                   <button className={side === "antes" ? "active" : ""} onClick={() => setSide("antes")}>Antes</button>
